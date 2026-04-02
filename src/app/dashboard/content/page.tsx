@@ -1210,7 +1210,7 @@ function FormBuilderTab() {
 
       {/* Preview Dialog */}
       <Dialog open={previewOpen} onOpenChange={setPreviewOpen}>
-        <DialogContent className="max-w-2xl max-h-[85vh]">
+        <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Form Preview — {contextTab === "APPLICATION" ? "Application" : "Renewal"}</DialogTitle>
           </DialogHeader>

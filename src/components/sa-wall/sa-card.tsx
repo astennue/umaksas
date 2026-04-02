@@ -92,8 +92,8 @@ export function SACard({ sa, onClick, isAuthenticated }: SACardProps) {
           </div>
 
           {/* Name + Sex indicator */}
-          <div className="flex items-center gap-1.5">
-            <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100 group-hover:text-blue-700 dark:group-hover:text-amber-400 transition-colors duration-300">
+          <div className="flex items-center gap-1.5 min-w-0 max-w-[220px]">
+            <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100 group-hover:text-blue-700 dark:group-hover:text-amber-400 transition-colors duration-300 truncate">
               {fullName}
             </h3>
             {sa.sex && (

@@ -104,31 +104,31 @@ export function SADetailModal({
                 </div>
 
                 {/* Name */}
-                <h2 className="text-xl font-bold text-white relative z-10">
+                <h2 className="text-xl font-bold text-white relative z-10 break-words max-w-[280px]">
                   {fullName}
                 </h2>
 
                 {/* Office */}
                 {sa.officeName && (
-                  <div className="flex items-center justify-center gap-1.5 mt-2 text-blue-200 text-sm relative z-10">
-                    <Building2 className="w-3.5 h-3.5" />
-                    <span>{sa.officeName}</span>
+                  <div className="flex items-center justify-center gap-1.5 mt-2 text-blue-200 text-sm relative z-10 min-w-0 max-w-[280px]">
+                    <Building2 className="w-3.5 h-3.5 shrink-0" />
+                    <span className="truncate">{sa.officeName}</span>
                   </div>
                 )}
 
                 {/* College */}
                 {sa.college && (
-                  <div className="flex items-center justify-center gap-1.5 mt-1 text-blue-300/80 text-sm relative z-10">
-                    <GraduationCap className="w-3.5 h-3.5" />
-                    <span>{sa.college}</span>
+                  <div className="flex items-center justify-center gap-1.5 mt-1 text-blue-300/80 text-sm relative z-10 min-w-0 max-w-[280px]">
+                    <GraduationCap className="w-3.5 h-3.5 shrink-0" />
+                    <span className="truncate">{sa.college}</span>
                   </div>
                 )}
 
                 {/* Office email */}
                 {sa.officeEmail && (
-                  <div className="flex items-center justify-center gap-1.5 mt-1 text-blue-300/70 text-xs relative z-10">
-                    <Mail className="w-3 h-3" />
-                    <span>{sa.officeEmail}</span>
+                  <div className="flex items-center justify-center gap-1.5 mt-1 text-blue-300/70 text-xs relative z-10 min-w-0 max-w-[280px]">
+                    <Mail className="w-3 h-3 shrink-0" />
+                    <span className="truncate">{sa.officeEmail}</span>
                   </div>
                 )}
 

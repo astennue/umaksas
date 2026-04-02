@@ -186,8 +186,8 @@ export function OfficeFormDialog({ office, open, onOpenChange, onSaved }: Office
           </div>
 
           {/* Email & Phone */}
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-2">
+          <div className="grid grid-cols-2 gap-3 min-w-0">
+            <div className="space-y-2 min-w-0">
               <Label htmlFor="office-email">Email</Label>
               <Input
                 id="office-email"

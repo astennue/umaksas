@@ -707,8 +707,7 @@ export default function OfficesPage() {
                         {/* Main Info */}
                         <div className="flex-1 min-w-0">
                           <div className="flex flex-wrap items-center gap-2">
-                            <h3 className="text-sm font-semibold">
-                              {req.officeName}
+                            <h3 className="text-sm font-semibold truncate">{req.officeName}
                               {req.officeCode ? (
                                 <span className="ml-1 text-xs font-normal text-muted-foreground">
                                   ({req.officeCode})
@@ -729,12 +728,12 @@ export default function OfficesPage() {
                             </p>
                           )}
                           {req.requirements && (
-                            <p className="text-xs text-muted-foreground mt-0.5">
+                            <p className="text-xs text-muted-foreground mt-0.5 break-words">
                               <span className="font-medium">Requirements:</span> {req.requirements}
                             </p>
                           )}
                           {req.preferredSkills && (
-                            <p className="text-xs text-muted-foreground mt-0.5">
+                            <p className="text-xs text-muted-foreground mt-0.5 break-words">
                               <span className="font-medium">Skills:</span> {req.preferredSkills}
                             </p>
                           )}
@@ -742,7 +741,7 @@ export default function OfficesPage() {
                             {format(new Date(req.createdAt), "MMM d, yyyy 'at' h:mm a")}
                           </p>
                           {req.reviewNotes && (
-                            <p className="text-xs text-muted-foreground mt-0.5 italic">
+                            <p className="text-xs text-muted-foreground mt-0.5 italic break-words">
                               Review: {req.reviewNotes}
                             </p>
                           )}
@@ -847,7 +846,7 @@ export default function OfficesPage() {
 
       {/* Review Request Dialog */}
       <Dialog open={reviewOpen} onOpenChange={setReviewOpen}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-md max-h-[85vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
               {reviewAction === "APPROVED" ? "Approve" : "Reject"} SA Request

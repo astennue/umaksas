@@ -848,7 +848,7 @@ export default function SchedulesPage() {
 
       {/* ─── Detail Dialog ───────────────────────────────────────────────── */}
       <Dialog open={detailOpen} onOpenChange={setDetailOpen}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-md max-h-[85vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Schedule Details</DialogTitle>
           </DialogHeader>
@@ -1083,7 +1083,7 @@ function ScheduleCard({
         {/* User name (for admin view) */}
         {!compact && (
           <div className="mt-1.5 text-xs font-medium text-slate-600 dark:text-slate-400 truncate">
-            {schedule.user.firstName} {schedule.user.lastName}
+            <span className="truncate">{schedule.user.firstName} {schedule.user.lastName}</span>
           </div>
         )}
 
@@ -1212,13 +1212,13 @@ function ScheduleListRow({
           </div>
 
           {/* Office + User */}
-          <div className="hidden sm:block text-right">
+          <div className="hidden sm:block text-right min-w-0">
             {schedule.office && (
-              <p className="text-xs text-muted-foreground">
+              <p className="text-xs text-muted-foreground truncate">
                 {schedule.office.name}
               </p>
             )}
-            <p className="text-xs font-medium">
+            <p className="text-xs font-medium truncate">
               {schedule.user.firstName} {schedule.user.lastName}
             </p>
           </div>

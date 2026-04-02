@@ -191,31 +191,31 @@ export function OfficeDetailModal({ officeId, open, onOpenChange, onEdit }: Offi
                 </DialogHeader>
 
                 {office.description && (
-                  <p className="text-sm text-muted-foreground mt-3">{office.description}</p>
+                  <p className="text-sm text-muted-foreground mt-3 line-clamp-3 break-words">{office.description}</p>
                 )}
 
                 {/* Info Grid */}
                 <div className="grid grid-cols-2 gap-3 mt-4">
                   {office.location && (
-                    <div className="flex items-center gap-2 text-sm rounded-lg border p-3">
+                    <div className="flex items-center gap-2 text-sm rounded-lg border p-3 min-w-0">
                       <MapPin className="h-4 w-4 text-muted-foreground shrink-0" />
                       <span className="truncate">{office.location}</span>
                     </div>
                   )}
                   {office.email && (
-                    <div className="flex items-center gap-2 text-sm rounded-lg border p-3">
+                    <div className="flex items-center gap-2 text-sm rounded-lg border p-3 min-w-0">
                       <Mail className="h-4 w-4 text-muted-foreground shrink-0" />
                       <span className="truncate">{office.email}</span>
                     </div>
                   )}
                   {office.phone && (
-                    <div className="flex items-center gap-2 text-sm rounded-lg border p-3">
+                    <div className="flex items-center gap-2 text-sm rounded-lg border p-3 min-w-0">
                       <Phone className="h-4 w-4 text-muted-foreground shrink-0" />
                       <span className="truncate">{office.phone}</span>
                     </div>
                   )}
                   {office.headName && (
-                    <div className="flex items-center gap-2 text-sm rounded-lg border p-3">
+                    <div className="flex items-center gap-2 text-sm rounded-lg border p-3 min-w-0">
                       <User className="h-4 w-4 text-muted-foreground shrink-0" />
                       <span className="truncate">{office.headName}</span>
                     </div>
@@ -262,7 +262,7 @@ export function OfficeDetailModal({ officeId, open, onOpenChange, onEdit }: Offi
                       return (
                         <div
                           key={sa.id}
-                          className="flex items-center gap-3 rounded-lg border p-3"
+                          className="flex items-center gap-3 rounded-lg border p-3 min-w-0"
                         >
                           <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#1e3a8a]/10 text-[#1e3a8a] text-xs font-semibold">
                             {(sa.firstName?.charAt(0) || "")}{(sa.lastName?.charAt(0) || "")}
@@ -300,8 +300,8 @@ export function OfficeDetailModal({ officeId, open, onOpenChange, onEdit }: Offi
                         return (
                           <div key={req.id} className="flex items-center justify-between rounded-lg border p-3">
                             <div className="min-w-0">
-                              <div className="flex items-center gap-2">
-                                <span className="text-sm font-medium">
+                              <div className="flex items-center gap-2 min-w-0">
+                                <span className="text-sm font-medium truncate">
                                   Request for {req.requestedCount} SA{req.requestedCount > 1 ? "s" : ""}
                                 </span>
                                 <Badge className={`${config.color} text-xs`} variant="secondary">

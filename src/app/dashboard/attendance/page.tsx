@@ -960,7 +960,7 @@ export default function AttendancePage() {
                               </td>
                               {!isSA && (
                                 <td className="py-3 pr-3">
-                                  <div className="flex items-center gap-2">
+                                  <div className="flex items-center gap-2 min-w-0">
                                     <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#1e3a8a]/10 text-[#1e3a8a] text-xs font-semibold">
                                       {record.firstName.charAt(0)}{record.lastName.charAt(0)}
                                     </div>
@@ -1073,12 +1073,12 @@ export default function AttendancePage() {
                           <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                             <div className="flex-1 min-w-0">
                               <div className="flex items-center gap-2 flex-wrap">
-                                <span className="font-medium text-sm">{correction.requesterName}</span>
-                                <Badge className={`${corrStatusCfg.color} text-[10px]`} variant="secondary">
+                                <span className="font-medium text-sm truncate max-w-[200px]">{correction.requesterName}</span>
+                                <Badge className={`${corrStatusCfg.color} text-[10px] shrink-0`} variant="secondary">
                                   {corrStatusCfg.label}
                                 </Badge>
                                 {correction.officeName && (
-                                  <span className="text-xs text-muted-foreground">• {correction.officeName}</span>
+                                  <span className="text-xs text-muted-foreground truncate max-w-[150px]">• {correction.officeName}</span>
                                 )}
                               </div>
                               <p className="text-xs text-muted-foreground mt-1">
@@ -1104,13 +1104,13 @@ export default function AttendancePage() {
                                 </div>
                               </div>
 
-                              <p className="mt-2 text-xs text-muted-foreground">
-                                <span className="font-medium">Reason: </span>{correction.reason}
+                              <p className="mt-2 text-xs text-muted-foreground break-words">
+                                <span className="font-medium">Reason: </span><span className="break-words">{correction.reason}</span>
                               </p>
 
                               {correction.reviewNotes && (
-                                <p className="mt-1 text-xs text-slate-600 dark:text-slate-400">
-                                  <span className="font-medium">Review: </span>{correction.reviewNotes}
+                                <p className="mt-1 text-xs text-slate-600 dark:text-slate-400 break-words">
+                                  <span className="font-medium">Review: </span><span className="break-words">{correction.reviewNotes}</span>
                                 </p>
                               )}
                             </div>
@@ -1151,7 +1151,7 @@ export default function AttendancePage() {
 
       {/* ============== CORRECTION REQUEST DIALOG (SA) ============== */}
       <Dialog open={correctionDialogOpen} onOpenChange={setCorrectionDialogOpen}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-md max-h-[85vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Request Attendance Correction</DialogTitle>
           </DialogHeader>
@@ -1210,7 +1210,7 @@ export default function AttendancePage() {
 
       {/* ============== REVIEW CORRECTION DIALOG (Admin) ============== */}
       <Dialog open={reviewDialogOpen} onOpenChange={setReviewDialogOpen}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-md max-h-[85vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
               {reviewAction === "approve" ? "Approve" : "Reject"} Correction Request

@@ -546,8 +546,8 @@ export default function ProfilePage() {
             />
 
             {/* Name & Info */}
-            <div className="flex-1 text-center sm:text-left">
-              <h2 className="text-xl font-bold text-slate-900 dark:text-white">
+            <div className="flex-1 text-center sm:text-left min-w-0">
+              <h2 className="text-xl font-bold text-slate-900 dark:text-white break-words">
                 {fullName}
               </h2>
               <div className="flex flex-col sm:flex-row items-center sm:items-center gap-2 mt-1.5">
@@ -562,10 +562,10 @@ export default function ProfilePage() {
                   </Badge>
                 )}
               </div>
-              <div className="flex flex-col sm:flex-row items-center sm:items-center gap-2 mt-2 text-sm text-muted-foreground">
-                <span className="flex items-center gap-1.5">
-                  <Mail className="h-3.5 w-3.5" />
-                  {profile.email}
+              <div className="flex flex-col sm:flex-row items-center sm:items-center gap-2 mt-2 text-sm text-muted-foreground min-w-0">
+                <span className="flex items-center gap-1.5 truncate">
+                  <Mail className="h-3.5 w-3.5 shrink-0" />
+                  <span className="truncate">{profile.email}</span>
                 </span>
                 {profile.phone && (
                   <>
@@ -907,9 +907,9 @@ export default function ProfilePage() {
                     <GraduationCap className="h-4 w-4 text-muted-foreground" />
                     <p className="text-xs text-muted-foreground font-medium">College</p>
                   </div>
-                  <p className="text-sm font-medium text-slate-900 dark:text-white">{profile.profile.college}</p>
+                  <p className="text-sm font-medium text-slate-900 dark:text-white break-words">{profile.profile.college}</p>
                   {profile.profile.program && (
-                    <p className="text-xs text-muted-foreground mt-0.5">{profile.profile.program}</p>
+                    <p className="text-xs text-muted-foreground mt-0.5 break-words">{profile.profile.program}</p>
                   )}
                 </div>
               )}
@@ -959,21 +959,21 @@ export default function ProfilePage() {
                     <Building2 className="h-4 w-4 text-blue-500 dark:text-blue-400" />
                     <p className="text-xs text-blue-600 dark:text-blue-400 font-medium">Office Assignment</p>
                   </div>
-                  <p className="text-sm font-semibold text-slate-900 dark:text-white">{profile.profile.office.name}</p>
+                  <p className="text-sm font-semibold text-slate-900 dark:text-white break-words">{profile.profile.office.name}</p>
                   <div className="flex flex-wrap gap-3 mt-1">
                     {profile.profile.office.code && (
                       <span className="text-xs text-muted-foreground">Code: {profile.profile.office.code}</span>
                     )}
                     {profile.profile.office.email && (
-                      <span className="text-xs text-muted-foreground flex items-center gap-1">
-                        <Mail className="h-3 w-3" />
-                        {profile.profile.office.email}
+                      <span className="text-xs text-muted-foreground flex items-center gap-1 truncate">
+                        <Mail className="h-3 w-3 shrink-0" />
+                        <span className="truncate">{profile.profile.office.email}</span>
                       </span>
                     )}
                     {profile.profile.office.location && (
-                      <span className="text-xs text-muted-foreground flex items-center gap-1">
-                        <Building2 className="h-3 w-3" />
-                        {profile.profile.office.location}
+                      <span className="text-xs text-muted-foreground flex items-center gap-1 truncate">
+                        <Building2 className="h-3 w-3 shrink-0" />
+                        <span className="truncate">{profile.profile.office.location}</span>
                       </span>
                     )}
                   </div>

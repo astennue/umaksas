@@ -14,7 +14,7 @@ interface UseAutoRefreshOptions {
 }
 
 export function useAutoRefresh({
-  interval = 10000,
+  interval = 5000,
   enabled = true,
   onRefresh,
   showIndicator = false,

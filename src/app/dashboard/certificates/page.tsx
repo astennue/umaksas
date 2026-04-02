@@ -867,7 +867,7 @@ export default function CertificatesPage() {
                         </div>
                         <div className="min-w-0">
                           <h3 className="text-sm font-semibold truncate">{fullName}</h3>
-                          <p className="text-xs text-muted-foreground font-mono">{cert.referenceNumber}</p>
+                          <p className="text-xs text-muted-foreground font-mono truncate max-w-[180px]">{cert.referenceNumber}</p>
                         </div>
                       </div>
                       <Badge className={sc.color} variant="secondary">
@@ -880,15 +880,15 @@ export default function CertificatesPage() {
                         {tc.label}
                       </Badge>
                       {cert.officeAssigned && (
-                        <span className="flex items-center gap-1 text-xs text-muted-foreground">
-                          <Building2 className="h-3 w-3" />
-                          {cert.officeAssigned}
+                        <span className="flex items-center gap-1 text-xs text-muted-foreground truncate">
+                          <Building2 className="h-3 w-3 shrink-0" />
+                          <span className="truncate max-w-[150px]">{cert.officeAssigned}</span>
                         </span>
                       )}
                       {cert.servicePeriod && (
-                        <span className="flex items-center gap-1 text-xs text-muted-foreground">
-                          <Clock className="h-3 w-3" />
-                          {cert.servicePeriod}
+                        <span className="flex items-center gap-1 text-xs text-muted-foreground truncate">
+                          <Clock className="h-3 w-3 shrink-0" />
+                          <span className="truncate max-w-[120px]">{cert.servicePeriod}</span>
                         </span>
                       )}
                     </div>

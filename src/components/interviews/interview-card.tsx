@@ -83,7 +83,7 @@ export function InterviewCard({ interview, onClick }: InterviewCardProps) {
               <h3 className="text-sm font-semibold truncate">{applicantName}</h3>
             </div>
             {interview.application.college && (
-              <p className="text-xs text-muted-foreground mb-3">
+              <p className="text-xs text-muted-foreground mb-3 truncate">
                 {interview.application.college}
                 {interview.application.program ? ` • ${interview.application.program}` : ""}
               </p>

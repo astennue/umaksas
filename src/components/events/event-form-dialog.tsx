@@ -368,7 +368,7 @@ export function EventFormDialog({
                     <Badge
                       key={sa.id}
                       variant="secondary"
-                      className="text-xs pr-1"
+                      className="text-xs pr-1 max-w-[180px] truncate"
                     >
                       {sa.firstName} {sa.lastName}
                       <button

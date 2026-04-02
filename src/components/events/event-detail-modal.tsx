@@ -342,7 +342,7 @@ export function EventDetailModal({
               </div>
 
               {event.description && (
-                <p className="text-sm text-muted-foreground whitespace-pre-wrap">
+                <p className="text-sm text-muted-foreground whitespace-pre-wrap break-words">
                   {event.description}
                 </p>
               )}
@@ -356,15 +356,15 @@ export function EventDetailModal({
                   </span>
                 </div>
                 {event.location && (
-                  <div className="flex items-center gap-2 text-muted-foreground">
+                  <div className="flex items-center gap-2 text-muted-foreground min-w-0">
                     <MapPin className="h-4 w-4 shrink-0" />
-                    <span>{event.location}</span>
+                    <span className="truncate">{event.location}</span>
                   </div>
                 )}
                 {event.office && (
-                  <div className="flex items-center gap-2 text-muted-foreground">
+                  <div className="flex items-center gap-2 text-muted-foreground min-w-0">
                     <Building2 className="h-4 w-4 shrink-0" />
-                    <span>{event.office.name}</span>
+                    <span className="truncate">{event.office.name}</span>
                   </div>
                 )}
                 <div className="flex items-center gap-2 text-muted-foreground">

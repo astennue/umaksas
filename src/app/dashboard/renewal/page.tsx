@@ -737,7 +737,7 @@ export default function RenewalPage() {
                   {/* Current office display */}
                   <div className="rounded-lg border p-4 bg-muted/30">
                     <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1">Current Office</p>
-                    <p className="text-sm font-semibold">
+                    <p className="text-sm font-semibold break-words">
                       {existingRenewal?.user?.profile?.office?.name || "Not assigned"}
                     </p>
                   </div>

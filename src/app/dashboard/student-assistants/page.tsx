@@ -395,15 +395,15 @@ export default function StudentAssistantsPage() {
           </DialogHeader>
           {detailSA && (
             <div className="space-y-4">
-              <div className="flex items-center gap-4">
+              <div className="flex items-center gap-4 min-w-0">
                 <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-[#1e3a8a]/10 text-[#1e3a8a] text-xl font-bold">
                   {detailSA.firstName.charAt(0)}{detailSA.lastName.charAt(0)}
                 </div>
-                <div>
-                  <h3 className="text-lg font-semibold">
+                <div className="min-w-0">
+                  <h3 className="text-lg font-semibold break-words">
                     {`${detailSA.firstName} ${detailSA.lastName}`.trim()}
                   </h3>
-                  <p className="text-sm text-muted-foreground">{detailSA.email}</p>
+                  <p className="text-sm text-muted-foreground break-words truncate">{detailSA.email}</p>
                   <Badge className={statusConfig[detailSA.status]?.color || ""} variant="secondary" mt-1>
                     {detailSA.isOnDuty && (
                       <span className="mr-1 inline-block h-1.5 w-1.5 rounded-full bg-green-500 animate-pulse" />
@@ -426,7 +426,7 @@ export default function StudentAssistantsPage() {
                 </div>
                 <div className="flex items-center gap-2 text-sm">
                   <GraduationCap className="h-4 w-4 text-muted-foreground" />
-                  <span>{detailSA.college || "No college"}</span>
+                  <span className="break-words">{detailSA.college || "No college"}</span>
                 </div>
                 <div className="flex items-center gap-2 text-sm">
                   <UserCheck className="h-4 w-4 text-muted-foreground" />
@@ -434,7 +434,7 @@ export default function StudentAssistantsPage() {
                 </div>
                 <div className="flex items-center gap-2 text-sm">
                   <Building2 className="h-4 w-4 text-muted-foreground" />
-                  <span>{detailSA.officeName || "No office assigned"}</span>
+                  <span className="break-words">{detailSA.officeName || "No office assigned"}</span>
                 </div>
                 <div className="flex items-center gap-2 text-sm">
                   <Calendar className="h-4 w-4 text-muted-foreground" />

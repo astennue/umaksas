@@ -245,13 +245,13 @@ export default function ApplicationsPage() {
                   return (
                     <tr key={app.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50">
                       <td className="py-3 pr-4">
-                        <div>
-                          <p className="font-medium">{name}</p>
-                          <p className="text-xs text-muted-foreground">{app.applicantEmail}</p>
+                        <div className="min-w-0">
+                          <p className="font-medium truncate max-w-[200px]">{name}</p>
+                          <p className="text-xs text-muted-foreground truncate max-w-[200px]">{app.applicantEmail}</p>
                         </div>
                       </td>
                       <td className="py-3 pr-4">
-                        <p className="text-sm">{app.college || "—"}</p>
+                        <p className="text-sm truncate max-w-[150px]">{app.college || "—"}</p>
                       </td>
                       <td className="py-3 pr-4">
                         <Badge className={config.color} variant="secondary">{config.label}</Badge>
@@ -391,10 +391,10 @@ export default function ApplicationsPage() {
               <div className="rounded-lg bg-slate-50 p-4 dark:bg-slate-800">
                 <div className="flex items-start justify-between">
                   <div>
-                    <h3 className="font-semibold">
+                    <h3 className="font-semibold break-words">
                       {`${selectedApp.firstName || ""} ${selectedApp.lastName || ""}`.trim() || selectedApp.applicantEmail}
                     </h3>
-                    <p className="text-sm text-muted-foreground">{selectedApp.applicantEmail}</p>
+                    <p className="text-sm text-muted-foreground break-words">{selectedApp.applicantEmail}</p>
                   </div>
                   <Badge className={statusConfig[selectedApp.status]?.color || ""} variant="secondary">
                     {statusConfig[selectedApp.status]?.label || selectedApp.status}

@@ -1535,7 +1535,7 @@ export default function PaymentsPage() {
 
       {/* Transaction Receipt Dialog */}
       <Dialog open={receiptOpen} onOpenChange={setReceiptOpen}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-md max-h-[85vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <BadgeCheck className="h-5 w-5 text-amber-500" />
@@ -1614,7 +1614,7 @@ export default function PaymentsPage() {
 
       {/* Generate Payments Dialog */}
       <Dialog open={generateOpen} onOpenChange={setGenerateOpen}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-md max-h-[85vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Generate Monthly Payments</DialogTitle>
             <DialogDescription>
@@ -1686,7 +1686,7 @@ export default function PaymentsPage() {
 
       {/* Verification Dialog */}
       <Dialog open={verifyOpen} onOpenChange={setVerifyOpen}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-md max-h-[85vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
               {verifyAction === "verify" ? "Verify Payment" : "Reject Payment"}
@@ -1799,7 +1799,7 @@ export default function PaymentsPage() {
 
       {/* Basic Proof Upload Dialog (fallback without GCash) */}
       <Dialog open={proofDialogOpen} onOpenChange={setProofDialogOpen}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-md max-h-[85vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Upload Proof of Payment</DialogTitle>
             <DialogDescription>

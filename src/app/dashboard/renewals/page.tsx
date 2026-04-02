@@ -499,12 +499,12 @@ export default function RenewalsManagementPage() {
                   {/* Details */}
                   <div className="space-y-2">
                     {renewal.user.profile?.college && (
-                      <p className="text-xs text-muted-foreground">{renewal.user.profile.college}</p>
+                      <p className="text-xs text-muted-foreground break-words">{renewal.user.profile.college}</p>
                     )}
                     {renewal.user.profile?.office && (
                       <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
                         <Building2 className="h-3 w-3" />
-                        {renewal.user.profile.office.name}
+                        <span className="truncate max-w-[200px]">{renewal.user.profile.office.name}</span>
                       </div>
                     )}
                     {renewal.statementOfIntent && (
@@ -608,10 +608,10 @@ export default function RenewalsManagementPage() {
               <div className="grid sm:grid-cols-2 gap-4">
                 <div className="rounded-lg border p-3 space-y-1">
                   <p className="text-[10px] uppercase tracking-wider font-medium text-muted-foreground">Student Assistant</p>
-                  <p className="text-sm font-semibold">{selectedRenewal.user.firstName} {selectedRenewal.user.lastName}</p>
-                  <p className="text-xs text-muted-foreground">{selectedRenewal.user.email}</p>
+                  <p className="text-sm font-semibold break-words">{selectedRenewal.user.firstName} {selectedRenewal.user.lastName}</p>
+                  <p className="text-xs text-muted-foreground break-words">{selectedRenewal.user.email}</p>
                   {selectedRenewal.user.profile?.college && (
-                    <p className="text-xs text-muted-foreground">{selectedRenewal.user.profile.college} — {selectedRenewal.user.profile.program}</p>
+                    <p className="text-xs text-muted-foreground break-words">{selectedRenewal.user.profile.college} — {selectedRenewal.user.profile.program}</p>
                   )}
                   {selectedRenewal.user.profile?.yearLevel && (
                     <p className="text-xs text-muted-foreground">Year Level: {selectedRenewal.user.profile.yearLevel}</p>
@@ -622,7 +622,7 @@ export default function RenewalsManagementPage() {
                 </div>
                 <div className="rounded-lg border p-3 space-y-1">
                   <p className="text-[10px] uppercase tracking-wider font-medium text-muted-foreground">Current Office</p>
-                  <p className="text-sm font-semibold">{selectedRenewal.user.profile?.office?.name || "Unassigned"}</p>
+                  <p className="text-sm font-semibold truncate max-w-[250px]">{selectedRenewal.user.profile?.office?.name || "Unassigned"}</p>
                   {selectedRenewal.academicYear && (
                     <p className="text-xs text-muted-foreground">
                       {selectedRenewal.academicYear} — {selectedRenewal.semester}
@@ -747,11 +747,13 @@ export default function RenewalsManagementPage() {
 
       {/* Review Dialog */}
       <Dialog open={reviewOpen} onOpenChange={setReviewOpen}>
-        <DialogContent className="max-w-lg">
+        <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Review Renewal</DialogTitle>
             <DialogDescription>
-              {selectedRenewal && `Reviewing renewal for ${selectedRenewal.user.firstName} ${selectedRenewal.user.lastName}`}
+              {selectedRenewal && (
+                <span className="break-words">Reviewing renewal for {selectedRenewal.user.firstName} {selectedRenewal.user.lastName}</span>
+              )}
             </DialogDescription>
           </DialogHeader>
 

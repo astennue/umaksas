@@ -141,24 +141,24 @@ export function InterviewDetailModal({
         <div className="rounded-lg bg-slate-50 p-4 dark:bg-slate-800">
           <h4 className="text-xs font-medium text-muted-foreground uppercase mb-3">Applicant Information</h4>
           <div className="space-y-2">
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 min-w-0">
               <User className="h-4 w-4 text-muted-foreground" />
-              <span className="text-sm font-medium">{applicantName}</span>
+              <span className="text-sm font-medium truncate">{applicantName}</span>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 min-w-0">
               <Mail className="h-4 w-4 text-muted-foreground" />
-              <span className="text-sm text-muted-foreground">{interview.application.applicantEmail}</span>
+              <span className="text-sm text-muted-foreground truncate">{interview.application.applicantEmail}</span>
             </div>
             {interview.application.college && (
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 min-w-0">
                 <GraduationCap className="h-4 w-4 text-muted-foreground" />
-                <span className="text-sm text-muted-foreground">{interview.application.college}</span>
+                <span className="text-sm text-muted-foreground truncate">{interview.application.college}</span>
               </div>
             )}
             {interview.application.program && (
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 min-w-0">
                 <FileText className="h-4 w-4 text-muted-foreground" />
-                <span className="text-sm text-muted-foreground">{interview.application.program}</span>
+                <span className="text-sm text-muted-foreground truncate">{interview.application.program}</span>
               </div>
             )}
           </div>
@@ -168,17 +168,17 @@ export function InterviewDetailModal({
         <div className="space-y-3">
           <h4 className="text-xs font-medium text-muted-foreground uppercase">Interview Schedule</h4>
           <div className="grid grid-cols-2 gap-3">
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 min-w-0">
               <Calendar className="h-4 w-4 text-muted-foreground" />
-              <span className="text-sm">{format(scheduledDate, "MMMM d, yyyy")}</span>
+              <span className="text-sm truncate">{format(scheduledDate, "MMMM d, yyyy")}</span>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 min-w-0">
               <Clock className="h-4 w-4 text-muted-foreground" />
-              <span className="text-sm">{format(scheduledDate, "h:mm a")} • {interview.duration} min</span>
+              <span className="text-sm truncate">{format(scheduledDate, "h:mm a")} • {interview.duration} min</span>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 min-w-0">
               <User className="h-4 w-4 text-muted-foreground" />
-              <span className="text-sm">{interview.interviewer.firstName} {interview.interviewer.lastName}</span>
+              <span className="text-sm truncate">{interview.interviewer.firstName} {interview.interviewer.lastName}</span>
             </div>
           </div>
 
@@ -198,7 +198,7 @@ export function InterviewDetailModal({
           {interview.notes && (
             <div className="rounded-md bg-slate-50 p-3 dark:bg-slate-800">
               <p className="text-xs text-muted-foreground mb-1">Notes</p>
-              <p className="text-sm">{interview.notes}</p>
+              <p className="text-sm break-words">{interview.notes}</p>
             </div>
           )}
 

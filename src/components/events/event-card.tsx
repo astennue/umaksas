@@ -100,16 +100,16 @@ export function EventCard({
           </div>
 
           {event.location && (
-            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+            <div className="flex items-center gap-2 text-xs text-muted-foreground min-w-0">
               <MapPin className="h-3.5 w-3.5 shrink-0" />
               <span className="truncate">{event.location}</span>
             </div>
           )}
 
           {event.office && (
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 min-w-0">
               <Building2 className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
-              <Badge variant="outline" className="text-[10px] px-1.5 py-0">
+              <Badge variant="outline" className="text-[10px] px-1.5 py-0 max-w-[180px] truncate">
                 {event.office.name}
               </Badge>
             </div>
