@@ -74,6 +74,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 import { CRUDToolbar } from "@/components/crud-toolbar";
 import { CRUDActions } from "@/components/crud-actions";
+import { RoleGuard } from "@/components/auth/role-guard";
 
 interface Renewal {
   id: string;
@@ -321,6 +322,7 @@ export default function RenewalsManagementPage() {
   }
 
   return (
+    <RoleGuard allowedRoles={["SUPER_ADMIN", "ADVISER", "OFFICER"]}>
     <div className="space-y-6">
       {/* Header */}
       <CRUDToolbar
@@ -927,5 +929,6 @@ export default function RenewalsManagementPage() {
         </AlertDialogContent>
       </AlertDialog>
     </div>
+    </RoleGuard>
   );
 }

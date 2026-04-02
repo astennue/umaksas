@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
   SelectContent,
@@ -20,6 +21,16 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
   FileText,
   Search,
   Filter,
@@ -31,6 +42,14 @@ import {
   Star,
   ArrowRight,
   Eye,
+  CheckCircle2,
+  XCircle,
+  Download,
+  ImageIcon,
+  IdCard,
+  BookOpen,
+  ClipboardList,
+  Loader2,
 } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "sonner";
@@ -54,6 +73,17 @@ interface Application {
   submittedAt: string | null;
   reviewedAt: string | null;
   createdAt: string;
+  updatedAt: string;
+  // Upload fields
+  photoUrl: string | null;
+  resumeUrl: string | null;
+  gradeReportUrl: string | null;
+  registrationUrl: string | null;
+  // Additional details
+  studentNumber: string | null;
+  yearLevel: string | null;
+  gwa: string | null;
+  essayWhyApply: string | null;
 }
 
 const statusConfig: Record<string, { label: string; color: string }> = {
@@ -79,6 +109,13 @@ export default function ApplicationsPage() {
   const [detailOpen, setDetailOpen] = useState(false);
   const [scheduleApp, setScheduleApp] = useState<{ id: string; name: string } | null>(null);
   const [scheduleOpen, setScheduleOpen] = useState(false);
+
+  // Approve/Reject state
+  const [confirmApproveOpen, setConfirmApproveOpen] = useState(false);
+  const [confirmRejectOpen, setConfirmRejectOpen] = useState(false);
+  const [rejectReason, setRejectReason] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+
   const limit = 12;
 
   const fetchApplications = useCallback(async () => {
@@ -114,29 +151,65 @@ export default function ApplicationsPage() {
     setScheduleOpen(true);
   };
 
-  const handleStatusChange = async (appId: string, newStatus: string) => {
+  const handleApprove = async () => {
+    if (!selectedApp) return;
     try {
-      const res = await fetch("/api/applications", {
+      setSubmitting(true);
+      const res = await fetch("/api/applications/admin", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          id: appId,
-          status: newStatus,
-          reviewedAt: new Date().toISOString(),
+          id: selectedApp.id,
+          status: "APPROVED",
         }),
       });
 
       if (!res.ok) {
-        // Since the API only allows updating DRAFT, we need a different approach
-        // For now, show a toast
-        toast.info("Status update requires a dedicated admin API endpoint");
-        return;
+        const data = await res.json();
+        throw new Error(data.error || "Failed to approve application");
       }
 
-      toast.success("Application status updated");
+      toast.success("Application approved successfully");
+      setConfirmApproveOpen(false);
+      setDetailOpen(false);
       fetchApplications();
-    } catch {
-      toast.error("Failed to update status");
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : "Failed to approve application";
+      toast.error(message);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleReject = async () => {
+    if (!selectedApp) return;
+    try {
+      setSubmitting(true);
+      const res = await fetch("/api/applications/admin", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          id: selectedApp.id,
+          status: "REJECTED",
+          reviewNotes: rejectReason.trim() || undefined,
+        }),
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || "Failed to reject application");
+      }
+
+      toast.success("Application rejected");
+      setConfirmRejectOpen(false);
+      setDetailOpen(false);
+      setRejectReason("");
+      fetchApplications();
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : "Failed to reject application";
+      toast.error(message);
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -382,19 +455,36 @@ export default function ApplicationsPage() {
 
       {/* Application Detail Modal */}
       <Dialog open={detailOpen} onOpenChange={setDetailOpen}>
-        <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
+        <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Application Details</DialogTitle>
           </DialogHeader>
           {selectedApp && (
             <div className="space-y-4">
+              {/* Header */}
               <div className="rounded-lg bg-slate-50 p-4 dark:bg-slate-800">
                 <div className="flex items-start justify-between">
-                  <div>
-                    <h3 className="font-semibold break-words">
-                      {`${selectedApp.firstName || ""} ${selectedApp.lastName || ""}`.trim() || selectedApp.applicantEmail}
-                    </h3>
-                    <p className="text-sm text-muted-foreground break-words">{selectedApp.applicantEmail}</p>
+                  <div className="flex items-center gap-3">
+                    {/* Photo */}
+                    {selectedApp.photoUrl ? (
+                      <div className="h-14 w-14 flex-shrink-0 overflow-hidden rounded-full border-2 border-white shadow-sm">
+                        <img
+                          src={selectedApp.photoUrl}
+                          alt="Applicant photo"
+                          className="h-full w-full object-cover"
+                        />
+                      </div>
+                    ) : (
+                      <div className="flex h-14 w-14 flex-shrink-0 items-center justify-center rounded-full bg-[#1e3a8a] text-white">
+                        <User className="h-6 w-6" />
+                      </div>
+                    )}
+                    <div>
+                      <h3 className="font-semibold break-words">
+                        {`${selectedApp.firstName || ""} ${selectedApp.lastName || ""}`.trim() || selectedApp.applicantEmail}
+                      </h3>
+                      <p className="text-sm text-muted-foreground break-words">{selectedApp.applicantEmail}</p>
+                    </div>
                   </div>
                   <Badge className={statusConfig[selectedApp.status]?.color || ""} variant="secondary">
                     {statusConfig[selectedApp.status]?.label || selectedApp.status}
@@ -402,48 +492,227 @@ export default function ApplicationsPage() {
                 </div>
               </div>
 
+              {/* Applicant Information */}
               <div className="space-y-3">
-                <div className="flex items-center gap-2 text-sm">
-                  <GraduationCap className="h-4 w-4 text-muted-foreground" />
-                  <span>{selectedApp.college || "No college specified"}</span>
-                </div>
-                <div className="flex items-center gap-2 text-sm">
-                  <FileText className="h-4 w-4 text-muted-foreground" />
-                  <span>{selectedApp.program || "No program specified"}</span>
-                </div>
-                <div className="flex items-center gap-2 text-sm">
-                  <Clock className="h-4 w-4 text-muted-foreground" />
-                  <span>
-                    Submitted: {selectedApp.submittedAt
-                      ? format(new Date(selectedApp.submittedAt), "MMM d, yyyy 'at' h:mm a")
-                      : "Not submitted yet"}
-                  </span>
-                </div>
-                <div className="flex items-center gap-2 text-sm">
-                  <Calendar className="h-4 w-4 text-muted-foreground" />
-                  <span>
-                    Interview: {selectedApp.interviewStatus.replace(/_/g, " ")}
-                    {selectedApp.interviewDate && ` — ${format(new Date(selectedApp.interviewDate), "MMM d, yyyy 'at' h:mm a")}`}
-                  </span>
-                </div>
-                {selectedApp.interviewScore !== null && (
+                <h4 className="text-sm font-semibold text-slate-900 dark:text-white">Applicant Information</h4>
+                <div className="grid grid-cols-2 gap-3">
+                  {selectedApp.studentNumber && (
+                    <div className="flex items-center gap-2 text-sm">
+                      <IdCard className="h-4 w-4 text-muted-foreground" />
+                      <div>
+                        <p className="text-xs text-muted-foreground">Student Number</p>
+                        <span className="font-medium">{selectedApp.studentNumber}</span>
+                      </div>
+                    </div>
+                  )}
+                  {selectedApp.college && (
+                    <div className="flex items-center gap-2 text-sm">
+                      <GraduationCap className="h-4 w-4 text-muted-foreground" />
+                      <div>
+                        <p className="text-xs text-muted-foreground">College</p>
+                        <span>{selectedApp.college}</span>
+                      </div>
+                    </div>
+                  )}
+                  {selectedApp.program && (
+                    <div className="flex items-center gap-2 text-sm">
+                      <BookOpen className="h-4 w-4 text-muted-foreground" />
+                      <div>
+                        <p className="text-xs text-muted-foreground">Program</p>
+                        <span>{selectedApp.program}</span>
+                      </div>
+                    </div>
+                  )}
+                  {selectedApp.yearLevel && (
+                    <div className="flex items-center gap-2 text-sm">
+                      <User className="h-4 w-4 text-muted-foreground" />
+                      <div>
+                        <p className="text-xs text-muted-foreground">Year Level</p>
+                        <span>{selectedApp.yearLevel}</span>
+                      </div>
+                    </div>
+                  )}
+                  {selectedApp.gwa && (
+                    <div className="flex items-center gap-2 text-sm">
+                      <Star className="h-4 w-4 text-muted-foreground" />
+                      <div>
+                        <p className="text-xs text-muted-foreground">GWA</p>
+                        <span className="font-medium">{selectedApp.gwa}</span>
+                      </div>
+                    </div>
+                  )}
                   <div className="flex items-center gap-2 text-sm">
-                    <Star className="h-4 w-4 text-amber-500" />
-                    <span className="font-medium">Interview Score: {selectedApp.interviewScore}/100</span>
+                    <Clock className="h-4 w-4 text-muted-foreground" />
+                    <div>
+                      <p className="text-xs text-muted-foreground">Submitted</p>
+                      <span>
+                        {selectedApp.submittedAt
+                          ? format(new Date(selectedApp.submittedAt), "MMM d, yyyy 'at' h:mm a")
+                          : "Not submitted yet"}
+                      </span>
+                    </div>
                   </div>
-                )}
-                {selectedApp.totalScore !== null && (
                   <div className="flex items-center gap-2 text-sm">
-                    <Star className="h-4 w-4 text-blue-500" />
-                    <span className="font-medium">Total Score: {selectedApp.totalScore}</span>
+                    <Calendar className="h-4 w-4 text-muted-foreground" />
+                    <div>
+                      <p className="text-xs text-muted-foreground">Interview</p>
+                      <span>
+                        {selectedApp.interviewStatus.replace(/_/g, " ")}
+                        {selectedApp.interviewDate && ` — ${format(new Date(selectedApp.interviewDate), "MMM d, yyyy 'at' h:mm a")}`}
+                      </span>
+                    </div>
                   </div>
-                )}
+                  {selectedApp.interviewScore !== null && (
+                    <div className="flex items-center gap-2 text-sm">
+                      <Star className="h-4 w-4 text-amber-500" />
+                      <div>
+                        <p className="text-xs text-muted-foreground">Interview Score</p>
+                        <span className="font-medium">{selectedApp.interviewScore}/100</span>
+                      </div>
+                    </div>
+                  )}
+                  {selectedApp.totalScore !== null && (
+                    <div className="flex items-center gap-2 text-sm">
+                      <Star className="h-4 w-4 text-blue-500" />
+                      <div>
+                        <p className="text-xs text-muted-foreground">Total Score</p>
+                        <span className="font-medium">{selectedApp.totalScore}</span>
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
 
-              <div className="flex gap-2 border-t pt-4">
-                {canManage && !["APPROVED", "REJECTED", "WITHDRAWN"].includes(selectedApp.status) && (
+              {/* Why Apply Essay */}
+              {selectedApp.essayWhyApply && (
+                <div className="space-y-2">
+                  <h4 className="text-sm font-semibold text-slate-900 dark:text-white">Why I Want to Apply</h4>
+                  <div className="rounded-lg border bg-slate-50 p-3 dark:bg-slate-800">
+                    <p className="text-sm text-slate-700 dark:text-slate-300 whitespace-pre-wrap break-words max-h-40 overflow-y-auto">
+                      {selectedApp.essayWhyApply}
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {/* Documents Section */}
+              {(selectedApp.photoUrl || selectedApp.resumeUrl || selectedApp.gradeReportUrl || selectedApp.registrationUrl) && (
+                <div className="space-y-2">
+                  <h4 className="text-sm font-semibold text-slate-900 dark:text-white">Documents</h4>
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    {/* Photo */}
+                    {selectedApp.photoUrl && (
+                      <div className="rounded-lg border bg-white p-3 dark:bg-slate-800">
+                        <div className="flex items-center gap-2 text-sm font-medium mb-2">
+                          <ImageIcon className="h-4 w-4 text-muted-foreground" />
+                          Photo (2x2)
+                        </div>
+                        <div className="flex justify-center">
+                          <div className="h-32 w-32 overflow-hidden rounded-lg border bg-slate-100 dark:bg-slate-700">
+                            <img
+                              src={selectedApp.photoUrl}
+                              alt="Applicant photo"
+                              className="h-full w-full object-cover"
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Resume */}
+                    {selectedApp.resumeUrl && (
+                      <a
+                        href={selectedApp.resumeUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-3 rounded-lg border bg-white p-3 transition-colors hover:bg-slate-50 dark:bg-slate-800 dark:hover:bg-slate-700"
+                      >
+                        <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-red-50 dark:bg-red-900/20">
+                          <FileText className="h-5 w-5 text-red-500" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium">Resume / CV</p>
+                          <p className="text-xs text-muted-foreground flex items-center gap-1">
+                            <Download className="h-3 w-3" />
+                            Click to view / download
+                          </p>
+                        </div>
+                      </a>
+                    )}
+
+                    {/* Grade Report */}
+                    {selectedApp.gradeReportUrl && (
+                      <a
+                        href={selectedApp.gradeReportUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-3 rounded-lg border bg-white p-3 transition-colors hover:bg-slate-50 dark:bg-slate-800 dark:hover:bg-slate-700"
+                      >
+                        <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-green-50 dark:bg-green-900/20">
+                          <BookOpen className="h-5 w-5 text-green-500" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium">Grade Report</p>
+                          <p className="text-xs text-muted-foreground flex items-center gap-1">
+                            <Download className="h-3 w-3" />
+                            Click to view / download
+                          </p>
+                        </div>
+                      </a>
+                    )}
+
+                    {/* Registration Form */}
+                    {selectedApp.registrationUrl && (
+                      <a
+                        href={selectedApp.registrationUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-3 rounded-lg border bg-white p-3 transition-colors hover:bg-slate-50 dark:bg-slate-800 dark:hover:bg-slate-700"
+                      >
+                        <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-violet-50 dark:bg-violet-900/20">
+                          <ClipboardList className="h-5 w-5 text-violet-500" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium">Registration Form</p>
+                          <p className="text-xs text-muted-foreground flex items-center gap-1">
+                            <Download className="h-3 w-3" />
+                            Click to view / download
+                          </p>
+                        </div>
+                      </a>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Action Buttons */}
+              {canManage && !["APPROVED", "REJECTED", "WITHDRAWN", "DRAFT"].includes(selectedApp.status) && (
+                <div className="flex flex-col gap-2 border-t pt-4 sm:flex-row">
                   <Button
-                    className="flex-1 bg-[#1e3a8a] hover:bg-[#1e3a8a]/90"
+                    className="flex-1 bg-green-600 hover:bg-green-700 text-white"
+                    onClick={() => setConfirmApproveOpen(true)}
+                  >
+                    <CheckCircle2 className="mr-2 h-4 w-4" />
+                    Approve Application
+                  </Button>
+                  <Button
+                    className="flex-1 bg-red-600 hover:bg-red-700 text-white"
+                    onClick={() => {
+                      setRejectReason("");
+                      setConfirmRejectOpen(true);
+                    }}
+                  >
+                    <XCircle className="mr-2 h-4 w-4" />
+                    Reject Application
+                  </Button>
+                </div>
+              )}
+
+              {/* Proceed to Interview button */}
+              {canManage && !["APPROVED", "REJECTED", "WITHDRAWN"].includes(selectedApp.status) && (
+                <div className="border-t pt-4">
+                  <Button
+                    className="w-full bg-[#1e3a8a] hover:bg-[#1e3a8a]/90"
                     onClick={() => {
                       setDetailOpen(false);
                       handleSchedule(selectedApp);
@@ -452,12 +721,79 @@ export default function ApplicationsPage() {
                     <ArrowRight className="mr-2 h-4 w-4" />
                     Proceed to Interview
                   </Button>
-                )}
-              </div>
+                </div>
+              )}
             </div>
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Approve Confirmation Dialog */}
+      <AlertDialog open={confirmApproveOpen} onOpenChange={setConfirmApproveOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Approve Application</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to approve the application from{" "}
+              <span className="font-semibold text-foreground">
+                {selectedApp
+                  ? `${selectedApp.firstName || ""} ${selectedApp.lastName || ""}`.trim() || selectedApp.applicantEmail
+                  : "this applicant"}
+              </span>
+              ? The applicant will be notified about the decision.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={submitting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleApprove}
+              disabled={submitting}
+              className="bg-green-600 hover:bg-green-700 focus:ring-green-600"
+            >
+              {submitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Approve
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Reject Confirmation Dialog */}
+      <AlertDialog open={confirmRejectOpen} onOpenChange={setConfirmRejectOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Reject Application</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to reject the application from{" "}
+              <span className="font-semibold text-foreground">
+                {selectedApp
+                  ? `${selectedApp.firstName || ""} ${selectedApp.lastName || ""}`.trim() || selectedApp.applicantEmail
+                  : "this applicant"}
+              </span>
+              ? Optionally provide a reason that will be included in the notification.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="py-2">
+            <Textarea
+              placeholder="Reason for rejection (optional)"
+              value={rejectReason}
+              onChange={(e) => setRejectReason(e.target.value)}
+              rows={3}
+              className="resize-none"
+            />
+          </div>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={submitting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleReject}
+              disabled={submitting}
+              className="bg-red-600 hover:bg-red-700 focus:ring-red-600"
+            >
+              {submitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Reject
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* Schedule Interview Dialog */}
       {scheduleApp && (

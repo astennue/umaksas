@@ -74,6 +74,7 @@ import { format } from "date-fns";
 import { toast } from "sonner";
 import { CRUDToolbar } from "@/components/crud-toolbar";
 import { CRUDActions } from "@/components/crud-actions";
+import { RoleGuard } from "@/components/auth/role-guard";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -608,6 +609,7 @@ export default function CertificatesPage() {
   }
 
   return (
+    <RoleGuard allowedRoles={["SUPER_ADMIN", "ADVISER"]}>
     <TooltipProvider>
       <div className="space-y-6">
         {/* Page Header */}
@@ -1409,5 +1411,6 @@ export default function CertificatesPage() {
         </AlertDialog>
       </div>
     </TooltipProvider>
+    </RoleGuard>
   );
 }

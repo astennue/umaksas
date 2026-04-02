@@ -51,6 +51,7 @@ import { toast } from "sonner";
 import { SAFormModal } from "@/components/dashboard/sa-form-modal";
 import { CRUDToolbar } from "@/components/crud-toolbar";
 import { CRUDActions } from "@/components/crud-actions";
+import { RoleGuard } from "@/components/auth/role-guard";
 
 interface StudentAssistant {
   id: string;
@@ -204,6 +205,7 @@ export default function StudentAssistantsPage() {
   }
 
   return (
+    <RoleGuard allowedRoles={["SUPER_ADMIN", "ADVISER", "OFFICER"]}>
     <div className="space-y-6">
       {/* Page Header */}
       <CRUDToolbar
@@ -516,5 +518,6 @@ export default function StudentAssistantsPage() {
         </AlertDialogContent>
       </AlertDialog>
     </div>
+    </RoleGuard>
   );
 }

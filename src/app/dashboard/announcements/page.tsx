@@ -59,6 +59,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useRef, useCallback as useCb } from "react";
 import { CRUDToolbar } from "@/components/crud-toolbar";
 import { CRUDActions } from "@/components/crud-actions";
+import { RoleGuard } from "@/components/auth/role-guard";
 
 interface Announcement {
   id: string;
@@ -372,6 +373,7 @@ export default function DashboardAnnouncementsPage() {
   };
 
   return (
+    <RoleGuard allowedRoles={["SUPER_ADMIN", "ADVISER", "OFFICER"]}>
     <div className="space-y-6">
       {/* Page Header */}
       <CRUDToolbar
@@ -839,5 +841,6 @@ export default function DashboardAnnouncementsPage() {
         </AlertDialogContent>
       </AlertDialog>
     </div>
+    </RoleGuard>
   );
 }

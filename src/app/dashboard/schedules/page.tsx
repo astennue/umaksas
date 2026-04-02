@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
+import TimeSlotGrid from "@/components/schedules/time-slot-grid";
 import { useSession } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -54,6 +55,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Grid3x3,
+  AlertTriangle,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -203,6 +205,10 @@ export default function SchedulesPage() {
   const [isDeleting, setIsDeleting] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // Day schedules for the time grid (existing schedules on the selected day)
+  const [daySchedules, setDaySchedules] = useState<ScheduleItem[]>([]);
+  const prevDayRef = useRef<number | null>(null);
+
   // Form state
   const [formData, setFormData] = useState({
     type: "WORK",
@@ -275,17 +281,42 @@ export default function SchedulesPage() {
       type: isSA ? "WORK" : "WORK",
       dayOfWeek: 1,
       startTime: "08:00",
-      endTime: "12:00",
+      endTime: "09:00",
       location: "",
       officeId: "",
       notes: "",
     });
     setFormTargetUserId(userId || "");
     setEditingSchedule(null);
+    setDaySchedules([]);
+    prevDayRef.current = null;
   };
+
+  const fetchDaySchedules = useCallback(async (dayOfWeek: number, excludeId?: string) => {
+    try {
+      const params = new URLSearchParams({
+        page: "1",
+        limit: "50",
+        dayOfWeek: dayOfWeek.toString(),
+      });
+      const res = await fetch(`/api/schedules?${params.toString()}`);
+      if (!res.ok) return;
+      const data = await res.json();
+      const filtered = (data.schedules || []).filter(
+        (s: ScheduleItem) =>
+          s.dayOfWeek === dayOfWeek &&
+          (s.status === "APPROVED" || s.status === "PENDING") &&
+          s.id !== excludeId
+      );
+      setDaySchedules(filtered);
+    } catch {
+      // Ignore fetch errors
+    }
+  }, []);
 
   const openCreateForm = () => {
     resetForm();
+    setDaySchedules([]);
     setFormOpen(true);
   };
 
@@ -301,6 +332,8 @@ export default function SchedulesPage() {
       notes: schedule.notes || "",
     });
     setFormTargetUserId(schedule.userId);
+    // Pre-fetch day schedules for the time grid
+    fetchDaySchedules(schedule.dayOfWeek, schedule.id);
     setFormOpen(true);
   };
 
@@ -448,6 +481,16 @@ export default function SchedulesPage() {
     }
   };
 
+  // ─── Fetch day schedules when form day changes ──────────────────────
+  useEffect(() => {
+    if (!formOpen) return;
+    const currentDay = formData.dayOfWeek;
+    if (prevDayRef.current !== currentDay) {
+      prevDayRef.current = currentDay;
+      fetchDaySchedules(currentDay, editingSchedule?.id);
+    }
+  }, [formOpen, formData.dayOfWeek, fetchDaySchedules, editingSchedule?.id]);
+
   // ─── Filtered Schedules for weekly view (grouped by day) ────────────────
 
   const schedulesByDay = DAYS_OF_WEEK.map((day) => ({
@@ -486,6 +529,22 @@ export default function SchedulesPage() {
         onAdd={canCreate ? openCreateForm : undefined}
         showAdd={!!canCreate}
       />
+
+      {/* SA Approval Banner */}
+      {isSA && (
+        <div className="flex items-start gap-2.5 rounded-lg border border-amber-200 bg-amber-50 p-3 dark:border-amber-800 dark:bg-amber-950/30">
+          <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-600 dark:text-amber-400" />
+          <div className="space-y-0.5">
+            <p className="text-xs font-semibold text-amber-800 dark:text-amber-300">
+              Schedule changes require adviser approval
+            </p>
+            <p className="text-[11px] text-amber-700 dark:text-amber-400">
+              When you create or update a schedule, it will be submitted as pending for review.
+              You&apos;ll be notified once it&apos;s approved or rejected.
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* Stats Bar */}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
@@ -708,7 +767,7 @@ export default function SchedulesPage() {
 
       {/* ─── Create / Edit Dialog ────────────────────────────────────────── */}
       <Dialog open={formOpen} onOpenChange={(open) => { setFormOpen(open); if (!open) resetForm(); }}>
-        <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
               {editingSchedule ? "Edit Schedule" : "Add Schedule"}
@@ -767,24 +826,31 @@ export default function SchedulesPage() {
               </BetterSelect>
             </div>
 
-            {/* Time Range */}
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-2">
-                <Label>Start Time</Label>
-                <Input
-                  type="time"
-                  value={formData.startTime}
-                  onChange={(e) => setFormData({ ...formData, startTime: e.target.value })}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>End Time</Label>
-                <Input
-                  type="time"
-                  value={formData.endTime}
-                  onChange={(e) => setFormData({ ...formData, endTime: e.target.value })}
-                />
-              </div>
+            {/* Time Range - 30-min slot grid */}
+            <div className="space-y-2">
+              <Label className="flex items-center gap-1.5">
+                <Clock className="h-3.5 w-3.5" />
+                Time Range
+              </Label>
+              <TimeSlotGrid
+                dayOfWeek={formData.dayOfWeek}
+                existingSchedules={daySchedules.map((s) => ({
+                  id: s.id,
+                  startTime: s.startTime,
+                  endTime: s.endTime,
+                  status: s.status,
+                  type: s.type,
+                  location: s.location,
+                  office: s.office,
+                  user: { firstName: s.user.firstName, lastName: s.user.lastName },
+                }))}
+                startTime={formData.startTime}
+                endTime={formData.endTime}
+                editingScheduleId={editingSchedule?.id}
+                onStartTimeChange={(time) => setFormData({ ...formData, startTime: time })}
+                onEndTimeChange={(time) => setFormData({ ...formData, endTime: time })}
+                showApprovalBanner={isSA}
+              />
             </div>
 
             {/* Location */}

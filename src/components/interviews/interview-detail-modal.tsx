@@ -7,6 +7,15 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -59,6 +68,7 @@ export function InterviewDetailModal({
   const [notes, setNotes] = useState("");
   const [isCompleting, setIsCompleting] = useState(false);
   const [isCancelling, setIsCancelling] = useState(false);
+  const [showCancelConfirm, setShowCancelConfirm] = useState(false);
 
   if (!interview) return null;
 
@@ -102,12 +112,11 @@ export function InterviewDetailModal({
   };
 
   const handleCancel = async () => {
+    setShowCancelConfirm(false);
     setIsCancelling(true);
     try {
-      const res = await fetch(`/api/interviews/${interview.id}/respond`, {
+      const res = await fetch(`/api/interviews/${interview.id}/cancel`, {
         method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "decline" }),
       });
 
       if (!res.ok) {
@@ -115,7 +124,7 @@ export function InterviewDetailModal({
         throw new Error(data.error || "Failed to cancel interview");
       }
 
-      toast.success("Interview cancelled");
+      toast.success("Interview cancelled successfully");
       onOpenChange(false);
       onUpdated?.();
     } catch (error: unknown) {
@@ -263,11 +272,11 @@ export function InterviewDetailModal({
                 </Button>
                 <Button
                   variant="destructive"
-                  onClick={handleCancel}
+                  onClick={() => setShowCancelConfirm(true)}
                   disabled={isCancelling}
                 >
                   <XCircle className="mr-2 h-4 w-4" />
-                  {isCancelling ? "Cancelling..." : "Cancel"}
+                  {isCancelling ? "Cancelling..." : "Cancel Interview"}
                 </Button>
               </div>
             </div>
@@ -290,6 +299,30 @@ export function InterviewDetailModal({
           </div>
         )}
       </DialogContent>
+
+      {/* Cancel Confirmation Dialog */}
+      <AlertDialog open={showCancelConfirm} onOpenChange={setShowCancelConfirm}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Cancel Interview</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to cancel this interview? This action cannot be undone. The application will be reset to pending status.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isCancelling}>
+              Go Back
+            </AlertDialogCancel>
+            <Button
+              variant="destructive"
+              onClick={handleCancel}
+              disabled={isCancelling}
+            >
+              {isCancelling ? "Cancelling..." : "Yes, Cancel Interview"}
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Dialog>
   );
 }

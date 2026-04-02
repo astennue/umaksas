@@ -81,6 +81,7 @@ import {
 import { format } from "date-fns";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { RoleGuard } from "@/components/auth/role-guard";
 
 // Types
 interface PaymentUser {
@@ -643,6 +644,7 @@ export default function PaymentsPage() {
   const defaultInstructions = `1. Open the GCash app on your phone\n2. Tap "Send Money" then "Express Send"\n3. Enter the GCash number shown above\n4. Enter the exact amount: ₱${systemSettings?.monthlyPaymentFee || 20.00}\n5. Review and confirm the transaction\n6. Take a screenshot of the successful payment\n7. Upload the screenshot below along with the transaction number`;
 
   return (
+    <RoleGuard allowedRoles={["SUPER_ADMIN", "ADVISER", "OFFICER", "STUDENT_ASSISTANT"]}>
     <div className="space-y-6">
       {/* Page Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -1857,5 +1859,6 @@ export default function PaymentsPage() {
         </DialogContent>
       </Dialog>
     </div>
+    </RoleGuard>
   );
 }

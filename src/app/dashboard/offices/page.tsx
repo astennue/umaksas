@@ -57,6 +57,7 @@ import { OfficeFormDialog, type OfficeFormData } from "@/components/offices/offi
 import { SARequestFormDialog } from "@/components/offices/sa-request-form-dialog";
 import { CRUDToolbar } from "@/components/crud-toolbar";
 import { CRUDActions } from "@/components/crud-actions";
+import { RoleGuard } from "@/components/auth/role-guard";
 
 // =============================================
 // Types
@@ -350,6 +351,7 @@ export default function OfficesPage() {
   // =============================================
 
   return (
+    <RoleGuard allowedRoles={["SUPER_ADMIN", "ADVISER", "OFFICER"]}>
     <div className="space-y-6">
       {/* Page Header */}
       <CRUDToolbar
@@ -924,5 +926,6 @@ export default function OfficesPage() {
         </DialogContent>
       </Dialog>
     </div>
+    </RoleGuard>
   );
 }

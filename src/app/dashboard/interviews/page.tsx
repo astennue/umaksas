@@ -24,6 +24,7 @@ import { InterviewCalendar } from "@/components/interviews/interview-calendar";
 import { InterviewDetailModal } from "@/components/interviews/interview-detail-modal";
 import { ScheduleInterviewDialog } from "@/components/interviews/schedule-interview-dialog";
 import { toast } from "sonner";
+import { RoleGuard } from "@/components/auth/role-guard";
 
 interface ApplicationItem {
   id: string;
@@ -133,6 +134,7 @@ export default function InterviewsPage() {
   }
 
   return (
+    <RoleGuard allowedRoles={["SUPER_ADMIN", "ADVISER", "OFFICER"]}>
     <div className="space-y-6">
       {/* Page Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -286,5 +288,6 @@ export default function InterviewsPage() {
         />
       )}
     </div>
+    </RoleGuard>
   );
 }

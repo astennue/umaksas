@@ -62,6 +62,7 @@ import {
 import { toast } from "sonner";
 import { CRUDToolbar } from "@/components/crud-toolbar";
 import { CRUDActions } from "@/components/crud-actions";
+import { RoleGuard } from "@/components/auth/role-guard";
 import { format } from "date-fns";
 
 // ========== Types ==========
@@ -538,6 +539,7 @@ export default function EvaluationsPage() {
 
   // ========== Render ==========
   return (
+    <RoleGuard allowedRoles={["SUPER_ADMIN", "ADVISER", "OFFICER", "OFFICE_SUPERVISOR"]}>
     <div className="space-y-6">
       {/* ========== OFFICE SUPERVISOR VIEW ========== */}
       {isSupervisor && (
@@ -1778,5 +1780,6 @@ export default function EvaluationsPage() {
         </DialogContent>
       </Dialog>
     </div>
+    </RoleGuard>
   );
 }

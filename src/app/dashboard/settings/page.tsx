@@ -40,6 +40,7 @@ import { SelectItem } from "@/components/ui/select";
 import { BetterSelect } from "@/components/ui/better-select";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
+import { RoleGuard } from "@/components/auth/role-guard";
 
 interface SystemSettingsData {
   id: string;
@@ -233,6 +234,7 @@ export default function SettingsPage() {
   const RoleIcon = roleIcon;
 
   return (
+    <RoleGuard allowedRoles={["SUPER_ADMIN", "ADVISER"]}>
     <div className="max-w-4xl mx-auto space-y-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -648,5 +650,6 @@ export default function SettingsPage() {
         </CardContent>
       </Card>
     </div>
+    </RoleGuard>
   );
 }

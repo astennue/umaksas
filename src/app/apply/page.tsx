@@ -433,8 +433,9 @@ export default function ApplyPage() {
 
       // Clear draft
       localStorage.removeItem(DRAFT_KEY);
-      setSubmittedRef(data.id);
+      setSubmittedRef(submitData.id || data.id);
       setShowSuccessDialog(true);
+      toast.success("Application submitted successfully!");
     } catch (error: any) {
       toast.error(error.message || "Something went wrong. Please try again.");
     } finally {
@@ -760,7 +761,7 @@ export default function ApplyPage() {
                 asChild
                 className="flex-1 bg-blue-700 text-white hover:bg-blue-800 dark:bg-amber-500 dark:text-gray-900"
               >
-                <a href="/">Go to Home</a>
+                <a href={submittedRef ? `/track?ref=${submittedRef}` : "/"}>Track Application</a>
               </Button>
             </div>
           </div>
