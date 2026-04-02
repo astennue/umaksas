@@ -290,7 +290,7 @@ export default function SAWallPage() {
           />
         </div>
         {/* Search & Filter Bar */}
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8 -mt-4 relative z-10">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8 pt-8 relative z-10">
           <div className="bg-white/80 dark:bg-gray-800/50 backdrop-blur-sm rounded-2xl shadow-lg border border-blue-100 dark:border-gray-700 p-4 sm:p-6">
             <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center">
               {/* Search */}
