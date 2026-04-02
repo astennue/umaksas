@@ -470,7 +470,7 @@ export default function AboutPage() {
       {/* ─── 4. Organization Chart ─── */}
       <section
         id="org-chart"
-        className="relative overflow-hidden scroll-mt-20 bg-white py-20 dark:bg-gray-950"
+        className="relative overflow-hidden scroll-mt-20 bg-slate-50 py-24 dark:bg-gray-900"
       >
         {/* Subtle gradient orbs */}
         <div className="pointer-events-none absolute inset-0">
@@ -493,7 +493,7 @@ export default function AboutPage() {
           />
 
           <SectionReveal delay={0.1}>
-            <div className="mx-auto max-w-5xl">
+            <div className="mx-auto max-w-7xl">
               <OrgChart />
             </div>
           </SectionReveal>

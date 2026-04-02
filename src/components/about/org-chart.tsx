@@ -74,10 +74,10 @@ const COLORS = {
   l5: { border: "#D4B860", avatar: "#C5A000", badge: "#fef3c7", text: "#92710c" },
 } as const
 
-// ── Uniform card size for ALL levels ──
-const CARD_W = 200
-const CARD_GAP = 16
-const AVATAR_SIZE = 80
+// ── Uniform card size for ALL levels — bigger and roomier ──
+const CARD_W = 240
+const CARD_GAP = 20
+const AVATAR_SIZE = 100
 
 const POSITION_ORDER: Record<string, number> = {
   VICE_PRESIDENT_INTERNAL: 0,
@@ -89,12 +89,12 @@ const POSITION_ORDER: Record<string, number> = {
 }
 
 const SHORT_POSITION_LABELS: Record<string, string> = {
-  VICE_PRESIDENT_INTERNAL: "VP - Internal",
-  VICE_PRESIDENT_EXTERNAL: "VP - External",
+  VICE_PRESIDENT_INTERNAL: "Vice President\nInternal",
+  VICE_PRESIDENT_EXTERNAL: "Vice President\nExternal",
   SECRETARY: "Secretary",
   TREASURER: "Treasurer",
   AUDITOR: "Auditor",
-  PUBLIC_RELATION_OFFICER: "PRO",
+  PUBLIC_RELATION_OFFICER: "Public Relations\nOfficer",
 }
 
 const LEVEL_LABELS: Record<string, string> = {
@@ -183,13 +183,6 @@ const truncateStyle: React.CSSProperties = {
   display: "block",
 }
 
-const breakWordStyle: React.CSSProperties = {
-  overflowWrap: "break-word",
-  wordBreak: "break-word",
-  overflow: "hidden",
-  maxWidth: "100%",
-}
-
 /* ── Unified Card used for ALL levels (L1–L5) ── */
 function OrgCard({
   name,
@@ -226,19 +219,19 @@ function OrgCard({
       transition={{ duration: 0.2 }}
     >
       {/* Top accent bar */}
-      <div className="w-full shrink-0" style={{ height: 5, backgroundColor: colors.border }} />
+      <div className="w-full shrink-0" style={{ height: 6, backgroundColor: colors.border }} />
 
       <div
         className="flex flex-col items-center"
         style={{
-          padding: "18px 14px 16px",
+          padding: "20px 16px 18px",
           overflowWrap: "break-word",
           wordBreak: "break-word",
         }}
       >
         {/* Avatar — large, supports photo or initials */}
         <div
-          className="rounded-full overflow-hidden shrink-0 shadow-md"
+          className="rounded-full overflow-hidden shrink-0 shadow-lg ring-4 ring-white"
           style={{ width: AVATAR_SIZE, height: AVATAR_SIZE }}
         >
           {photoUrl ? (
@@ -256,7 +249,7 @@ function OrgCard({
               style={{
                 backgroundColor: colors.avatar,
                 color: "#ffffff",
-                fontSize: 22,
+                fontSize: 28,
                 letterSpacing: "0.03em",
               }}
             >
@@ -265,36 +258,42 @@ function OrgCard({
           )}
         </div>
 
-        {/* Role badge */}
+        {/* Role badge — supports 2-line text */}
         <div
-          className="mt-3 inline-flex items-center gap-1.5 rounded-full font-semibold uppercase tracking-wider"
+          className="mt-3.5 inline-flex items-center gap-1.5 rounded-full font-semibold uppercase tracking-wider"
           style={{
             backgroundColor: colors.badge,
             color: colors.text,
             fontSize: 9,
-            padding: "3px 10px",
+            padding: "4px 12px",
             maxWidth: "100%",
-            overflow: "hidden",
+            lineHeight: 1.3,
+            // Allow 2-line wrapping
+            display: "inline-flex",
+            WebkitLineClamp: 2,
+            whiteSpace: "pre-line",
+            textAlign: "center",
+            wordBreak: "break-word",
           }}
         >
           {icon}
-          <span style={truncateStyle} className="truncate">
-            {title}
-          </span>
+          <span>{title}</span>
         </div>
 
         {/* Name */}
         <h3
-          className="mt-2 font-bold leading-snug text-center"
+          className="mt-2.5 font-bold leading-snug text-center"
           style={{
-            fontSize: 13,
+            fontSize: 14,
             maxWidth: "100%",
             color: "#111827",
             display: "-webkit-box",
             WebkitLineClamp: 2,
             WebkitBoxOrient: "vertical",
             whiteSpace: "normal",
-            ...breakWordStyle,
+            overflowWrap: "break-word",
+            wordBreak: "break-word",
+            overflow: "hidden",
           }}
           title={name}
         >
@@ -304,10 +303,10 @@ function OrgCard({
         {/* Email */}
         {email && (
           <div
-            className="mt-1.5 flex items-center gap-1.5 w-full justify-center"
+            className="mt-2 flex items-center gap-1.5 w-full justify-center"
             style={{ maxWidth: "100%" }}
           >
-            <Mail className="shrink-0" style={{ width: 11, height: 11, color: "#9CA3AF" }} />
+            <Mail className="shrink-0" style={{ width: 12, height: 12, color: "#9CA3AF" }} />
             <span
               style={{
                 fontSize: 10,
@@ -326,7 +325,7 @@ function OrgCard({
 }
 
 /* ── Vertical connector line ── */
-function VerticalLine({ height = 40 }: { height?: number }) {
+function VerticalLine({ height = 48 }: { height?: number }) {
   return (
     <div className="flex justify-center" aria-hidden="true">
       <svg width={2} height={height} className="block">
@@ -339,17 +338,17 @@ function VerticalLine({ height = 40 }: { height?: number }) {
 /* ── Tree branch connector: 1 parent → N children ── */
 function TreeBranchConnector({ childCount }: { childCount: number }) {
   if (childCount <= 0) return null
-  if (childCount === 1) return <VerticalLine height={40} />
+  if (childCount === 1) return <VerticalLine height={48} />
 
   const totalW = childCount * CARD_W + (childCount - 1) * CARD_GAP
-  const midY = 22
+  const midY = 24
 
   return (
     <div className="flex justify-center" aria-hidden="true">
       <svg
         width={totalW}
-        height={44}
-        viewBox={`0 0 ${totalW} 44`}
+        height={48}
+        viewBox={`0 0 ${totalW} 48`}
         className="block"
       >
         {/* Vertical drop from parent center */}
@@ -360,7 +359,7 @@ function TreeBranchConnector({ childCount }: { childCount: number }) {
         {Array.from({ length: childCount }, (_, i) => {
           const cx = i * (CARD_W + CARD_GAP) + CARD_W / 2
           return (
-            <line key={i} x1={cx} y1={midY} x2={cx} y2={44} stroke={LINE_COLOR} strokeWidth={2} />
+            <line key={i} x1={cx} y1={midY} x2={cx} y2={48} stroke={LINE_COLOR} strokeWidth={2} />
           )
         })}
       </svg>
@@ -402,7 +401,7 @@ function LevelBadge({
   icon: React.ReactNode
 }) {
   return (
-    <div className="flex items-center gap-1.5 mb-2" style={{ color }}>
+    <div className="flex items-center gap-1.5 mb-3" style={{ color }}>
       {icon}
       <span className="text-xs font-semibold uppercase tracking-widest">{label}</span>
     </div>
@@ -415,17 +414,17 @@ function SAWallLink() {
     <LevelWrapper delay={0.7}>
       <Link
         href="/sa-wall"
-        className="inline-flex items-center gap-2.5 px-6 py-3 rounded-full bg-white border-2 border-gray-200 shadow-sm hover:shadow-lg hover:border-[#C5A000] transition-all duration-200 group"
+        className="inline-flex items-center gap-2.5 px-8 py-3.5 rounded-full bg-white border-2 border-gray-200 shadow-sm hover:shadow-lg hover:border-[#C5A000] transition-all duration-200 group"
       >
         <Users
-          className="w-4.5 h-4.5 transition-colors duration-200 group-hover:text-[#C5A000]"
+          className="w-5 h-5 transition-colors duration-200 group-hover:text-[#C5A000]"
           style={{ color: "#003366" }}
         />
         <span
           className="text-sm font-bold transition-colors duration-200 group-hover:text-[#C5A000]"
           style={{ color: "#003366" }}
         >
-          Student Assistants
+          View All Student Assistants
         </span>
         <ChevronRight
           className="w-4 h-4 opacity-40 group-hover:opacity-80 group-hover:translate-x-0.5 transition-all duration-200"
@@ -472,17 +471,17 @@ function OfficerGrid({
 function getLevelIcon(level: string) {
   switch (level) {
     case "l1":
-      return <Building2 className="w-3 h-3" />
+      return <Building2 className="w-3.5 h-3.5" />
     case "l2":
-      return <Shield className="w-3 h-3" />
+      return <Shield className="w-3.5 h-3.5" />
     case "l3":
-      return <Star className="w-3 h-3" />
+      return <Star className="w-3.5 h-3.5" />
     case "l4":
-      return <Crown className="w-3 h-3" />
+      return <Crown className="w-3.5 h-3.5" />
     case "l5":
-      return <UserCog className="w-3 h-3" />
+      return <UserCog className="w-3.5 h-3.5" />
     default:
-      return <User className="w-3 h-3" />
+      return <User className="w-3.5 h-3.5" />
   }
 }
 
@@ -529,13 +528,13 @@ export function OrgChart() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-20">
+      <div className="flex items-center justify-center py-24">
         <div className="flex flex-col items-center gap-3">
           <div
             className="rounded-full animate-spin"
             style={{
-              width: 40,
-              height: 40,
+              width: 44,
+              height: 44,
               border: `3px solid ${COLORS.l1.border}33`,
               borderTopColor: COLORS.l1.border,
             }}
@@ -554,7 +553,7 @@ export function OrgChart() {
      DESKTOP (lg+) — Full tree layout
      ══════════════════════════════════════════════════════════════════════ */
   const desktopTree = (
-    <div className="hidden lg:flex lg:flex-col lg:items-center w-full overflow-x-auto pb-4">
+    <div className="hidden lg:flex lg:flex-col lg:items-center w-full overflow-x-auto py-6">
       <div className="flex flex-col items-center" style={{ minWidth: "fit-content" }}>
         {/* L1: UMak President */}
         <LevelWrapper delay={0}>
@@ -568,7 +567,7 @@ export function OrgChart() {
           />
         </LevelWrapper>
 
-        <VerticalLine height={36} />
+        <VerticalLine height={44} />
 
         {/* L2: OVPSSCD */}
         <LevelWrapper delay={0.1}>
@@ -582,7 +581,7 @@ export function OrgChart() {
           />
         </LevelWrapper>
 
-        <VerticalLine height={36} />
+        <VerticalLine height={44} />
 
         {/* L3: SAS Adviser */}
         <LevelWrapper delay={0.2}>
@@ -596,7 +595,7 @@ export function OrgChart() {
           />
         </LevelWrapper>
 
-        <VerticalLine height={36} />
+        <VerticalLine height={44} />
 
         {/* L4: SAS President */}
         {sasPresident ? (
@@ -614,7 +613,7 @@ export function OrgChart() {
         ) : (
           <LevelWrapper delay={0.3}>
             <div
-              className="px-6 py-4 rounded-2xl border-2 border-dashed text-center"
+              className="px-6 py-5 rounded-2xl border-2 border-dashed text-center"
               style={{ borderColor: COLORS.l4.border, width: CARD_W }}
             >
               <p className="text-sm font-medium" style={{ color: COLORS.l4.text }}>
@@ -656,7 +655,7 @@ export function OrgChart() {
         )}
 
         {/* Connector L5 → L6 */}
-        {officerCount > 0 && <VerticalLine height={32} />}
+        {officerCount > 0 && <VerticalLine height={40} />}
 
         {/* L6: Student Assistants */}
         <SAWallLink />
@@ -668,7 +667,7 @@ export function OrgChart() {
      TABLET (md–lg)
      ══════════════════════════════════════════════════════════════════════ */
   const tabletView = (
-    <div className="hidden md:flex md:flex-col md:items-center lg:hidden w-full">
+    <div className="hidden md:flex md:flex-col md:items-center lg:hidden w-full py-4">
       <LevelWrapper delay={0}>
         <OrgCard
           name={orgChartData.presidentName}
@@ -680,7 +679,7 @@ export function OrgChart() {
         />
       </LevelWrapper>
 
-      <VerticalLine height={28} />
+      <VerticalLine height={32} />
 
       <LevelWrapper delay={0.08}>
         <OrgCard
@@ -693,7 +692,7 @@ export function OrgChart() {
         />
       </LevelWrapper>
 
-      <VerticalLine height={28} />
+      <VerticalLine height={32} />
 
       <LevelWrapper delay={0.16}>
         <OrgCard
@@ -706,7 +705,7 @@ export function OrgChart() {
         />
       </LevelWrapper>
 
-      <VerticalLine height={28} />
+      <VerticalLine height={32} />
 
       {sasPresident ? (
         <LevelWrapper delay={0.24}>
@@ -723,7 +722,7 @@ export function OrgChart() {
       ) : (
         <LevelWrapper delay={0.24}>
           <div
-            className="px-5 py-3 rounded-2xl border-2 border-dashed text-center"
+            className="px-5 py-4 rounded-2xl border-2 border-dashed text-center"
             style={{ borderColor: COLORS.l4.border, width: CARD_W }}
           >
             <p className="text-sm font-medium" style={{ color: COLORS.l4.text }}>
@@ -733,16 +732,16 @@ export function OrgChart() {
         </LevelWrapper>
       )}
 
-      {officerCount > 0 && <VerticalLine height={28} />}
+      {officerCount > 0 && <VerticalLine height={32} />}
 
       {officerCount > 0 && (
         <OfficerGrid
           officers={otherOfficers}
-          gridClass="grid grid-cols-3 gap-4 w-full max-w-[680px]"
+          gridClass="grid grid-cols-2 gap-5 w-full max-w-[520px]"
         />
       )}
 
-      <div className="h-6" />
+      <div className="h-8" />
       <SAWallLink />
     </div>
   )
@@ -751,7 +750,7 @@ export function OrgChart() {
      MOBILE (<md)
      ══════════════════════════════════════════════════════════════════════ */
   const mobileView = (
-    <div className="md:hidden flex flex-col items-center gap-5 w-full">
+    <div className="md:hidden flex flex-col items-center gap-6 w-full py-2">
       <LevelWrapper delay={0}>
         <LevelBadge label={LEVEL_LABELS.l1} color={COLORS.l1.text} icon={getLevelIcon("l1")} />
         <OrgCard
@@ -802,7 +801,7 @@ export function OrgChart() {
           />
         ) : (
           <div
-            className="w-full px-5 py-3 rounded-2xl border-2 border-dashed text-center"
+            className="w-full px-5 py-4 rounded-2xl border-2 border-dashed text-center"
             style={{ borderColor: COLORS.l4.border }}
           >
             <p className="text-sm font-medium" style={{ color: COLORS.l4.text }}>
@@ -817,12 +816,12 @@ export function OrgChart() {
           <LevelBadge label={LEVEL_LABELS.l5} color={COLORS.l5.text} icon={getLevelIcon("l5")} />
           <OfficerGrid
             officers={otherOfficers}
-            gridClass="grid grid-cols-2 gap-3 w-full"
+            gridClass="grid grid-cols-2 gap-4 w-full"
           />
         </LevelWrapper>
       )}
 
-      <div className="h-4" />
+      <div className="h-6" />
       <SAWallLink />
     </div>
   )
