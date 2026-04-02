@@ -15,3 +15,7 @@ db/
 tsconfig.tsbuildinfo
 skills/
 worklog.md
+.config
+.accesslog
+.stats
+tailwind.config.ts.bak
