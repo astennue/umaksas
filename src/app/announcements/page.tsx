@@ -151,19 +151,19 @@ export default function AnnouncementsPage() {
   return (
     <PublicLayout>
       {/* Hero Section */}
-      <section className="relative overflow-hidden live-gradient bg-gradient-to-r from-blue-900 via-blue-800 to-blue-900">
+      <section className="relative overflow-hidden live-gradient hero-fade-bottom bg-gradient-to-br from-[#0c0a1d] via-[#1a1147] to-[#0d1b3e]">
         {/* Decorative blurs */}
         <div className="pointer-events-none absolute inset-0">
-          <div className="absolute -top-24 -right-24 h-64 w-64 rounded-full bg-amber-500/10 blur-3xl" />
-          <div className="absolute -bottom-24 -left-24 h-64 w-64 rounded-full bg-amber-500/5 blur-3xl" />
+          <div className="absolute -top-24 -right-24 h-64 w-64 rounded-full bg-violet-500/10 blur-3xl" />
+          <div className="absolute -bottom-24 -left-24 h-64 w-64 rounded-full bg-indigo-400/8 blur-3xl" />
           <div className="absolute top-1/2 left-1/2 h-96 w-96 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white/5 blur-3xl" />
           <motion.div
-            className="absolute -top-20 right-[15%] h-[300px] w-[300px] rounded-full bg-amber-500/[0.06] dark:bg-amber-500/[0.08] blur-3xl"
+            className="absolute -top-20 right-[15%] h-[300px] w-[300px] rounded-full bg-violet-500/[0.06] dark:bg-violet-500/[0.08] blur-3xl"
             animate={{ x: [0, 20, -15, 0], y: [0, -20, 15, 0], scale: [1, 1.06, 0.94, 1] }}
             transition={{ duration: 22, repeat: Infinity, ease: "easeInOut" }}
           />
           <motion.div
-            className="absolute -bottom-24 left-[20%] h-[280px] w-[280px] rounded-full bg-white/[0.04] dark:bg-white/[0.06] blur-3xl"
+            className="absolute -bottom-24 left-[20%] h-[280px] w-[280px] rounded-full bg-indigo-400/[0.04] dark:bg-indigo-400/[0.06] blur-3xl"
             animate={{ x: [0, -15, 20, 0], y: [0, 15, -20, 0], scale: [1, 0.92, 1.1, 1] }}
             transition={{ duration: 26, repeat: Infinity, ease: "easeInOut" }}
           />
@@ -176,28 +176,17 @@ export default function AnnouncementsPage() {
             transition={{ duration: 0.5 }}
             className="text-center"
           >
-            <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-amber-500/10 px-4 py-1.5 text-sm font-medium text-amber-400">
+            <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-violet-500/10 px-4 py-1.5 text-sm font-medium text-violet-400">
               <Megaphone className="h-4 w-4" />
               Stay Updated
             </div>
             <h1 className="text-3xl font-bold tracking-tight text-white sm:text-4xl lg:text-5xl">
               Announcements
             </h1>
-            <p className="mx-auto mt-4 max-w-2xl text-base text-blue-200 sm:text-lg">
+            <p className="mx-auto mt-4 max-w-2xl text-base text-violet-200/80 sm:text-lg">
               Keep up with the latest news, updates, and important notices from the UMak SAS community.
             </p>
           </motion.div>
-        </div>
-
-        {/* Wave divider */}
-        <div className="absolute bottom-0 left-0 w-full">
-          <svg viewBox="0 0 1440 80" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full">
-            <path
-              d="M0 80V30C240 0 480 60 720 40C960 20 1200 50 1440 30V80H0Z"
-              fill="white"
-              className="dark:fill-slate-50"
-            />
-          </svg>
         </div>
       </section>
 
@@ -211,12 +200,12 @@ export default function AnnouncementsPage() {
             transition={{ duration: 24, repeat: Infinity, ease: "easeInOut" }}
           />
           <motion.div
-            className="absolute top-[40%] -left-16 h-[280px] w-[280px] rounded-full bg-amber-500/[0.03] dark:bg-amber-500/[0.05] blur-3xl"
+            className="absolute top-[40%] -left-16 h-[280px] w-[280px] rounded-full bg-violet-500/[0.03] dark:bg-violet-500/[0.05] blur-3xl"
             animate={{ x: [0, -18, 22, 0], y: [0, 18, -12, 0], scale: [1, 0.94, 1.08, 1] }}
             transition={{ duration: 28, repeat: Infinity, ease: "easeInOut" }}
           />
           <motion.div
-            className="absolute -bottom-32 left-[45%] h-[350px] w-[350px] rounded-full bg-violet-500/[0.03] dark:bg-violet-500/[0.05] blur-3xl"
+            className="absolute -bottom-32 left-[45%] h-[350px] w-[350px] rounded-full bg-indigo-400/[0.03] dark:bg-indigo-400/[0.05] blur-3xl"
             animate={{ x: [0, 15, -20, 0], y: [0, -15, 20, 0], scale: [1, 1.08, 0.92, 1] }}
             transition={{ duration: 26, repeat: Infinity, ease: "easeInOut" }}
           />
@@ -424,7 +413,7 @@ export default function AnnouncementsPage() {
                               {config.label}
                             </Badge>
                             {announcement.isPinned && (
-                              <Badge variant="secondary" className="bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 border-0 gap-1 text-xs">
+                              <Badge variant="secondary" className="bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-400 border-0 gap-1 text-xs">
                                 <Pin className="h-3 w-3" />
                                 Pinned
                               </Badge>
@@ -432,7 +421,7 @@ export default function AnnouncementsPage() {
                           </div>
 
                           {/* Title */}
-                          <h3 className="mb-2 line-clamp-2 text-base font-semibold leading-snug text-gray-900 group-hover:text-blue-700 dark:text-gray-100 dark:group-hover:text-blue-400 transition-colors">
+                          <h3 className="mb-2 line-clamp-2 text-base font-semibold leading-snug text-gray-900 group-hover:text-violet-700 dark:text-gray-100 dark:group-hover:text-violet-400 transition-colors">
                             {announcement.title}
                           </h3>
 
@@ -453,7 +442,7 @@ export default function AnnouncementsPage() {
                           {/* Read more */}
                           <Link
                             href={`/announcements?id=${announcement.id}`}
-                            className="mt-3 inline-flex items-center text-sm font-medium text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300"
+                            className="mt-3 inline-flex items-center text-sm font-medium text-violet-600 hover:text-violet-800 dark:text-violet-400 dark:hover:text-violet-300"
                           >
                             Read more
                             <svg className="ml-1 h-3 w-3 transition-transform group-hover:translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">

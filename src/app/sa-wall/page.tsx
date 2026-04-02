@@ -147,17 +147,17 @@ export default function SAWallPage() {
   return (
     <PublicLayout>
       {/* Hero Banner */}
-      <div className="relative live-gradient bg-gradient-to-r from-blue-900 via-blue-800 to-blue-900 overflow-hidden">
-        {/* Decorative amber circles */}
-        <div className="animate-blob absolute top-10 left-[10%] w-64 h-64 rounded-full bg-amber-500/10 blur-3xl" />
-        <div className="animate-blob-delay absolute bottom-10 right-[10%] w-72 h-72 rounded-full bg-amber-500/10 blur-3xl" />
+      <div className="relative live-gradient hero-fade-slate bg-gradient-to-br from-[#0c0a1d] via-[#1a1147] to-[#0d1b3e] overflow-hidden">
+        {/* Decorative violet circles */}
+        <div className="animate-blob absolute top-10 left-[10%] w-64 h-64 rounded-full bg-violet-500/10 blur-3xl" />
+        <div className="animate-blob-delay absolute bottom-10 right-[10%] w-72 h-72 rounded-full bg-violet-500/10 blur-3xl" />
         <motion.div
-          className="pointer-events-none absolute -top-40 -right-40 h-80 w-80 rounded-full bg-blue-500/20 dark:bg-blue-500/10 blur-3xl"
+          className="pointer-events-none absolute -top-40 -right-40 h-80 w-80 rounded-full bg-violet-500/15 dark:bg-violet-500/10 blur-3xl"
           animate={{ x: [0, 30, -20, 0], y: [0, -30, 20, 0], scale: [1, 1.1, 0.95, 1] }}
           transition={{ duration: 20, repeat: Infinity, ease: "easeInOut" }}
         />
         <motion.div
-          className="pointer-events-none absolute -bottom-40 -left-40 h-80 w-80 rounded-full bg-amber-500/20 dark:bg-amber-500/10 blur-3xl"
+          className="pointer-events-none absolute -bottom-40 -left-40 h-80 w-80 rounded-full bg-indigo-400/15 dark:bg-indigo-400/10 blur-3xl"
           animate={{ x: [0, -25, 15, 0], y: [0, 25, -15, 0], scale: [1, 0.95, 1.1, 1] }}
           transition={{ duration: 25, repeat: Infinity, ease: "easeInOut" }}
         />
@@ -170,7 +170,7 @@ export default function SAWallPage() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.4 }}
             >
-              <Badge className="bg-amber-500/20 text-amber-300 hover:bg-amber-500/30 border-amber-500/30 px-4 py-1.5 text-sm font-medium">
+              <Badge className="bg-violet-500/20 text-violet-300 hover:bg-violet-500/30 border-violet-500/30 px-4 py-1.5 text-sm font-medium">
                 <Users className="w-4 h-4 mr-1.5" />
                 Student Assistant Directory
               </Badge>
@@ -184,7 +184,7 @@ export default function SAWallPage() {
               className="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight mt-5"
             >
               <span className="text-white">Student Assistants</span>
-              <span className="text-amber-400">Wall</span>
+              <span className="text-violet-400">Wall</span>
             </motion.h1>
 
             {/* Subtitle */}
@@ -192,7 +192,7 @@ export default function SAWallPage() {
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.2 }}
-              className="text-blue-100/80 text-base sm:text-lg max-w-xl mt-4"
+              className="text-violet-200/80 text-base sm:text-lg max-w-xl mt-4"
             >
               Browse all active Student Assistants, see who&apos;s currently on
               duty, and explore offices across all colleges.
@@ -203,29 +203,29 @@ export default function SAWallPage() {
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.3 }}
-              className="flex items-center gap-3 sm:gap-5 mt-6 text-blue-200 text-sm"
+              className="flex items-center gap-3 sm:gap-5 mt-6 text-violet-200/80 text-sm"
             >
               <div className="flex items-center gap-2">
                 <span className="relative flex h-2 w-2">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75" />
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500" />
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-violet-400 opacity-75" />
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-violet-400" />
                 </span>
                 <span>
                   <span className="font-bold text-white">{onDutyCount}</span>{" "}
                   Active SAs
                 </span>
               </div>
-              <span className="text-blue-400/50">•</span>
+              <span className="text-violet-400/50">•</span>
               <div className="flex items-center gap-2">
-                <Building2 className="w-4 h-4 text-blue-300" />
+                <Building2 className="w-4 h-4 text-violet-300" />
                 <span>
                   <span className="font-bold text-white">{uniqueOffices}</span>{" "}
                   Offices
                 </span>
               </div>
-              <span className="text-blue-400/50">•</span>
+              <span className="text-violet-400/50">•</span>
               <div className="flex items-center gap-2">
-                <GraduationCap className="w-4 h-4 text-blue-300" />
+                <GraduationCap className="w-4 h-4 text-violet-300" />
                 <span>
                   <span className="font-bold text-white">
                     {uniqueColleges}
@@ -233,15 +233,15 @@ export default function SAWallPage() {
                   Colleges
                 </span>
               </div>
-              <span className="text-blue-400/50">·</span>
+              <span className="text-violet-400/50">·</span>
               <div className="flex items-center gap-2">
-                <UserCircle className="w-4 h-4 text-blue-300" />
+                <UserCircle className="w-4 h-4 text-violet-300" />
                 <span>
                   <span className="font-bold text-white">
                     {genderStats.female}
                   </span>{" "}
                   Female
-                  <span className="text-blue-400/50 mx-0.5">·</span>
+                  <span className="text-violet-400/50 mx-0.5">·</span>
                   <span className="font-bold text-white">
                     {genderStats.male}
                   </span>{" "}
@@ -251,26 +251,10 @@ export default function SAWallPage() {
             </motion.div>
           </div>
         </div>
-
-        {/* Wave SVG divider */}
-        <div className="absolute bottom-0 left-0 right-0">
-          <svg
-            viewBox="0 0 1440 80"
-            fill="none"
-            xmlns="http://www.w3.org/2000/svg"
-            className="w-full h-auto"
-            preserveAspectRatio="none"
-          >
-            <path
-              d="M0 40C240 70 480 10 720 40C960 70 1200 10 1440 40V80H0V40Z"
-              className="fill-slate-50 dark:fill-gray-950"
-            />
-          </svg>
-        </div>
       </div>
 
       {/* Page background */}
-      <div className="relative overflow-hidden bg-gradient-to-br from-slate-50 via-blue-50/30 to-amber-50/20 dark:from-gray-950 dark:via-gray-900 dark:to-gray-950 min-h-screen">
+      <div className="relative overflow-hidden bg-gradient-to-br from-slate-50 via-violet-50/20 to-indigo-50/10 dark:from-gray-950 dark:via-gray-900 dark:to-gray-950 min-h-screen">
         {/* Subtle gradient orbs behind filter bar and grid */}
         <div className="pointer-events-none absolute inset-0">
           <motion.div
@@ -279,7 +263,7 @@ export default function SAWallPage() {
             transition={{ duration: 24, repeat: Infinity, ease: "easeInOut" }}
           />
           <motion.div
-            className="absolute top-[30%] -right-20 h-[300px] w-[300px] rounded-full bg-amber-500/[0.04] dark:bg-amber-500/[0.06] blur-3xl"
+            className="absolute top-[30%] -right-20 h-[300px] w-[300px] rounded-full bg-violet-500/[0.04] dark:bg-violet-500/[0.06] blur-3xl"
             animate={{ x: [0, -18, 22, 0], y: [0, 18, -12, 0], scale: [1, 0.94, 1.08, 1] }}
             transition={{ duration: 28, repeat: Infinity, ease: "easeInOut" }}
           />
@@ -300,7 +284,7 @@ export default function SAWallPage() {
                   placeholder="Search by name, college, or office..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="h-12 rounded-lg pl-10 pr-9 bg-white border-blue-200 focus:border-blue-500 text-sm"
+                  className="h-12 rounded-lg pl-10 pr-9 bg-white border-violet-200 focus:border-violet-500 text-sm"
                 />
                 {searchQuery && (
                   <button
@@ -314,7 +298,7 @@ export default function SAWallPage() {
 
               {/* Filter dropdowns */}
               <div className="flex items-center gap-2 flex-wrap w-full sm:w-auto">
-                <BetterSelect value={collegeFilter} onValueChange={setCollegeFilter} placeholder="All Colleges" className="h-12 w-[170px] border-blue-200">
+                <BetterSelect value={collegeFilter} onValueChange={setCollegeFilter} placeholder="All Colleges" className="h-12 w-[170px] border-violet-200">
                     <SelectItem value="all">All Colleges</SelectItem>
                     {colleges.map((college) => (
                       <SelectItem key={college} value={college}>
@@ -323,7 +307,7 @@ export default function SAWallPage() {
                     ))}
                 </BetterSelect>
 
-                <BetterSelect value={officeFilter} onValueChange={setOfficeFilter} placeholder="All Offices" className="h-12 w-[170px] border-blue-200">
+                <BetterSelect value={officeFilter} onValueChange={setOfficeFilter} placeholder="All Offices" className="h-12 w-[170px] border-violet-200">
                     <SelectItem value="all">All Offices</SelectItem>
                     {offices.map((office) => (
                       <SelectItem key={office} value={office}>
@@ -332,7 +316,7 @@ export default function SAWallPage() {
                     ))}
                 </BetterSelect>
 
-                <BetterSelect value={genderFilter} onValueChange={setGenderFilter} placeholder="All Genders" className="h-12 w-[140px] border-blue-200">
+                <BetterSelect value={genderFilter} onValueChange={setGenderFilter} placeholder="All Genders" className="h-12 w-[140px] border-violet-200">
                     <SelectItem value="all">All Genders</SelectItem>
                     <SelectItem value="male">Male</SelectItem>
                     <SelectItem value="female">Female</SelectItem>
@@ -342,7 +326,7 @@ export default function SAWallPage() {
                   value={sortBy}
                   onValueChange={(v) => setSortBy(v as SortOption)}
                   placeholder="Sort by"
-                  className="h-12 w-[140px] border-blue-200"
+                  className="h-12 w-[140px] border-violet-200"
                 >
                     <SelectItem value="name">Name</SelectItem>
                     <SelectItem value="college">College</SelectItem>
@@ -352,7 +336,7 @@ export default function SAWallPage() {
                 {hasFilters && (
                   <button
                     onClick={clearFilters}
-                    className="h-12 text-sm text-blue-700 dark:text-blue-400 hover:text-blue-900 dark:hover:text-blue-300 font-medium px-3 py-2 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
+                    className="h-12 text-sm text-violet-700 dark:text-violet-400 hover:text-violet-900 dark:hover:text-violet-300 font-medium px-3 py-2 rounded-lg hover:bg-violet-50 dark:hover:bg-violet-900/20 transition-colors"
                   >
                     Clear all
                   </button>
@@ -366,7 +350,7 @@ export default function SAWallPage() {
                 {searchQuery && (
                   <Badge
                     variant="secondary"
-                    className="text-xs bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 gap-1.5 px-2.5 py-1 rounded-full border border-blue-200 dark:border-blue-800"
+                    className="text-xs bg-violet-50 dark:bg-violet-900/30 text-violet-700 dark:text-violet-300 gap-1.5 px-2.5 py-1 rounded-full border border-violet-200 dark:border-violet-800"
                   >
                     Search: &quot;{searchQuery}&quot;
                     <button onClick={() => setSearchQuery("")}>
@@ -377,7 +361,7 @@ export default function SAWallPage() {
                 {collegeFilter !== "all" && (
                   <Badge
                     variant="secondary"
-                    className="text-xs bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 gap-1.5 px-2.5 py-1 rounded-full border border-blue-200 dark:border-blue-800"
+                    className="text-xs bg-violet-50 dark:bg-violet-900/30 text-violet-700 dark:text-violet-300 gap-1.5 px-2.5 py-1 rounded-full border border-violet-200 dark:border-violet-800"
                   >
                     {collegeFilter}
                     <button onClick={() => setCollegeFilter("all")}>
@@ -388,7 +372,7 @@ export default function SAWallPage() {
                 {officeFilter !== "all" && (
                   <Badge
                     variant="secondary"
-                    className="text-xs bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 gap-1.5 px-2.5 py-1 rounded-full border border-blue-200 dark:border-blue-800"
+                    className="text-xs bg-violet-50 dark:bg-violet-900/30 text-violet-700 dark:text-violet-300 gap-1.5 px-2.5 py-1 rounded-full border border-violet-200 dark:border-violet-800"
                   >
                     {officeFilter}
                     <button onClick={() => setOfficeFilter("all")}>
@@ -399,7 +383,7 @@ export default function SAWallPage() {
                 {genderFilter !== "all" && (
                   <Badge
                     variant="secondary"
-                    className="text-xs bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 gap-1.5 px-2.5 py-1 rounded-full border border-blue-200 dark:border-blue-800"
+                    className="text-xs bg-violet-50 dark:bg-violet-900/30 text-violet-700 dark:text-violet-300 gap-1.5 px-2.5 py-1 rounded-full border border-violet-200 dark:border-violet-800"
                   >
                     {genderFilter === "male" ? "Male" : "Female"}
                     <button onClick={() => setGenderFilter("all")}>
@@ -434,7 +418,7 @@ export default function SAWallPage() {
           {loading ? (
             <div className="flex items-center justify-center py-20">
               <div className="text-center">
-                <div className="w-10 h-10 border-3 border-blue-700 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+                <div className="w-10 h-10 border-3 border-violet-600 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
                 <p className="text-sm text-gray-500 dark:text-gray-400">
                   Loading Student Assistants...
                 </p>
@@ -455,7 +439,7 @@ export default function SAWallPage() {
                 {hasFilters && (
                   <button
                     onClick={clearFilters}
-                    className="mt-4 text-sm text-blue-700 dark:text-blue-400 hover:text-blue-900 dark:hover:text-blue-300 font-medium"
+                    className="mt-4 text-sm text-violet-700 dark:text-violet-400 hover:text-violet-900 dark:hover:text-violet-300 font-medium"
                   >
                     Clear all filters
                   </button>

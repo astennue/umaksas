@@ -65,7 +65,7 @@ function SectionHeader({
     <div className="mb-10 text-center">
       <Badge
         variant="secondary"
-        className="mb-4 bg-amber-500/10 text-amber-600 border-amber-500/20 dark:text-amber-400 dark:bg-amber-500/10 dark:border-amber-500/20"
+        className="mb-4 bg-violet-500/10 text-violet-600 border-violet-500/20 dark:text-violet-400 dark:bg-violet-500/10 dark:border-violet-500/20"
       >
         {badge}
       </Badge>
@@ -95,18 +95,18 @@ export default function AboutPage() {
   return (
     <PublicLayout>
       {/* ─── 1. Hero Section ─── */}
-      <section className="relative overflow-hidden live-gradient text-white bg-gradient-to-br from-blue-700 via-blue-800 via-blue-900 to-blue-700">
+      <section className="relative overflow-hidden live-gradient hero-fade-bottom text-white bg-gradient-to-br from-[#0c0a1d] via-[#1a1147] to-[#0d1b3e]">
         {/* Decorative circles */}
         <div className="pointer-events-none absolute inset-0">
-          <div className="animate-blob absolute -top-24 right-[10%] h-[480px] w-[480px] rounded-full bg-blue-500/20 blur-3xl" />
-          <div className="animate-blob-delay absolute -bottom-24 left-[5%] h-[420px] w-[420px] rounded-full bg-amber-500/20 blur-3xl" />
+          <div className="animate-blob absolute -top-24 right-[10%] h-[480px] w-[480px] rounded-full bg-violet-500/15 blur-3xl" />
+          <div className="animate-blob-delay absolute -bottom-24 left-[5%] h-[420px] w-[420px] rounded-full bg-indigo-400/15 blur-3xl" />
           <motion.div
-            className="absolute -top-40 -right-40 h-80 w-80 rounded-full bg-blue-500/20 dark:bg-blue-500/10 blur-3xl"
+            className="absolute -top-40 -right-40 h-80 w-80 rounded-full bg-violet-500/15 dark:bg-violet-500/10 blur-3xl"
             animate={{ x: [0, 30, -20, 0], y: [0, -30, 20, 0], scale: [1, 1.1, 0.95, 1] }}
             transition={{ duration: 20, repeat: Infinity, ease: "easeInOut" }}
           />
           <motion.div
-            className="absolute -bottom-40 -left-40 h-80 w-80 rounded-full bg-amber-500/20 dark:bg-amber-500/10 blur-3xl"
+            className="absolute -bottom-40 -left-40 h-80 w-80 rounded-full bg-indigo-400/15 dark:bg-indigo-400/10 blur-3xl"
             animate={{ x: [0, -25, 15, 0], y: [0, 25, -15, 0], scale: [1, 0.95, 1.1, 1] }}
             transition={{ duration: 25, repeat: Infinity, ease: "easeInOut" }}
           />
@@ -126,7 +126,7 @@ export default function AboutPage() {
 
             <h1 className="text-4xl font-bold tracking-tight leading-tight sm:text-5xl lg:text-6xl">
               University of Makati
-              <span className="mt-1 block text-amber-400">
+              <span className="mt-1 block text-violet-400">
                 Student Assistant System
               </span>
             </h1>
@@ -139,7 +139,7 @@ export default function AboutPage() {
 
             <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
               <Link href="/sa-wall">
-                <Button className="h-11 gap-2 bg-amber-500 px-6 text-white shadow-lg shadow-amber-500/25 hover:bg-amber-600">
+                <Button className="h-11 gap-2 bg-violet-500 px-6 text-white shadow-lg shadow-violet-500/25 hover:bg-violet-600">
                   <Users className="h-4 w-4" />
                   Meet Our Student Assistants
                 </Button>
@@ -173,32 +173,16 @@ export default function AboutPage() {
                 key={stat.label}
                 className="rounded-xl border border-white/20 bg-white/5 p-4 text-center backdrop-blur-sm sm:p-5"
               >
-                <stat.icon className="mx-auto mb-2 h-5 w-5 text-amber-400" />
+                <stat.icon className="mx-auto mb-2 h-5 w-5 text-violet-400" />
                 <div className="text-2xl font-bold sm:text-3xl">
                   {stat.value}
                 </div>
-                <div className="mt-0.5 text-xs text-blue-200 sm:text-sm">
+                <div className="mt-0.5 text-xs text-violet-200/80 sm:text-sm">
                   {stat.label}
                 </div>
               </div>
             ))}
           </motion.div>
-        </div>
-
-        {/* Wave divider */}
-        <div className="absolute bottom-0 left-0 right-0">
-          <svg
-            viewBox="0 0 1440 80"
-            fill="none"
-            xmlns="http://www.w3.org/2000/svg"
-            className="w-full"
-            preserveAspectRatio="none"
-          >
-            <path
-              d="M0 40C240 80 480 0 720 40C960 80 1200 0 1440 40V80H0V40Z"
-              className="fill-white dark:fill-gray-950"
-            />
-          </svg>
         </div>
       </section>
 
@@ -212,7 +196,7 @@ export default function AboutPage() {
             transition={{ duration: 24, repeat: Infinity, ease: "easeInOut" }}
           />
           <motion.div
-            className="absolute -bottom-20 left-[15%] h-[260px] w-[260px] rounded-full bg-amber-500/[0.04] dark:bg-amber-500/[0.06] blur-3xl"
+            className="absolute -bottom-20 left-[15%] h-[260px] w-[260px] rounded-full bg-violet-500/[0.04] dark:bg-violet-500/[0.06] blur-3xl"
             animate={{ x: [0, -18, 22, 0], y: [0, 18, -12, 0], scale: [1, 0.94, 1.08, 1] }}
             transition={{ duration: 28, repeat: Infinity, ease: "easeInOut" }}
           />
@@ -229,7 +213,7 @@ export default function AboutPage() {
             <SectionReveal delay={0.1}>
               <Card className="shimmer-card h-full border-0 shadow-lg transition-shadow hover:shadow-xl dark:border dark:border-white/10">
                 {/* Blue accent bar */}
-                <div className="rounded-t-xl bg-gradient-to-r from-blue-700 to-blue-600 px-8 pt-8 pb-6 text-white">
+                <div className="rounded-t-xl bg-gradient-to-r from-[#1a1147] to-[#2d1b69] px-8 pt-8 pb-6 text-white">
                   <div className="flex items-center gap-3">
                     <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-white/15">
                       <Target className="h-5 w-5" />
@@ -258,7 +242,7 @@ export default function AboutPage() {
                         key={item}
                         className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400"
                       >
-                        <div className="h-1.5 w-1.5 rounded-full bg-blue-700 dark:bg-amber-400" />
+                        <div className="h-1.5 w-1.5 rounded-full bg-indigo-600 dark:bg-violet-400" />
                         {item}
                       </div>
                     ))}
@@ -270,8 +254,8 @@ export default function AboutPage() {
             {/* Vision */}
             <SectionReveal delay={0.2}>
               <Card className="shimmer-card h-full border-0 shadow-lg transition-shadow hover:shadow-xl dark:border dark:border-white/10">
-                {/* Amber accent bar */}
-                <div className="rounded-t-xl bg-gradient-to-r from-amber-500 to-amber-400 px-8 pt-8 pb-6 text-white">
+                {/* Violet accent bar */}
+                <div className="rounded-t-xl bg-gradient-to-r from-violet-600 to-violet-500 px-8 pt-8 pb-6 text-white">
                   <div className="flex items-center gap-3">
                     <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-white/15">
                       <Eye className="h-5 w-5" />
@@ -299,7 +283,7 @@ export default function AboutPage() {
                         key={item}
                         className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400"
                       >
-                        <div className="h-1.5 w-1.5 rounded-full bg-amber-500 dark:bg-amber-400" />
+                        <div className="h-1.5 w-1.5 rounded-full bg-violet-500 dark:bg-violet-400" />
                         {item}
                       </div>
                     ))}
@@ -319,7 +303,7 @@ export default function AboutPage() {
                 { icon: Heart, label: "Integrity", color: "bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-400" },
                 { icon: Users, label: "Teamwork", color: "bg-blue-100 text-blue-600 dark:bg-blue-900/40 dark:text-blue-300" },
                 { icon: Award, label: "Excellence", color: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400" },
-                { icon: Globe, label: "Service", color: "bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-400" },
+                { icon: Globe, label: "Service", color: "bg-fuchsia-100 text-fuchsia-700 dark:bg-fuchsia-900/40 dark:text-fuchsia-400" },
                 { icon: GraduationCap, label: "Learning", color: "bg-violet-100 text-violet-700 dark:bg-violet-900/40 dark:text-violet-400" },
                 { icon: Target, label: "Commitment", color: "bg-rose-100 text-rose-700 dark:bg-rose-900/40 dark:text-rose-400" },
               ].map((v) => (
@@ -345,21 +329,21 @@ export default function AboutPage() {
       </section>
 
       {/* ─── 3. Our Journey (Timeline) ─── */}
-      <section className="relative overflow-hidden bg-[#0f172a] py-20">
+      <section className="relative overflow-hidden bg-[#0c0a1d] py-20">
         {/* Gradient orbs — adapted for dark background */}
         <div className="pointer-events-none absolute inset-0">
           <motion.div
-            className="absolute -top-20 -left-10 h-[320px] w-[320px] rounded-full bg-blue-500/[0.08] blur-3xl"
+            className="absolute -top-20 -left-10 h-[320px] w-[320px] rounded-full bg-violet-500/[0.08] blur-3xl"
             animate={{ x: [0, 15, -20, 0], y: [0, -15, 20, 0], scale: [1, 1.06, 0.94, 1] }}
             transition={{ duration: 22, repeat: Infinity, ease: "easeInOut" }}
           />
           <motion.div
-            className="absolute -bottom-16 right-[5%] h-[280px] w-[280px] rounded-full bg-amber-500/[0.07] blur-3xl"
+            className="absolute -bottom-16 right-[5%] h-[280px] w-[280px] rounded-full bg-indigo-400/[0.07] blur-3xl"
             animate={{ x: [0, -20, 15, 0], y: [0, 15, -20, 0], scale: [1, 0.92, 1.1, 1] }}
             transition={{ duration: 26, repeat: Infinity, ease: "easeInOut" }}
           />
           <motion.div
-            className="absolute top-[50%] left-[45%] h-[200px] w-[200px] rounded-full bg-blue-400/[0.05] blur-3xl"
+            className="absolute top-[50%] left-[45%] h-[200px] w-[200px] rounded-full bg-violet-400/[0.05] blur-3xl"
             animate={{ x: [0, -12, 18, 0], y: [0, 22, -16, 0], scale: [1, 1.08, 0.92, 1] }}
             transition={{ duration: 30, repeat: Infinity, ease: "easeInOut" }}
           />
@@ -370,7 +354,7 @@ export default function AboutPage() {
           <div className="mb-14 text-center">
             <Badge
               variant="secondary"
-              className="mb-4 border-amber-500/20 bg-amber-500/10 text-amber-400"
+              className="mb-4 border-violet-500/20 bg-violet-500/10 text-violet-400"
             >
               <History className="mr-1.5 h-3.5 w-3.5" />
               Our Story
@@ -386,7 +370,7 @@ export default function AboutPage() {
           {/* Vertical Timeline */}
           <div className="relative">
             {/* Central vertical line — left on mobile, center on desktop */}
-            <div className="absolute left-[19px] top-2 bottom-2 w-0.5 bg-gradient-to-b from-blue-500/40 via-blue-500/20 to-blue-500/40 md:left-1/2 md:-translate-x-px" />
+            <div className="absolute left-[19px] top-2 bottom-2 w-0.5 bg-gradient-to-b from-violet-500/40 via-violet-500/20 to-violet-500/40 md:left-1/2 md:-translate-x-px" />
 
             {/* Timeline events */}
             {[
@@ -429,8 +413,8 @@ export default function AboutPage() {
             ].map((event, i) => (
               <SectionReveal key={event.year} delay={0.1 + i * 0.12}>
                 <div className="relative mb-10">
-                  {/* Timeline node — amber dot with glow */}
-                  <div className="absolute left-[13px] top-6 z-10 h-3 w-3 rounded-full bg-amber-400 ring-4 ring-[#0f172a] shadow-[0_0_14px_rgba(251,191,36,0.5)] md:left-1/2 md:-translate-x-1/2 md:top-7" />
+                  {/* Timeline node — violet dot with glow */}
+                  <div className="absolute left-[13px] top-6 z-10 h-3 w-3 rounded-full bg-violet-400 ring-4 ring-[#0c0a1d] shadow-[0_0_14px_rgba(139,92,246,0.5)] md:left-1/2 md:-translate-x-1/2 md:top-7" />
 
                   {/* Card container — left on mobile, alternating on desktop */}
                   <div
@@ -444,7 +428,7 @@ export default function AboutPage() {
                       {/* Year badge */}
                       <Badge
                         variant="secondary"
-                        className="mb-3 border-blue-500/30 bg-blue-500/20 text-xs text-blue-300"
+                        className="mb-3 border-violet-500/30 bg-violet-500/20 text-xs text-violet-300"
                       >
                         {event.year}
                       </Badge>
@@ -480,7 +464,7 @@ export default function AboutPage() {
             transition={{ duration: 25, repeat: Infinity, ease: "easeInOut" }}
           />
           <motion.div
-            className="absolute -bottom-16 right-[25%] h-[220px] w-[220px] rounded-full bg-amber-500/[0.03] dark:bg-amber-500/[0.05] blur-3xl"
+            className="absolute -bottom-16 right-[25%] h-[220px] w-[220px] rounded-full bg-violet-500/[0.03] dark:bg-violet-500/[0.05] blur-3xl"
             animate={{ x: [0, -15, 18, 0], y: [0, 15, -18, 0], scale: [1, 0.94, 1.06, 1] }}
             transition={{ duration: 22, repeat: Infinity, ease: "easeInOut" }}
           />
@@ -510,7 +494,7 @@ export default function AboutPage() {
             transition={{ duration: 24, repeat: Infinity, ease: "easeInOut" }}
           />
           <motion.div
-            className="absolute -bottom-16 left-[10%] h-[300px] w-[300px] rounded-full bg-amber-500/[0.04] dark:bg-amber-500/[0.06] blur-3xl"
+            className="absolute -bottom-16 left-[10%] h-[300px] w-[300px] rounded-full bg-violet-500/[0.04] dark:bg-violet-500/[0.06] blur-3xl"
             animate={{ x: [0, -20, 15, 0], y: [0, 20, -15, 0], scale: [1, 0.94, 1.08, 1] }}
             transition={{ duration: 28, repeat: Infinity, ease: "easeInOut" }}
           />
@@ -553,8 +537,8 @@ export default function AboutPage() {
             <SectionReveal delay={0.2}>
               <Card className="h-full border-0 py-6 text-center shadow-lg transition-shadow hover:shadow-xl dark:border dark:border-white/10">
                 <CardContent className="px-6">
-                  <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-amber-100 dark:bg-amber-900/40">
-                    <Mail className="h-5 w-5 text-amber-700 dark:text-amber-400" />
+                  <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-violet-100 dark:bg-violet-900/40">
+                    <Mail className="h-5 w-5 text-violet-700 dark:text-violet-400" />
                   </div>
                   <h3 className="font-semibold text-gray-900 dark:text-white">
                     Email
@@ -608,7 +592,7 @@ export default function AboutPage() {
                   </p>
                 </div>
                 <Link href="/sa-wall" className="shrink-0">
-                  <Button className="gap-2 bg-blue-700 text-white hover:bg-blue-800 dark:bg-amber-500 dark:text-white dark:hover:bg-amber-600">
+                  <Button className="gap-2 bg-blue-700 text-white hover:bg-blue-800 dark:bg-violet-500 dark:text-white dark:hover:bg-violet-600">
                     Visit Student Assistants Wall
                     <ChevronRight className="h-4 w-4" />
                   </Button>

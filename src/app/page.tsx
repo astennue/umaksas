@@ -74,7 +74,7 @@ function SectionHeader({
     <SectionReveal className="text-center">
       <Badge
         variant="secondary"
-        className="mb-4 bg-amber-500/10 text-amber-600 border-amber-500/20 dark:text-amber-400 dark:bg-amber-500/10 dark:border-amber-500/20"
+        className="mb-4 bg-violet-500/10 text-violet-600 border-violet-500/20 dark:text-violet-400 dark:bg-violet-500/10 dark:border-violet-500/20"
       >
         {badge}
       </Badge>
@@ -165,7 +165,7 @@ const iconColorMap: Record<string, string> = {
   violet:
     "bg-violet-100 text-violet-700 dark:bg-violet-900/40 dark:text-violet-400",
   amber:
-    "bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-400",
+    "bg-violet-100 text-violet-700 dark:bg-violet-900/40 dark:text-violet-400",
 };
 
 /* ═══════════════════════════════════════════════════════════════════════════
@@ -196,18 +196,18 @@ export default function HomePage() {
   return (
     <PublicLayout>
       {/* ─── 1. Hero Section ─── */}
-      <section className="relative overflow-hidden text-white live-gradient bg-gradient-to-br from-blue-700 via-blue-800 via-blue-900 to-blue-700">
+      <section className="hero-fade-bottom relative overflow-hidden text-white live-gradient bg-gradient-to-br from-[#0c0a1d] via-[#1a1147] to-[#0d1b3e]">
         {/* Decorative blurred circles */}
         <div className="pointer-events-none absolute inset-0">
-          <div className="animate-blob absolute -top-24 right-[10%] h-[480px] w-[480px] rounded-full bg-blue-500/20 blur-3xl" />
-          <div className="animate-blob-delay absolute -bottom-24 left-[5%] h-[420px] w-[420px] rounded-full bg-amber-500/20 blur-3xl" />
+          <div className="animate-blob absolute -top-24 right-[10%] h-[480px] w-[480px] rounded-full bg-violet-500/15 blur-3xl" />
+          <div className="animate-blob-delay absolute -bottom-24 left-[5%] h-[420px] w-[420px] rounded-full bg-indigo-400/15 blur-3xl" />
           <motion.div
-            className="absolute -top-40 -right-40 h-80 w-80 rounded-full bg-blue-500/20 dark:bg-blue-500/10 blur-3xl"
+            className="absolute -top-40 -right-40 h-80 w-80 rounded-full bg-violet-500/15 dark:bg-violet-500/10 blur-3xl"
             animate={{ x: [0, 30, -20, 0], y: [0, -30, 20, 0], scale: [1, 1.1, 0.95, 1] }}
             transition={{ duration: 20, repeat: Infinity, ease: "easeInOut" }}
           />
           <motion.div
-            className="absolute -bottom-40 -left-40 h-80 w-80 rounded-full bg-amber-500/20 dark:bg-amber-500/10 blur-3xl"
+            className="absolute -bottom-40 -left-40 h-80 w-80 rounded-full bg-indigo-400/15 dark:bg-indigo-400/10 blur-3xl"
             animate={{ x: [0, -25, 15, 0], y: [0, 25, -15, 0], scale: [1, 0.95, 1.1, 1] }}
             transition={{ duration: 25, repeat: Infinity, ease: "easeInOut" }}
           />
@@ -229,10 +229,10 @@ export default function HomePage() {
               <Badge className={cn(
                 "mb-4 px-3 py-1 text-xs sm:mb-6 sm:px-4 sm:py-1.5 sm:text-sm",
                 applicationOpen === true
-                  ? "border-amber-400/30 bg-amber-500/20 text-amber-300 hover:bg-amber-500/30"
+                  ? "border-violet-400/30 bg-violet-500/20 text-violet-300 hover:bg-violet-500/30"
                   : applicationOpen === false
                     ? "border-gray-400/30 bg-gray-500/20 text-gray-300 hover:bg-gray-500/30"
-                    : "border-amber-400/30 bg-amber-500/20 text-amber-300 hover:bg-amber-500/30"
+                    : "border-violet-400/30 bg-violet-500/20 text-violet-300 hover:bg-violet-500/30"
               )}>
                 {applicationOpen === false ? (
                   <CalendarDays className="mr-1.5 h-3.5 w-3.5" />
@@ -251,7 +251,7 @@ export default function HomePage() {
               className="text-3xl font-extrabold tracking-tight sm:text-4xl lg:text-5xl"
             >
               Empowering Students,{" "}
-              <span className="text-amber-400">Building Futures</span>
+              <span className="text-violet-400">Building Futures</span>
             </motion.h1>
 
             {/* Description */}
@@ -259,7 +259,7 @@ export default function HomePage() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.35, duration: 0.6 }}
-              className="mx-auto mt-4 max-w-lg text-base text-blue-100 sm:mt-6 sm:max-w-2xl sm:text-lg"
+              className="mx-auto mt-4 max-w-lg text-base text-violet-200/80 sm:mt-6 sm:max-w-2xl sm:text-lg"
             >
               Join the Universidad Makati Student Assistant Program. Gain
               valuable work experience, earn while you learn, and make a
@@ -288,7 +288,7 @@ export default function HomePage() {
                 <Button
                   asChild
                   size="lg"
-                  className="bg-amber-500 px-5 py-5 text-sm font-bold text-white shadow-lg shadow-amber-500/25 hover:bg-amber-600 sm:px-6 sm:py-6 sm:text-base"
+                  className="bg-violet-500 px-5 py-5 text-sm font-bold text-white shadow-lg shadow-violet-500/25 hover:bg-violet-600 sm:px-6 sm:py-6 sm:text-base"
                 >
                   <Link href="/apply">
                     Apply Now
@@ -315,37 +315,21 @@ export default function HomePage() {
             className="mx-auto mt-10 flex max-w-3xl flex-wrap items-center justify-center gap-x-4 gap-y-1 text-xs sm:mt-16 sm:gap-x-6 sm:gap-y-2 sm:text-sm"
           >
             {statsItems.map((s, i) => (
-                <span key={s} className="flex items-center gap-2 text-blue-100">
+                <span key={s} className="flex items-center gap-2 text-violet-200/80">
                   {i > 0 && (
-                    <span className="text-blue-400/40">•</span>
+                    <span className="text-violet-400/40">•</span>
                   )}
                   {s}
                 </span>
               ))}
-            <span className="relative ml-1 flex items-center gap-2 text-amber-300 font-medium">
+            <span className="relative ml-1 flex items-center gap-2 text-violet-300 font-medium">
               <span className="relative flex h-2 w-2">
-                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-amber-400 opacity-75" />
-                <span className="relative inline-flex h-2 w-2 rounded-full bg-amber-400" />
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-violet-400 opacity-75" />
+                <span className="relative inline-flex h-2 w-2 rounded-full bg-violet-400" />
               </span>
               Active
             </span>
           </motion.div>
-        </div>
-
-        {/* Wave SVG divider */}
-        <div className="absolute bottom-0 left-0 right-0">
-          <svg
-            viewBox="0 0 1440 80"
-            fill="none"
-            xmlns="http://www.w3.org/2000/svg"
-            className="w-full"
-            preserveAspectRatio="none"
-          >
-            <path
-              d="M0 40C240 80 480 0 720 40C960 80 1200 0 1440 40V80H0V40Z"
-              className="fill-white dark:fill-gray-950"
-            />
-          </svg>
         </div>
       </section>
 
@@ -359,7 +343,7 @@ export default function HomePage() {
             transition={{ duration: 22, repeat: Infinity, ease: "easeInOut" }}
           />
           <motion.div
-            className="absolute -bottom-16 left-[10%] h-[250px] w-[250px] rounded-full bg-amber-500/[0.05] dark:bg-amber-500/[0.07] blur-3xl"
+            className="absolute -bottom-16 left-[10%] h-[250px] w-[250px] rounded-full bg-violet-500/[0.05] dark:bg-violet-500/[0.07] blur-3xl"
             animate={{ x: [0, -15, 20, 0], y: [0, 15, -20, 0], scale: [1, 0.95, 1.08, 1] }}
             transition={{ duration: 28, repeat: Infinity, ease: "easeInOut" }}
           />
@@ -375,7 +359,7 @@ export default function HomePage() {
             title={
               <>
                 What Makes the SA Program{" "}
-                <span className="text-blue-700 dark:text-amber-400">
+                <span className="text-blue-700 dark:text-violet-400">
                   Special
                 </span>
               </>
@@ -408,7 +392,7 @@ export default function HomePage() {
       </section>
 
       {/* ─── 3. How It Works ─── */}
-      <section className="relative overflow-hidden live-gradient bg-gradient-to-br from-blue-700 via-blue-800 via-blue-900 to-blue-700 py-12 sm:py-16 lg:py-20 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
+      <section className="relative overflow-hidden live-gradient bg-gradient-to-br from-[#0c0a1d] via-[#1a1147] to-[#0d1b3e] py-12 sm:py-16 lg:py-20 dark:from-[#0c0a1d] dark:via-[#1a1147] dark:to-[#0d1b3e]">
         {/* Subtle gradient orbs */}
         <div className="pointer-events-none absolute inset-0">
           <motion.div
@@ -417,7 +401,7 @@ export default function HomePage() {
             transition={{ duration: 24, repeat: Infinity, ease: "easeInOut" }}
           />
           <motion.div
-            className="absolute -bottom-20 right-[5%] h-[300px] w-[300px] rounded-full bg-amber-500/[0.05] dark:bg-amber-500/[0.08] blur-3xl"
+            className="absolute -bottom-20 right-[5%] h-[300px] w-[300px] rounded-full bg-violet-500/[0.05] dark:bg-violet-500/[0.08] blur-3xl"
             animate={{ x: [0, -20, 15, 0], y: [0, 20, -15, 0], scale: [1, 0.93, 1.1, 1] }}
             transition={{ duration: 30, repeat: Infinity, ease: "easeInOut" }}
           />
@@ -432,7 +416,7 @@ export default function HomePage() {
             <SectionReveal>
               <Badge
                 variant="secondary"
-                className="mb-4 bg-white/10 text-white/80 border-white/20 dark:bg-white/5 dark:text-amber-400 dark:border-amber-500/20"
+                className="mb-4 bg-white/10 text-white/80 border-white/20 dark:bg-white/5 dark:text-violet-400 dark:border-violet-500/20"
               >
                 How It Works
               </Badge>
@@ -440,11 +424,11 @@ export default function HomePage() {
             <SectionReveal delay={0.1}>
               <h2 className="text-2xl font-bold tracking-tight text-white sm:text-3xl lg:text-4xl">
                 Your Journey to{" "}
-                <span className="text-amber-400">Becoming an SA</span>
+                <span className="text-violet-400">Becoming an SA</span>
               </h2>
             </SectionReveal>
             <SectionReveal delay={0.15}>
-              <p className="mx-auto mt-4 max-w-2xl text-blue-200 dark:text-gray-400">
+              <p className="mx-auto mt-4 max-w-2xl text-violet-200/80 dark:text-gray-400">
                 Follow these four simple steps to start your journey as a
                 Student Assistant at Universidad Makati.
               </p>
@@ -457,16 +441,16 @@ export default function HomePage() {
                 <div className="relative text-center">
                   {/* Connector line (desktop only) */}
                   {i < steps.length - 1 && (
-                    <div className="absolute left-1/2 top-10 hidden h-0.5 w-full bg-gradient-to-r from-amber-400/50 to-transparent lg:block" />
+                    <div className="absolute left-1/2 top-10 hidden h-0.5 w-full bg-gradient-to-r from-violet-400/50 to-transparent lg:block" />
                   )}
 
                   {/* Step circle */}
                   <div className="relative mx-auto mb-4 flex h-16 w-16 items-center justify-center sm:h-20 sm:w-20 sm:mb-5">
                     <div className="absolute inset-0 rounded-full bg-white/5 dark:bg-white/5" />
-                    <div className="relative flex h-11 w-11 items-center justify-center rounded-full bg-gradient-to-br from-amber-400 to-amber-500 text-blue-900 shadow-lg shadow-amber-500/30 sm:h-14 sm:w-14">
+                    <div className="relative flex h-11 w-11 items-center justify-center rounded-full bg-gradient-to-br from-violet-400 to-violet-500 text-white shadow-lg shadow-violet-500/30 sm:h-14 sm:w-14">
                       <s.icon className="h-5 w-5 sm:h-6 sm:w-6" />
                     </div>
-                    <span className="absolute -top-1 -right-1 flex h-6 w-6 items-center justify-center rounded-full bg-white text-[10px] font-bold text-blue-700 shadow dark:bg-gray-800 dark:text-amber-400 sm:h-7 sm:w-7 sm:text-xs">
+                    <span className="absolute -top-1 -right-1 flex h-6 w-6 items-center justify-center rounded-full bg-white text-[10px] font-bold text-violet-600 shadow dark:bg-gray-800 dark:text-violet-400 sm:h-7 sm:w-7 sm:text-xs">
                       {s.step}
                     </span>
                   </div>
@@ -474,7 +458,7 @@ export default function HomePage() {
                   <h3 className="text-lg font-semibold text-white dark:text-gray-100">
                     {s.title}
                   </h3>
-                  <p className="mt-2 text-sm text-blue-200 dark:text-gray-400">
+                  <p className="mt-2 text-sm text-violet-200/80 dark:text-gray-400">
                     {s.description}
                   </p>
                 </div>
@@ -494,7 +478,7 @@ export default function HomePage() {
             transition={{ duration: 26, repeat: Infinity, ease: "easeInOut" }}
           />
           <motion.div
-            className="absolute -bottom-20 right-[10%] h-[320px] w-[320px] rounded-full bg-amber-500/[0.04] dark:bg-amber-500/[0.07] blur-3xl"
+            className="absolute -bottom-20 right-[10%] h-[320px] w-[320px] rounded-full bg-violet-500/[0.04] dark:bg-violet-500/[0.07] blur-3xl"
             animate={{ x: [0, -18, 22, 0], y: [0, 18, -12, 0], scale: [1, 0.94, 1.08, 1] }}
             transition={{ duration: 22, repeat: Infinity, ease: "easeInOut" }}
           />
@@ -510,13 +494,13 @@ export default function HomePage() {
             <SectionReveal>
               <Badge
                 variant="secondary"
-                className="mb-4 bg-amber-500/10 text-amber-600 border-amber-500/20 dark:text-amber-400 dark:bg-amber-500/10 dark:border-amber-500/20"
+                className="mb-4 bg-violet-500/10 text-violet-600 border-violet-500/20 dark:text-violet-400 dark:bg-violet-500/10 dark:border-violet-500/20"
               >
                 Benefits
               </Badge>
               <h2 className="text-2xl font-bold tracking-tight text-gray-900 sm:text-3xl lg:text-4xl dark:text-white">
                 More Than Just a{" "}
-                <span className="text-blue-700 dark:text-amber-400">Job</span>
+                <span className="text-blue-700 dark:text-violet-400">Job</span>
               </h2>
               <p className="mt-4 text-muted-foreground">
                 Being a Student Assistant is an enriching experience that goes
@@ -525,7 +509,7 @@ export default function HomePage() {
               <ul className="mt-6 space-y-3">
                 {benefits.map((b, i) => (
                   <li key={b} className="flex items-start gap-3">
-                    <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-amber-500" />
+                    <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-violet-500" />
                     <span className="text-sm text-gray-700 dark:text-gray-300">
                       {b}
                     </span>
@@ -536,15 +520,15 @@ export default function HomePage() {
 
             {/* Right – CTA card */}
             <SectionReveal delay={0.2}>
-              <div className="shimmer-card relative overflow-hidden rounded-2xl bg-gradient-to-br from-blue-700 to-blue-900 p-5 text-white shadow-2xl sm:p-8">
-                <div className="pointer-events-none absolute -top-10 -right-10 h-32 w-32 rounded-full bg-amber-500/20 blur-2xl" />
+              <div className="shimmer-card relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#1a1147] to-[#0d1b3e] p-5 text-white shadow-2xl sm:p-8">
+                <div className="pointer-events-none absolute -top-10 -right-10 h-32 w-32 rounded-full bg-violet-500/20 blur-2xl" />
                 <div className="pointer-events-none absolute -bottom-10 -left-10 h-32 w-32 rounded-full bg-white/5 blur-2xl" />
                 <div className="relative">
-                  <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-amber-500 shadow-lg shadow-amber-500/30 sm:mb-6 sm:h-16 sm:w-16">
+                  <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-violet-500 shadow-lg shadow-violet-500/30 sm:mb-6 sm:h-16 sm:w-16">
                     <Heart className="h-6 w-6 text-white sm:h-8 sm:w-8" />
                   </div>
                   <h3 className="text-xl font-bold sm:text-2xl">Start Your Journey Today</h3>
-                  <p className="mt-3 text-blue-100">
+                  <p className="mt-3 text-violet-200/80">
                     Every great career starts with a single step. Take yours now
                     by joining the UMak Student Assistant program.
                   </p>
@@ -559,7 +543,7 @@ export default function HomePage() {
                     ) : (
                       <Button
                         asChild
-                        className="bg-amber-500 font-semibold text-white hover:bg-amber-600"
+                        className="bg-violet-500 font-semibold text-white hover:bg-violet-600"
                       >
                         <Link href="/apply">
                           Apply Now
@@ -583,12 +567,12 @@ export default function HomePage() {
       </section>
 
       {/* ─── 5. CTA Section ─── */}
-      <section className="relative overflow-hidden live-gradient bg-gradient-to-br from-blue-700 via-blue-800 via-blue-900 to-blue-700 py-12 sm:py-16 lg:py-20 text-white">
+      <section className="relative overflow-hidden live-gradient bg-gradient-to-br from-[#0c0a1d] via-[#1a1147] to-[#0d1b3e] py-12 sm:py-16 lg:py-20 text-white">
         <div className="pointer-events-none absolute inset-0">
-          <div className="absolute top-0 left-1/4 h-64 w-64 rounded-full bg-amber-500/10 blur-3xl" />
+          <div className="absolute top-0 left-1/4 h-64 w-64 rounded-full bg-violet-500/10 blur-3xl" />
           <div className="absolute bottom-0 right-1/4 h-64 w-64 rounded-full bg-white/5 blur-3xl" />
           <motion.div
-            className="absolute -top-20 left-[30%] h-[300px] w-[300px] rounded-full bg-amber-500/[0.06] dark:bg-amber-500/[0.08] blur-3xl"
+            className="absolute -top-20 left-[30%] h-[300px] w-[300px] rounded-full bg-violet-500/[0.06] dark:bg-violet-500/[0.08] blur-3xl"
             animate={{ x: [0, 20, -15, 0], y: [0, -20, 15, 0], scale: [1, 1.08, 0.92, 1] }}
             transition={{ duration: 22, repeat: Infinity, ease: "easeInOut" }}
           />
@@ -605,18 +589,18 @@ export default function HomePage() {
         </div>
         <div className="relative mx-auto max-w-4xl px-4 text-center sm:px-6 lg:px-8">
           <SectionReveal>
-            <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-amber-500 shadow-lg shadow-amber-500/30 sm:mb-6 sm:h-16 sm:w-16">
+            <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-violet-500 shadow-lg shadow-violet-500/30 sm:mb-6 sm:h-16 sm:w-16">
               <GraduationCap className="h-6 w-6 text-white sm:h-8 sm:w-8" />
             </div>
           </SectionReveal>
           <SectionReveal delay={0.1}>
             <h2 className="text-2xl font-bold tracking-tight sm:text-3xl lg:text-4xl">
               Ready to Make a{" "}
-              <span className="text-amber-400">Difference</span>?
+              <span className="text-violet-400">Difference</span>?
             </h2>
           </SectionReveal>
           <SectionReveal delay={0.2}>
-            <p className="mx-auto mt-3 max-w-lg text-base text-blue-100 sm:mt-4 sm:max-w-xl sm:text-lg">
+            <p className="mx-auto mt-3 max-w-lg text-base text-violet-200/80 sm:mt-4 sm:max-w-xl sm:text-lg">
               Join hundreds of UMAK students who are building their future while
               serving the university community.
             </p>
@@ -638,7 +622,7 @@ export default function HomePage() {
                 <Button
                   asChild
                   size="lg"
-                  className="bg-amber-500 px-5 py-5 text-sm font-bold text-white shadow-lg shadow-amber-500/25 hover:bg-amber-600 sm:px-6 sm:py-6 sm:text-base"
+                  className="bg-violet-500 px-5 py-5 text-sm font-bold text-white shadow-lg shadow-violet-500/25 hover:bg-violet-600 sm:px-6 sm:py-6 sm:text-base"
                 >
                   <Link href="/apply">
                     Apply Now

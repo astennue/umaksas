@@ -166,6 +166,69 @@
 }
 
 /* ═══════════════════════════════════════════════════════════
+   PREMIUM HERO FADE DIVIDER
+   ═══════════════════════════════════════════════════════════ */
+
+/* Smooth gradient fade from hero to next section (light mode) */
+.hero-fade-bottom::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 120px;
+  background: linear-gradient(
+    to bottom,
+    transparent 0%,
+    rgba(255, 255, 255, 0.3) 40%,
+    rgba(255, 255, 255, 0.85) 70%,
+    #ffffff 100%
+  );
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Dark mode variant */
+.dark .hero-fade-bottom::after {
+  background: linear-gradient(
+    to bottom,
+    transparent 0%,
+    rgba(3, 7, 18, 0.3) 40%,
+    rgba(3, 7, 18, 0.85) 70%,
+    #030712 100%
+  );
+}
+
+/* Variant: fade to slate-50 (for SA Wall) */
+.hero-fade-slate::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 120px;
+  background: linear-gradient(
+    to bottom,
+    transparent 0%,
+    rgba(248, 250, 252, 0.3) 40%,
+    rgba(248, 250, 252, 0.85) 70%,
+    #f8fafc 100%
+  );
+  pointer-events: none;
+  z-index: 1;
+}
+
+.dark .hero-fade-slate::after {
+  background: linear-gradient(
+    to bottom,
+    transparent 0%,
+    rgba(3, 7, 18, 0.3) 40%,
+    rgba(3, 7, 18, 0.85) 70%,
+    #030712 100%
+  );
+}
+
+/* ═══════════════════════════════════════════════════════════
    LIVE ANIMATION SYSTEM
    ═══════════════════════════════════════════════════════════ */
 
