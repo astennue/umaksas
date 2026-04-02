@@ -41,7 +41,7 @@ export function PublicHeader() {
   }, []);
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 h-16 bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl border-b border-violet-100/60 dark:border-gray-700">
+    <header className="fixed top-0 left-0 right-0 z-50 h-16 bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl border-b border-yellow-100/60 dark:border-gray-700">
       <div className="mx-auto flex h-full max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
         {/* Logo */}
         <Link href="/" className="flex items-center gap-3 group">
@@ -71,8 +71,8 @@ export function PublicHeader() {
                   isApplyDisabled
                     ? "text-gray-400 cursor-not-allowed opacity-60"
                     : pathname === link.href
-                      ? "text-violet-700 bg-violet-50 dark:text-violet-400 dark:bg-violet-400/10"
-                      : "text-gray-600 hover:text-violet-700 hover:bg-gray-100 dark:text-gray-400 dark:hover:text-violet-400"
+                      ? "text-yellow-700 bg-yellow-50 dark:text-yellow-400 dark:bg-yellow-400/10"
+                      : "text-gray-600 hover:text-yellow-700 hover:bg-gray-100 dark:text-gray-400 dark:hover:text-yellow-400"
                 )}
               >
                 {isApplyDisabled ? "Apply (Closed)" : link.label}
@@ -88,7 +88,7 @@ export function PublicHeader() {
             variant="ghost"
             size="icon"
             onClick={() => setTheme(isDark ? "light" : "dark")}
-            className="text-gray-600 hover:bg-gray-100 hover:text-violet-700 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-violet-400"
+            className="text-gray-600 hover:bg-gray-100 hover:text-yellow-700 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-yellow-400"
           >
             <Sun className="h-4 w-4 rotate-0 scale-100 transition-transform dark:-rotate-90 dark:scale-0" />
             <Moon className="absolute h-4 w-4 rotate-90 scale-0 transition-transform dark:rotate-0 dark:scale-100" />
@@ -102,7 +102,7 @@ export function PublicHeader() {
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="text-gray-600 hover:bg-gray-100 hover:text-violet-700 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-violet-400"
+                  className="text-gray-600 hover:bg-gray-100 hover:text-yellow-700 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-yellow-400"
                 >
                   <Menu className="h-5 w-5" />
                   <span className="sr-only">Open menu</span>
@@ -134,8 +134,8 @@ export function PublicHeader() {
                             isApplyDisabled
                               ? "text-gray-400 cursor-not-allowed opacity-60"
                               : pathname === link.href
-                                ? "text-violet-700 bg-violet-50 dark:text-violet-400 dark:bg-violet-400/10"
-                                : "text-gray-600 hover:text-violet-700 hover:bg-gray-100 dark:text-gray-400 dark:hover:text-violet-400"
+                                ? "text-yellow-700 bg-yellow-50 dark:text-yellow-400 dark:bg-yellow-400/10"
+                                : "text-gray-600 hover:text-yellow-700 hover:bg-gray-100 dark:text-gray-400 dark:hover:text-yellow-400"
                           )}
                         >
                           {isApplyDisabled ? "Apply (Closed)" : link.label}

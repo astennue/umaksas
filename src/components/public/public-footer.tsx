@@ -11,7 +11,7 @@ import {
 
 export function PublicFooter() {
   return (
-    <footer className="bg-gradient-to-br from-[#0c0a1d] via-[#1a1147] to-[#0d1b3e] text-white">
+    <footer className="bg-gradient-to-br from-[#0a0e27] via-[#0f1b4d] to-[#0d2247] text-white">
       <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-4">
           {/* Brand */}
@@ -26,12 +26,12 @@ export function PublicFooter() {
               />
               <div className="flex flex-col leading-tight">
                 <span className="text-lg font-bold">UMAK S.A.S</span>
-                <span className="text-[10px] font-medium uppercase tracking-widest text-violet-300">
+                <span className="text-[10px] font-medium uppercase tracking-widest text-yellow-300">
                   Student Assistants
                 </span>
               </div>
             </Link>
-            <p className="mt-4 text-sm leading-relaxed text-violet-200/80">
+            <p className="mt-4 text-sm leading-relaxed text-yellow-200/70">
               The official Student Assistant Management System of Universidad
               Makati. Empowering students through meaningful work experience and
               professional development.
@@ -40,21 +40,21 @@ export function PublicFooter() {
             <div className="mt-6 flex gap-3">
               <a
                 href="#"
-                className="flex h-10 w-10 items-center justify-center rounded-full bg-white/5 text-violet-200/80 transition-all duration-200 hover:bg-violet-400 hover:text-white"
+                className="flex h-10 w-10 items-center justify-center rounded-full bg-white/5 text-yellow-200/70 transition-all duration-200 hover:bg-yellow-400 hover:text-gray-900"
                 aria-label="Facebook"
               >
                 <Facebook className="h-4 w-4" />
               </a>
               <a
                 href="#"
-                className="flex h-10 w-10 items-center justify-center rounded-full bg-white/5 text-violet-200/80 transition-all duration-200 hover:bg-violet-400 hover:text-white"
+                className="flex h-10 w-10 items-center justify-center rounded-full bg-white/5 text-yellow-200/70 transition-all duration-200 hover:bg-yellow-400 hover:text-gray-900"
                 aria-label="Twitter"
               >
                 <Twitter className="h-4 w-4" />
               </a>
               <a
                 href="#"
-                className="flex h-10 w-10 items-center justify-center rounded-full bg-white/5 text-violet-200/80 transition-all duration-200 hover:bg-violet-400 hover:text-white"
+                className="flex h-10 w-10 items-center justify-center rounded-full bg-white/5 text-yellow-200/70 transition-all duration-200 hover:bg-yellow-400 hover:text-gray-900"
                 aria-label="Instagram"
               >
                 <Instagram className="h-4 w-4" />
@@ -64,7 +64,7 @@ export function PublicFooter() {
 
           {/* Quick Links */}
           <div>
-            <h3 className="text-sm font-semibold uppercase tracking-wider text-violet-400">
+            <h3 className="text-sm font-semibold uppercase tracking-wider text-yellow-400">
               Quick Links
             </h3>
             <ul className="mt-4 space-y-2">
@@ -78,7 +78,7 @@ export function PublicFooter() {
                 <li key={link.href}>
                   <Link
                     href={link.href}
-                    className="text-sm text-violet-200/80 transition-colors hover:text-white"
+                    className="text-sm text-yellow-200/70 transition-colors hover:text-white"
                   >
                     {link.label}
                   </Link>
@@ -89,7 +89,7 @@ export function PublicFooter() {
 
           {/* Resources */}
           <div>
-            <h3 className="text-sm font-semibold uppercase tracking-wider text-violet-400">
+            <h3 className="text-sm font-semibold uppercase tracking-wider text-yellow-400">
               Resources
             </h3>
             <ul className="mt-4 space-y-2">
@@ -103,7 +103,7 @@ export function PublicFooter() {
                 <li key={link.label}>
                   <Link
                     href={link.href}
-                    className="text-sm text-violet-200/80 transition-colors hover:text-white"
+                    className="text-sm text-yellow-200/70 transition-colors hover:text-white"
                   >
                     {link.label}
                   </Link>
@@ -114,25 +114,25 @@ export function PublicFooter() {
 
           {/* Contact Us */}
           <div>
-            <h3 className="text-sm font-semibold uppercase tracking-wider text-violet-400">
+            <h3 className="text-sm font-semibold uppercase tracking-wider text-yellow-400">
               Contact Us
             </h3>
             <ul className="mt-4 space-y-3">
               <li className="flex items-start gap-3">
-                <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-violet-200/80" />
-                <span className="text-sm text-violet-200/80">
+                <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-yellow-200/70" />
+                <span className="text-sm text-yellow-200/70">
                   J.P. Rizal St., Brgy. Pio del Pilar,
                   <br />
                   Makati City, Philippines
                 </span>
               </li>
               <li className="flex items-center gap-3">
-                <Phone className="h-4 w-4 shrink-0 text-violet-200/80" />
-                <span className="text-sm text-violet-200/80">(02) 8882-2500</span>
+                <Phone className="h-4 w-4 shrink-0 text-yellow-200/70" />
+                <span className="text-sm text-yellow-200/70">(02) 8882-2500</span>
               </li>
               <li className="flex items-center gap-3">
-                <Mail className="h-4 w-4 shrink-0 text-violet-200/80" />
-                <span className="text-sm text-violet-200/80">sas@umak.edu.ph</span>
+                <Mail className="h-4 w-4 shrink-0 text-yellow-200/70" />
+                <span className="text-sm text-yellow-200/70">sas@umak.edu.ph</span>
               </li>
             </ul>
           </div>
@@ -141,20 +141,20 @@ export function PublicFooter() {
         {/* Bottom Bar */}
         <div className="mt-10 border-t border-white/10 pt-8">
           <div className="flex flex-col items-center justify-between gap-4 sm:flex-row">
-            <p className="text-xs text-violet-300">
+            <p className="text-xs text-yellow-300">
               &copy; 2026 University of Makati &mdash; Student Assistant
               Management System. All rights reserved.
             </p>
             <div className="flex items-center gap-4">
               <Link
                 href="#"
-                className="text-xs text-violet-300 transition-colors hover:text-white"
+                className="text-xs text-yellow-300 transition-colors hover:text-white"
               >
                 Privacy Policy
               </Link>
               <Link
                 href="#"
-                className="text-xs text-violet-300 transition-colors hover:text-white"
+                className="text-xs text-yellow-300 transition-colors hover:text-white"
               >
                 Terms of Use
               </Link>

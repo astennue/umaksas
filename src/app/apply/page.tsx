@@ -490,7 +490,7 @@ export default function ApplyPage() {
 
   return (
     <PublicLayout>
-      <div className="relative overflow-hidden mx-auto max-w-5xl px-4 py-8 sm:px-6 lg:px-8">
+      <div className="relative overflow-hidden mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
         {/* Subtle gradient orbs */}
         <div className="pointer-events-none absolute inset-0">
           <motion.div
@@ -499,7 +499,7 @@ export default function ApplyPage() {
             transition={{ duration: 24, repeat: Infinity, ease: "easeInOut" }}
           />
           <motion.div
-            className="absolute -bottom-32 -right-20 h-[350px] w-[350px] rounded-full bg-violet-500/[0.04] dark:bg-violet-500/[0.06] blur-3xl"
+            className="absolute -bottom-32 -right-20 h-[350px] w-[350px] rounded-full bg-yellow-500/[0.04] dark:bg-yellow-500/[0.06] blur-3xl"
             animate={{ x: [0, -18, 22, 0], y: [0, 18, -12, 0], scale: [1, 0.94, 1.08, 1] }}
             transition={{ duration: 28, repeat: Infinity, ease: "easeInOut" }}
           />
@@ -520,7 +520,7 @@ export default function ApplyPage() {
           {completedSteps.length > 0 && (
             <Badge
               variant="secondary"
-              className="mt-2 gap-1 bg-blue-100 text-blue-700 dark:bg-violet-900/30 dark:text-violet-400"
+              className="mt-2 gap-1 bg-blue-100 text-blue-700 dark:bg-yellow-900/30 dark:text-yellow-400"
             >
               <Save className="h-3 w-3" />
               Auto-saved • {completedSteps.length}/{TOTAL_STEPS} completed
@@ -567,7 +567,7 @@ export default function ApplyPage() {
               <Card className="glow-border border-0 shadow-lg">
                 <CardHeader>
                   <div className="flex items-center gap-3">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-100 text-blue-700 dark:bg-violet-900/30 dark:text-violet-400">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-100 text-blue-700 dark:bg-yellow-900/30 dark:text-yellow-400">
                       <span className="text-lg font-bold">{currentStep}</span>
                     </div>
                     <div>
@@ -634,7 +634,7 @@ export default function ApplyPage() {
               <Button
                 type="button"
                 onClick={goToNext}
-                className="gap-2 bg-blue-700 text-white hover:bg-blue-800 dark:bg-violet-500 dark:text-white dark:hover:bg-violet-600"
+                className="gap-2 bg-blue-700 text-white hover:bg-blue-800 dark:bg-yellow-500 dark:text-gray-900 dark:hover:bg-yellow-600"
               >
                 Next
                 <ArrowRight className="h-4 w-4" />
@@ -759,7 +759,7 @@ export default function ApplyPage() {
               <Button
                 type="button"
                 asChild
-                className="flex-1 bg-blue-700 text-white hover:bg-blue-800 dark:bg-violet-500 dark:text-white"
+                className="flex-1 bg-blue-700 text-white hover:bg-blue-800 dark:bg-yellow-500 dark:text-gray-900"
               >
                 <a href={submittedRef ? `/track?ref=${submittedRef}` : "/"}>Track Application</a>
               </Button>
@@ -1131,7 +1131,7 @@ function Step3Family({ formData, updateField, errors }: StepProps) {
       {/* Guardian */}
       <div>
         <h4 className="mb-3 flex items-center gap-2 text-sm font-semibold">
-          <div className="h-2 w-2 rounded-full bg-violet-500" />
+          <div className="h-2 w-2 rounded-full bg-yellow-500" />
           Guardian Information
           <span className="text-xs font-normal text-muted-foreground">(if applicable)</span>
         </h4>

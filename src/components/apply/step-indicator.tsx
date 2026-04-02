@@ -44,27 +44,38 @@ export function StepIndicator({
   completedSteps,
   onStepClick,
 }: StepIndicatorProps) {
+  const maxReached = completedSteps.length > 0
+    ? Math.max(...completedSteps, currentStep)
+    : currentStep;
+
   return (
     <div className="w-full">
-      {/* Desktop version */}
+      {/* Desktop version — grid-based uniform layout */}
       <div className="hidden lg:block">
-        <div className="flex items-center justify-between">
+        {/* Icons row with uniform grid */}
+        <div
+          className="grid items-center"
+          style={{
+            gridTemplateColumns: `repeat(${STEPS.length}, 1fr)`,
+            gap: "0",
+          }}
+        >
           {STEPS.map((step, index) => {
             const isCompleted = completedSteps.includes(step.id);
             const isCurrent = currentStep === step.id;
-            const isClickable = isCompleted || step.id <= Math.max(...completedSteps, currentStep) + 1;
+            const isClickable = isCompleted || step.id <= maxReached + 1;
 
             const IconComponent = iconMap[step.icon] || User;
 
             return (
-              <div key={step.id} className="flex flex-1 items-center">
-                {/* Step circle + label */}
+              <div key={step.id} className="flex items-center">
+                {/* Step circle */}
                 <button
                   type="button"
                   onClick={() => isClickable && onStepClick?.(step.id)}
                   disabled={!isClickable}
                   className={cn(
-                    "flex flex-col items-center gap-1.5 transition-all",
+                    "relative z-10 flex flex-col items-center gap-1.5 transition-all shrink-0",
                     isClickable ? "cursor-pointer" : "cursor-not-allowed opacity-60"
                   )}
                 >
@@ -86,9 +97,9 @@ export function StepIndicator({
                   </div>
                   <span
                     className={cn(
-                      "text-xs font-semibold whitespace-nowrap",
+                      "text-[11px] font-semibold whitespace-nowrap leading-tight",
                       isCurrent
-                        ? "text-blue-700 dark:text-amber-500"
+                        ? "text-blue-700 dark:text-yellow-500"
                         : isCompleted
                           ? "text-emerald-600 dark:text-emerald-400"
                           : "text-muted-foreground"
@@ -98,9 +109,9 @@ export function StepIndicator({
                   </span>
                 </button>
 
-                {/* Connector line */}
+                {/* Connector line — fills remaining space uniformly */}
                 {index < STEPS.length - 1 && (
-                  <div className="mx-1 mt-[-18px] h-0.5 flex-1">
+                  <div className="flex-1 mx-0.5 h-0.5 -mt-5 self-start mt-[18px]">
                     <div
                       className={cn(
                         "h-full rounded-full transition-all",
@@ -125,7 +136,7 @@ export function StepIndicator({
           {STEPS.map((step, index) => {
             const isCompleted = completedSteps.includes(step.id);
             const isCurrent = currentStep === step.id;
-            const isClickable = isCompleted || step.id <= Math.max(...completedSteps, currentStep) + 1;
+            const isClickable = isCompleted || step.id <= maxReached + 1;
 
             const IconComponent = iconMap[step.icon] || User;
 
@@ -140,7 +151,7 @@ export function StepIndicator({
                     isCompleted
                       ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
                       : isCurrent
-                        ? "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-amber-500"
+                        ? "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-yellow-500"
                         : "bg-muted text-muted-foreground"
                   )}
                 >
@@ -168,7 +179,7 @@ export function StepIndicator({
         {/* Progress bar */}
         <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-muted">
           <div
-            className="h-full rounded-full bg-blue-700 transition-all duration-500 dark:bg-amber-500"
+            className="h-full rounded-full bg-blue-700 transition-all duration-500 dark:bg-yellow-500"
             style={{ width: `${(currentStep / STEPS.length) * 100}%` }}
           />
         </div>

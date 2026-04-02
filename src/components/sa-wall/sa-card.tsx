@@ -77,7 +77,7 @@ export function SACard({ sa, onClick, isAuthenticated }: SACardProps) {
         className={`h-1.5 ${
           sa.isOnDuty
             ? "bg-gradient-to-r from-green-400 to-emerald-500"
-            : "bg-gradient-to-r from-violet-600 via-violet-500 to-indigo-500"
+            : "bg-gradient-to-r from-blue-700 via-blue-600 to-yellow-500"
         }`}
       />
 
@@ -85,7 +85,7 @@ export function SACard({ sa, onClick, isAuthenticated }: SACardProps) {
         {/* Avatar */}
         <div className="flex flex-col items-center text-center">
           <div className="relative mb-3">
-            <div className="h-20 w-20 rounded-full bg-gradient-to-br from-blue-700 to-blue-900 flex items-center justify-center text-white font-bold text-xl shadow-md ring-4 ring-blue-100 dark:ring-blue-900/50 group-hover:ring-violet-200 dark:group-hover:ring-violet-800/50 transition-all duration-300">
+            <div className="h-20 w-20 rounded-full bg-gradient-to-br from-blue-700 to-blue-900 flex items-center justify-center text-white font-bold text-xl shadow-md ring-4 ring-blue-100 dark:ring-blue-900/50 group-hover:ring-yellow-200 dark:group-hover:ring-yellow-800/50 transition-all duration-300">
               {initials}
             </div>
             <OnDutyIndicator isOnDuty={sa.isOnDuty} />
@@ -93,7 +93,7 @@ export function SACard({ sa, onClick, isAuthenticated }: SACardProps) {
 
           {/* Name + Sex indicator */}
           <div className="flex items-center gap-1.5 min-w-0 max-w-[220px]">
-            <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100 group-hover:text-violet-700 dark:group-hover:text-violet-400 transition-colors duration-300 truncate">
+            <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100 group-hover:text-yellow-700 dark:group-hover:text-yellow-400 transition-colors duration-300 truncate">
               {fullName}
             </h3>
             {sa.sex && (
@@ -125,7 +125,7 @@ export function SACard({ sa, onClick, isAuthenticated }: SACardProps) {
           {/* Office */}
           {sa.officeName && (
             <div className="flex items-center gap-1.5 mt-1 text-sm text-gray-600 dark:text-gray-400">
-              <Building2 className="w-3.5 h-3.5 text-violet-500 flex-shrink-0" />
+              <Building2 className="w-3.5 h-3.5 text-yellow-500 flex-shrink-0" />
               <span className="truncate max-w-[200px]">{sa.officeName}</span>
             </div>
           )}
@@ -148,7 +148,7 @@ export function SACard({ sa, onClick, isAuthenticated }: SACardProps) {
           {sa.semester && (
             <Badge
               variant="secondary"
-              className="bg-violet-50 dark:bg-violet-900/30 text-violet-700 dark:text-violet-300 text-xs font-medium border border-violet-100 dark:border-violet-800/50"
+              className="bg-yellow-50 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300 text-xs font-medium border border-yellow-100 dark:border-yellow-800/50"
             >
               <BookOpen className="w-3 h-3 mr-1" />
               {sa.semester}

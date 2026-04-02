@@ -71,10 +71,10 @@ export function SADetailModal({
               className="max-h-[85vh] overflow-y-auto"
             >
               {/* Header with gradient */}
-              <div className="relative bg-gradient-to-br from-[#1a1147] to-[#0d1b3e] px-6 pt-8 pb-10 text-center">
+              <div className="relative bg-gradient-to-br from-[#0f1b4d] to-[#0d2247] px-6 pt-8 pb-10 text-center">
                 {/* Decorative circles */}
-                <div className="absolute top-4 right-4 w-20 h-20 rounded-full bg-violet-500/10 blur-xl" />
-                <div className="absolute bottom-2 left-4 w-16 h-16 rounded-full bg-indigo-400/10 blur-xl" />
+                <div className="absolute top-4 right-4 w-20 h-20 rounded-full bg-yellow-500/10 blur-xl" />
+                <div className="absolute bottom-2 left-4 w-16 h-16 rounded-full bg-blue-500/10 blur-xl" />
 
                 <DialogHeader className="relative z-10">
                   <DialogTitle className="sr-only">

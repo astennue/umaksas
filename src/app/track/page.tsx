@@ -84,7 +84,7 @@ export default function TrackPage() {
       fallback={
         <PublicLayout>
           <div className="flex min-h-[60vh] items-center justify-center">
-            <Loader2 className="h-8 w-8 animate-spin text-violet-600" />
+            <Loader2 className="h-8 w-8 animate-spin text-yellow-600" />
           </div>
         </PublicLayout>
       }
@@ -169,7 +169,7 @@ function TrackPageContent() {
           animate={{ opacity: 1, y: 0 }}
           className="mb-8 text-center"
         >
-          <Badge className="mb-3 bg-violet-100 text-violet-700 hover:bg-violet-200 dark:bg-violet-900/30 dark:text-violet-400 dark:hover:bg-violet-900/50">
+          <Badge className="mb-3 bg-yellow-100 text-yellow-700 hover:bg-yellow-200 dark:bg-yellow-900/30 dark:text-yellow-400 dark:hover:bg-yellow-900/50">
             <Search className="mr-1 h-3.5 w-3.5" />
             Application Tracker
           </Badge>
@@ -209,7 +209,7 @@ function TrackPageContent() {
                 <Button
                   type="submit"
                   disabled={isLoading}
-                  className="gap-2 bg-violet-600 text-white hover:bg-violet-700"
+                  className="gap-2 bg-yellow-600 text-gray-900 hover:bg-yellow-700"
                 >
                   {isLoading ? (
                     <Loader2 className="h-4 w-4 animate-spin" />
@@ -226,7 +226,7 @@ function TrackPageContent() {
         {/* Loading */}
         {isLoading && (
           <div className="flex flex-col items-center justify-center gap-3 py-12">
-            <Loader2 className="h-8 w-8 animate-spin text-violet-600" />
+            <Loader2 className="h-8 w-8 animate-spin text-yellow-600" />
             <p className="text-sm text-muted-foreground">Looking up your application...</p>
           </div>
         )}
@@ -250,7 +250,7 @@ function TrackPageContent() {
                 <div className="flex flex-col items-center gap-2 sm:flex-row sm:justify-center">
                   <Button
                     onClick={() => router.push("/apply")}
-                    className="gap-2 bg-violet-600 text-white hover:bg-violet-700"
+                    className="gap-2 bg-yellow-600 text-gray-900 hover:bg-yellow-700"
                   >
                     Apply Now
                     <ArrowRight className="h-4 w-4" />
@@ -273,7 +273,7 @@ function TrackPageContent() {
           >
             {/* Status Card */}
             <Card className="overflow-hidden">
-              <CardHeader className="bg-gradient-to-r from-[#1a1147] to-[#0d1b3e] px-6 py-4 text-white">
+              <CardHeader className="bg-gradient-to-r from-[#0f1b4d] to-[#0d2247] px-6 py-4 text-white">
                 <div className="flex items-center justify-between">
                   <div>
                     <CardTitle className="text-base">
@@ -345,7 +345,7 @@ function TrackPageContent() {
                               item.completed
                                 ? "border-green-500 bg-green-500 text-white"
                                 : isActive
-                                ? "border-violet-600 bg-violet-600 text-white animate-pulse"
+                                ? "border-yellow-600 bg-yellow-600 text-white animate-pulse"
                                 : "border-muted-foreground/30 bg-background text-muted-foreground/50"
                             }`}
                           >
@@ -369,7 +369,7 @@ function TrackPageContent() {
                               item.completed
                                 ? "text-green-700 dark:text-green-400"
                                 : isActive
-                                ? "text-violet-600"
+                                ? "text-yellow-600"
                                 : "text-muted-foreground"
                             }`}
                           >
@@ -406,7 +406,7 @@ function TrackPageContent() {
                     <Button
                       size="sm"
                       onClick={() => router.push("/apply")}
-                      className="mt-2 gap-2 bg-violet-600 text-white hover:bg-violet-700"
+                      className="mt-2 gap-2 bg-yellow-600 text-gray-900 hover:bg-yellow-700"
                     >
                       Continue Application
                       <ArrowRight className="h-3 w-3" />
@@ -442,8 +442,8 @@ function TrackPageContent() {
             animate={{ opacity: 1 }}
             className="text-center py-12"
           >
-            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-violet-100 dark:bg-violet-900/30">
-              <Search className="h-8 w-8 text-violet-600" />
+            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-yellow-100 dark:bg-yellow-900/30">
+              <Search className="h-8 w-8 text-yellow-600" />
             </div>
             <h3 className="mb-2 text-lg font-semibold">Check Your Application Status</h3>
             <p className="text-sm text-muted-foreground">
