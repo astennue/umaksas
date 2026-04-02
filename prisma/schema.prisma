@@ -1,0 +1,1532 @@
+// UMAK Student Assistant Management System
+// PostgreSQL Schema for Supabase
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_DATABASE_URL")
+}
+
+// ============================================
+// USER MANAGEMENT
+// ============================================
+
+enum UserRole {
+  SUPER_ADMIN
+  ADVISER
+  OFFICER
+  OFFICE_SUPERVISOR
+  HRMO
+  STUDENT_ASSISTANT
+  APPLICANT
+  PUBLIC_VISITOR
+}
+
+enum SAStatus {
+  ACTIVE
+  ARCHIVED
+  COMPLETED
+  RESIGNED
+  DISMISSED
+  OTHER
+}
+
+enum OfficerPosition {
+  ADVISER
+  PRESIDENT
+  VICE_PRESIDENT_INTERNAL
+  VICE_PRESIDENT_EXTERNAL
+  SECRETARY
+  TREASURER
+  AUDITOR
+  PUBLIC_RELATION_OFFICER
+}
+
+model User {
+  id                String   @id @default(cuid())
+  email             String   @unique @db.VarChar(255)
+  password          String
+  role              UserRole @default(PUBLIC_VISITOR)
+
+  // Profile Information
+  firstName         String?  @db.VarChar(255)
+  middleName        String?  @db.VarChar(255)
+  lastName          String?  @db.VarChar(255)
+  suffix            String?  @db.VarChar(255)
+  phone             String?  @db.VarChar(50)
+  photoUrl          String?
+
+  // Status
+  isActive          Boolean  @default(true)
+  emailVerified     DateTime?
+  lastLoginAt       DateTime?
+
+  // Timestamps
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  // Relations
+  profile           SAProfile?
+  application       Application?
+  supervisedOffice  Office?              @relation("OfficeHead")
+  attendanceRecords AttendanceRecord[]
+  correctionRequests AttendanceCorrection[]
+  schedules         Schedule[]
+  evaluations       Evaluation[]         @relation("EvaluatedSA")
+  evaluationsGiven  Evaluation[]         @relation("Evaluator")
+  payments          Payment[]
+  certificates      Certificate[]
+  events            EventAssignment[]
+  sentMessages      Message[]            @relation("MessageSender")
+  receivedMessages  MessageRecipient[]
+  notifications     Notification[]
+  notificationPrefs NotificationPreference?
+  activityLogs      ActivityLog[]
+  documents         Document[]
+  signature         DigitalSignature?
+  interviewSlotsAsInterviewer InterviewSlot[] @relation("Interviewer")
+  interviewSlotsAsInterviewee InterviewSlot[] @relation("Interviewee")
+  hrOnboarding      HROnboarding?
+  agreements        Agreement[]
+  officerProfile    OfficerProfile?
+  renewal           Renewal?
+  formFieldResponses FormFieldResponse[]
+  announcements     Announcement[]
+
+  @@index([role])
+  @@map("users")
+}
+
+model SAProfile {
+  id                String   @id @default(cuid())
+  userId            String   @unique
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Academic Information
+  studentNumber     String?  @unique
+  college           String?
+  program           String?
+  yearLevel         String?  @db.VarChar(100)
+  academicYear      String?  @db.VarChar(100)
+  semester          String?  @db.VarChar(100)
+
+  // Personal Information
+  dateOfBirth       DateTime?
+  age               Int?
+  sex               String?
+  courtesyTitle     String?
+
+  // Contact Information
+  contactNumber     String?  @db.VarChar(50)
+  personalEmail     String?  @db.VarChar(50)
+
+  // Employment Details
+  employeeId        String?  @unique
+  dateHired         DateTime?
+  status            SAStatus @default(ACTIVE)
+  archiveReason     String?  @db.Text
+  archiveDate       DateTime?
+
+  // Work Hours
+  totalHoursWorked  Float    @default(0)
+  hoursThisSemester Float    @default(0)
+
+  // Office Assignment
+  officeId          String?
+  office            Office?  @relation(fields: [officeId], references: [id])
+
+  // On Duty Status
+  isOnDuty          Boolean  @default(false)
+  lastClockIn       DateTime?
+  lastClockOut      DateTime?
+
+  // Timestamps
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@index([officeId])
+  @@map("sa_profiles")
+}
+
+// ============================================
+// OFFICER PROFILES
+// ============================================
+
+model OfficerProfile {
+  id                String           @id @default(cuid())
+  userId            String           @unique
+  user              User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  position          OfficerPosition
+  orderIndex        Int              @default(0)
+
+  // Contact
+  email             String?
+  phone             String?          @db.VarChar(50)
+
+  // Timestamps
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+
+  @@map("officer_profiles")
+}
+
+// ============================================
+// OFFICE MANAGEMENT
+// ============================================
+
+model Office {
+  id                String   @id @default(cuid())
+  name              String
+  code              String?  @unique
+  email             String?
+  phone             String?  @db.VarChar(50)
+  location          String?
+  description       String?  @db.Text
+
+  // Leadership
+  headName          String?
+  headEmail         String?
+  headUserId        String?  @unique
+  headUser          User?    @relation("OfficeHead", fields: [headUserId], references: [id])
+
+  // Capacity
+  maxSACount        Int      @default(5)
+  currentSACount    Int      @default(0)
+
+  // Status
+  isActive          Boolean  @default(true)
+
+  // Timestamps
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  // Relations
+  saRequests        SARequest[]
+  schedules         Schedule[]
+  evaluations       Evaluation[]
+  events            Event[]
+  profiles          SAProfile[]
+  renewalTransfers  Renewal[]            @relation("RenewalOffice")
+
+  @@map("offices")
+}
+
+model SARequest {
+  id                String   @id @default(cuid())
+  officeId          String
+  office            Office   @relation(fields: [officeId], references: [id], onDelete: Cascade)
+
+  // Request Details
+  requestedCount    Int
+  reason            String?  @db.Text
+  requirements      String?  @db.Text
+  preferredSkills   String?  @db.Text
+
+  // Status
+  status            RequestStatus @default(PENDING)
+  reviewedBy        String?
+  reviewedAt        DateTime?
+  reviewNotes       String?  @db.Text
+
+  // Timestamps
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@map("sa_requests")
+}
+
+enum RequestStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  CANCELLED
+}
+
+// ============================================
+// APPLICATION SYSTEM (FORM A)
+// ============================================
+
+enum ApplicationStatus {
+  DRAFT
+  SUBMITTED
+  UNDER_REVIEW
+  INTERVIEW_SCHEDULED
+  INTERVIEWED
+  APPROVED
+  REJECTED
+  WITHDRAWN
+}
+
+model Application {
+  id                String   @id @default(cuid())
+  applicantEmail    String   @unique
+  userId            String?  @unique
+  user              User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  // Application Details
+  batchId           String?
+  status            ApplicationStatus @default(DRAFT)
+  currentStep       Int      @default(1)
+
+  // Personal Information
+  firstName         String?
+  middleName        String?
+  lastName          String?
+  suffix            String?
+  dateOfBirth       DateTime?
+  placeOfBirth      String?  @db.VarChar(255)
+  gender            String?  @db.VarChar(100)
+  civilStatus       String?  @db.VarChar(100)
+  religion          String?  @db.VarChar(100)
+  citizenship       String?  @db.VarChar(100)
+
+  // Contact Information
+  email             String?
+  phone             String?   @db.VarChar(50)
+  alternatePhone    String?   @db.VarChar(50)
+
+  // Family Background
+  fatherName        String?   @db.VarChar(255)
+  fatherOccupation  String?   @db.VarChar(255)
+  fatherContact     String?   @db.VarChar(50)
+  motherName        String?   @db.VarChar(255)
+  motherMaidenName  String?   @db.VarChar(255)
+  motherOccupation  String?   @db.VarChar(255)
+  motherContact     String?   @db.VarChar(50)
+  guardianName      String?   @db.VarChar(255)
+  guardianRelation  String?   @db.VarChar(100)
+  guardianContact   String?   @db.VarChar(50)
+  siblingsCount     Int?
+
+  // Educational Background
+  elementarySchool  String?
+  elementaryYear    String?
+  highSchool        String?
+  highSchoolYear    String?
+  seniorHigh        String?
+  seniorHighYear    String?
+  seniorHighTrack   String?
+
+  // Current Education
+  studentNumber     String?
+  college           String?
+  program           String?
+  yearLevel         String?  @db.VarChar(100)
+  section           String?  @db.VarChar(100)
+  gwa               String?  @db.VarChar(100)
+
+  // Employment Record
+  employmentJson    String?   @db.Text
+
+  // Weekly Availability
+  availabilityJson  String?   @db.Text
+
+  // Trainings and Seminars
+  trainingsJson     String?   @db.Text
+
+  // Character References
+  referencesJson    String?   @db.Text
+
+  // Essay Questions
+  essayWhyApply     String?   @db.Text
+  essayGoals        String?   @db.Text
+  essaySkills       String?   @db.Text
+  essayChallenges   String?   @db.Text
+
+  // Residence Information
+  residenceAddress  String?   @db.VarChar(255)
+  residenceCity     String?   @db.VarChar(255)
+  residenceZip      String?   @db.VarChar(255)
+  residenceLatitude Float?
+  residenceLongitude Float?
+  residenceMapUrl   String?   @db.VarChar(255)
+
+  // Uploads
+  photoUrl          String?
+  resumeUrl         String?
+  registrationUrl   String?
+  gradeReportUrl    String?
+  residenceImageUrl String?
+
+  // Review Scores
+  totalScore        Float?
+  rank              Int?
+
+  // Interview
+  interviewStatus   InterviewAppStatus @default(PENDING)
+  interviewNotes    String?
+  interviewScore    Float?
+  interviewDate     DateTime?
+
+  // Timestamps
+  submittedAt       DateTime?
+  reviewedAt        DateTime?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  // Relations
+  scores            ApplicationScore[]
+  interviewSlots    InterviewSlot[]
+  formFieldResponses FormFieldResponse[]
+
+  @@index([status])
+  @@map("applications")
+}
+
+enum InterviewAppStatus {
+  PENDING
+  SCHEDULED
+  ACCEPTED
+  DECLINED
+  RESCHEDULE_REQUESTED
+  COMPLETED
+  NO_SHOW
+}
+
+model ApplicationScore {
+  id                String   @id @default(cuid())
+  applicationId     String
+  application       Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+
+  // Evaluator
+  evaluatorId       String
+
+  // Scoring Categories
+  academicScore     Float    @default(0)
+  interviewScore    Float    @default(0)
+  skillsScore       Float    @default(0)
+  characterScore    Float    @default(0)
+  totalScore        Float    @default(0)
+
+  // Comments
+  comments          String?
+
+  // Timestamps
+  evaluatedAt       DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@unique([applicationId, evaluatorId])
+  @@map("application_scores")
+}
+
+// ============================================
+// INTERVIEW SYSTEM
+// ============================================
+
+model InterviewSlot {
+  id                String   @id @default(cuid())
+
+  // Interview Details
+  scheduledAt       DateTime
+  duration          Int      @default(30)
+  location          String?
+  mode              String?  @default("online")
+  meetingLink       String?
+
+  // Interviewer
+  interviewerId     String
+  interviewer       User     @relation("Interviewer", fields: [interviewerId], references: [id])
+
+  // Applicant
+  applicationId     String
+  application       Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  intervieweeId     String?
+  interviewee       User?    @relation("Interviewee", fields: [intervieweeId], references: [id])
+
+  // Status
+  status            InterviewStatus @default(SCHEDULED)
+
+  // Reschedule Request
+  rescheduleReason  String?  @db.Text
+  requestedDate     DateTime?
+
+  // Notes
+  notes             String?  @db.Text
+  score             Float?
+
+  // Timestamps
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@map("interview_slots")
+}
+
+enum InterviewStatus {
+  SCHEDULED
+  ACCEPTED
+  DECLINED
+  RESCHEDULE_REQUESTED
+  COMPLETED
+  CANCELLED
+  NO_SHOW
+}
+
+// ============================================
+// SCHEDULE MANAGEMENT (FORM B)
+// ============================================
+
+model Schedule {
+  id                String   @id @default(cuid())
+  userId            String
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Schedule Details
+  semester          String?  @db.VarChar(100)
+  academicYear      String?  @db.VarChar(100)
+
+  // Schedule Type
+  type              ScheduleType @default(WORK)
+
+  // Time Block
+  dayOfWeek         Int
+  startTime         String
+  endTime           String
+
+  // Location
+  location          String?
+
+  // Office Assignment
+  officeId          String?
+  office            Office?  @relation(fields: [officeId], references: [id])
+
+  // Approval
+  status            ScheduleStatus @default(PENDING)
+  approvedBy        String?
+  approvedAt        DateTime?
+
+  // Signature
+  studentSignedAt   DateTime?
+  supervisorSignedAt DateTime?
+
+  // Notes
+  notes             String?  @db.Text
+
+  // Timestamps
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@index([userId])
+  @@index([officeId])
+  @@map("schedules")
+}
+
+enum ScheduleType {
+  CLASS
+  WORK
+  EVENT
+  BREAK
+}
+
+enum ScheduleStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+// ============================================
+// ATTENDANCE SYSTEM
+// ============================================
+
+model AttendanceRecord {
+  id                String   @id @default(cuid())
+  userId            String
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Date
+  date              DateTime
+
+  // Time Records
+  timeIn            DateTime?
+  timeOut           DateTime?
+  breakStart        DateTime?
+  breakEnd          DateTime?
+
+  // Calculated Hours
+  totalHours        Float    @default(0)
+
+  // Status
+  status            AttendanceStatus @default(PRESENT)
+
+  // Corrections
+  isCorrected       Boolean  @default(false)
+  correctedBy       String?
+  correctionReason  String?  @db.Text
+  correctedAt       DateTime?
+
+  // Notes
+  notes             String?   @db.Text
+
+  // Location
+  location          String?
+
+  // Relations
+  corrections       AttendanceCorrection[]
+
+  // Timestamps
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@unique([userId, date])
+  @@index([userId])
+  @@index([date])
+  @@map("attendance_records")
+}
+
+enum AttendanceStatus {
+  PRESENT
+  ABSENT
+  LATE
+  HALF_DAY
+  ON_LEAVE
+  HOLIDAY
+  UNDERTIME
+  OVERTIME
+}
+
+model AttendanceCorrection {
+  id                String   @id @default(cuid())
+  attendanceId      String
+  attendance        AttendanceRecord @relation(fields: [attendanceId], references: [id], onDelete: Cascade)
+
+  // Request Details
+  requestedBy       String
+  requester         User     @relation(fields: [requestedBy], references: [id], onDelete: Cascade)
+
+  // Correction Details
+  requestedTimeIn   DateTime?
+  requestedTimeOut  DateTime?
+  requestedBreakStart DateTime?
+  requestedBreakEnd DateTime?
+  reason            String   @db.Text
+
+  // Status
+  status            CorrectionStatus @default(PENDING)
+
+  // Review
+  reviewedBy        String?
+  reviewedAt        DateTime?
+  reviewNotes       String?  @db.Text
+
+  // Timestamps
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@map("attendance_corrections")
+}
+
+enum CorrectionStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+// ============================================
+// EVALUATION SYSTEM (FORM C)
+// ============================================
+
+model Evaluation {
+  id                String   @id @default(cuid())
+
+  // Student Assistant
+  saId              String
+  sa                User     @relation("EvaluatedSA", fields: [saId], references: [id], onDelete: Cascade)
+
+  // Evaluator
+  evaluatorId       String
+  evaluator         User     @relation("Evaluator", fields: [evaluatorId], references: [id])
+
+  // Office
+  officeId          String?
+  office            Office?  @relation(fields: [officeId], references: [id])
+
+  // Period
+  month             Int
+  year              Int
+  semester          String?  @db.VarChar(100)
+  academicYear      String?  @db.VarChar(100)
+
+  // Scoring Categories (weighted)
+  punctuality       Float    @default(0)
+  workQuality       Float    @default(0)
+  initiative        Float    @default(0)
+  teamwork          Float    @default(0)
+  communication     Float    @default(0)
+  attitude          Float    @default(0)
+
+  // Computed
+  totalScore        Float    @default(0)
+  rating            EvaluationRating?
+
+  // Comments
+  strengths         String?   @db.Text
+  improvements      String?   @db.Text
+  supervisorComments String?   @db.Text
+
+  // Status
+  status            EvaluationStatus @default(DRAFT)
+  isLocked          Boolean  @default(false)
+  lockedAt          DateTime?
+
+  // Signature
+  supervisorSignedAt DateTime?
+  hrVerifiedAt      DateTime?
+
+  // Timestamps
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@unique([saId, evaluatorId, month, year])
+  @@index([officeId])
+  @@map("evaluations")
+}
+
+enum EvaluationRating {
+  EXCELLENT
+  OUTSTANDING
+  VERY_SATISFACTORY
+  SATISFACTORY
+  FAIR
+  POOR
+}
+
+enum EvaluationStatus {
+  DRAFT
+  SUBMITTED
+  ACKNOWLEDGED
+}
+
+// ============================================
+// HR ONBOARDING (FORM D)
+// ============================================
+
+model HROnboarding {
+  id                String   @id @default(cuid())
+  userId            String   @unique
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Employee Information
+  employeeId        String?  @unique
+  employeeType      String   @default("Student Assistant") @db.VarChar(100)
+
+  // Personal Details (verified)
+  firstName         String?
+  lastName          String?
+  middleName        String?
+  dateOfBirth       DateTime?
+  gender            String?  @db.VarChar(100)
+  civilStatus       String?  @db.VarChar(100)
+  citizenship       String?  @db.VarChar(100)
+  religion          String?  @db.VarChar(100)
+
+  // Contact Details
+  email             String?
+  phone             String?  @db.VarChar(50)
+  address           String?  @db.VarChar(255)
+
+  // Emergency Contact
+  emergencyName     String?
+  emergencyRelation String?
+  emergencyContact  String?
+
+  // Employment Details
+  dateHired         DateTime?
+  officeId          String?
+  position          String?  @db.VarChar(100)
+
+  // Status
+  isVerified        Boolean  @default(false)
+  verifiedAt        DateTime?
+
+  // Timestamps
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@map("hr_onboarding")
+}
+
+// ============================================
+// AGREEMENT (FORM E)
+// ============================================
+
+model Agreement {
+  id                String   @id @default(cuid())
+  userId            String
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Agreement Details
+  academicYear      String   @db.VarChar(100)
+  semester          String   @db.VarChar(100)
+
+  // Terms
+  agreedToTerms     Boolean  @default(false)
+
+  // Student Signature
+  studentSignedAt   DateTime?
+  studentSignatureId String?
+  studentSignature  DigitalSignature? @relation("StudentAgreementSignature", fields: [studentSignatureId], references: [id])
+
+  // Supervisor Signature
+  supervisorSignedAt DateTime?
+  supervisorSignatureId String?
+  supervisorSignature DigitalSignature? @relation("SupervisorAgreementSignature", fields: [supervisorSignatureId], references: [id])
+
+  // Document
+  documentUrl       String?
+  documentRefNumber String?
+
+  // Timestamps
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@unique([userId, academicYear, semester])
+  @@map("agreements")
+}
+
+model DigitalSignature {
+  id                String   @id @default(cuid())
+  userId            String   @unique
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Signature Data
+  signatureData     String   @db.Text
+
+  // Timestamps
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  // Relations
+  studentAgreements  Agreement[] @relation("StudentAgreementSignature")
+  supervisorAgreements Agreement[] @relation("SupervisorAgreementSignature")
+
+  @@map("digital_signatures")
+}
+
+// ============================================
+// PAYMENT SYSTEM
+// ============================================
+
+model Payment {
+  id                String   @id @default(cuid())
+  userId            String
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Payment Details
+  amount            Float    @default(20.00)
+  month             Int
+  year              Int
+
+  // Reference
+  referenceNumber   String?  @unique
+
+  // Status
+  status            PaymentStatus @default(UNPAID)
+
+  // GCash / Proof of Payment
+  transactionNumber String?
+  amountPaid        Float?
+  proofUrl          String?
+  uploadedAt        DateTime?
+
+  // Verification
+  verifiedBy        String?
+  verifiedAt        DateTime?
+  verificationNotes String?  @db.Text
+
+  // Receipt
+  receiptUrl        String?
+  receiptGeneratedAt DateTime?
+
+  // Timestamps
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@unique([userId, month, year])
+  @@index([userId])
+  @@index([status])
+  @@map("payments")
+}
+
+enum PaymentStatus {
+  UNPAID
+  PENDING
+  PAID
+  REJECTED
+}
+
+// ============================================
+// CERTIFICATE SYSTEM
+// ============================================
+
+model Certificate {
+  id                String   @id @default(cuid())
+  userId            String
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Certificate Details
+  type              CertificateType
+  referenceNumber   String   @unique
+
+  // Content
+  title             String
+  officeAssigned    String?
+  servicePeriod     String?
+  serviceStartDate  DateTime?
+  serviceEndDate    DateTime?
+  dateIssued        DateTime @default(now())
+
+  // Approval
+  approvingAuthority ApprovingAuthority
+  approvedByName    String?
+  approvedByTitle   String?
+  approvedAt        DateTime?
+
+  // Status
+  status            CertificateStatus @default(ACTIVE)
+  revokedAt         DateTime?
+  revokedBy         String?
+  revokeReason      String?  @db.Text
+
+  // QR Verification
+  qrCode            String?
+  verificationUrl   String?
+
+  // Document
+  documentUrl       String?
+
+  // Timestamps
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@index([userId])
+  @@map("certificates")
+}
+
+enum CertificateType {
+  CERTIFICATE_OF_SERVICE
+  CERTIFICATE_OF_COMPLETION
+  CERTIFICATE_OF_EMPLOYMENT
+}
+
+enum ApprovingAuthority {
+  ADVISER
+  PRESIDENT
+}
+
+enum CertificateStatus {
+  ACTIVE
+  REVOKED
+  EXPIRED
+}
+
+// ============================================
+// EVENT SYSTEM
+// ============================================
+
+model Event {
+  id                String   @id @default(cuid())
+  officeId          String?
+  office            Office?  @relation(fields: [officeId], references: [id])
+
+  // Event Details
+  name              String
+  description       String?  @db.Text
+  location          String?
+
+  // Schedule
+  startDate         DateTime
+  endDate           DateTime?
+
+  // Requirements
+  requiredSACount   Int?
+
+  // Status
+  status            EventStatus @default(UPCOMING)
+
+  // Report
+  reportGenerated   Boolean  @default(false)
+  reportUrl         String?
+
+  // Timestamps
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  // Relations
+  assignments       EventAssignment[]
+
+  @@index([officeId])
+  @@index([status])
+  @@map("events")
+}
+
+model EventAssignment {
+  id                String   @id @default(cuid())
+  eventId           String
+  event             Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  userId            String
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Assignment Details
+  role              String?
+  assignedAt        DateTime @default(now())
+  assignedBy        String?
+
+  // Status
+  status            EventAssignmentStatus @default(ASSIGNED)
+  confirmedAt       DateTime?
+
+  // Attendance
+  attended          Boolean?
+  hoursRendered     Float?
+
+  @@unique([eventId, userId])
+  @@index([userId])
+  @@map("event_assignments")
+}
+
+enum EventStatus {
+  UPCOMING
+  ONGOING
+  COMPLETED
+  CANCELLED
+}
+
+enum EventAssignmentStatus {
+  ASSIGNED
+  CONFIRMED
+  DECLINED
+  ABSENT
+}
+
+// ============================================
+// MESSAGING SYSTEM
+// ============================================
+
+model Message {
+  id                String   @id @default(cuid())
+
+  // Sender
+  senderId          String
+  sender            User     @relation("MessageSender", fields: [senderId], references: [id])
+
+  // Content
+  subject           String?  @db.Text
+  content           String   @db.Text
+
+  // Type
+  type              MessageType @default(DIRECT)
+
+  // Group (for group chats)
+  groupType         MessageGroupType?
+  officeId          String?
+
+  // Timestamps
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  // Relations
+  recipients        MessageRecipient[]
+
+  @@map("messages")
+}
+
+model MessageRecipient {
+  id                String   @id @default(cuid())
+  messageId         String
+  message           Message  @relation(fields: [messageId], references: [id], onDelete: Cascade)
+
+  userId            String
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Status
+  isRead            Boolean  @default(false)
+  readAt            DateTime?
+
+  // Timestamps
+  createdAt         DateTime @default(now())
+
+  @@unique([messageId, userId])
+  @@map("message_recipients")
+}
+
+enum MessageType {
+  DIRECT
+  GROUP
+  ANNOUNCEMENT
+  SYSTEM
+}
+
+enum MessageGroupType {
+  OFFICE
+  ALL_SA
+  SUPERVISORS
+}
+
+// ============================================
+// NOTIFICATION SYSTEM
+// ============================================
+
+model Notification {
+  id                String   @id @default(cuid())
+  userId            String
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Content
+  type              NotificationType
+  title             String
+  message           String   @db.Text
+
+  // Link
+  link              String?
+
+  // Status
+  isRead            Boolean  @default(false)
+  readAt            DateTime?
+
+  // Timestamps
+  createdAt         DateTime @default(now())
+
+  @@index([userId])
+  @@index([createdAt])
+  @@map("notifications")
+}
+
+enum NotificationType {
+  APPLICATION_SUBMITTED
+  APPLICATION_APPROVED
+  APPLICATION_REJECTED
+  INTERVIEW_SCHEDULED
+  INTERVIEW_REMINDER
+  INTERVIEW_RESCHEDULE_REQUESTED
+  EVALUATION_DUE
+  EVALUATION_SUBMITTED
+  PAYMENT_DUE
+  PAYMENT_VERIFIED
+  EVENT_ASSIGNED
+  EVENT_REMINDER
+  SCHEDULE_APPROVED
+  ATTENDANCE_CORRECTED
+  ACCOUNT_CREATED
+  SYSTEM
+}
+
+// ============================================
+// NOTIFICATION PREFERENCES
+// ============================================
+
+model NotificationPreference {
+  id                String   @id @default(cuid())
+  userId            String   @unique
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Toggle per type
+  applicationSubmitted   Boolean @default(true)
+  applicationApproved   Boolean @default(true)
+  applicationRejected   Boolean @default(true)
+  interviewScheduled    Boolean @default(true)
+  interviewReminder     Boolean @default(true)
+  evaluationDue         Boolean @default(true)
+  evaluationSubmitted   Boolean @default(true)
+  paymentDue            Boolean @default(true)
+  paymentVerified       Boolean @default(true)
+  eventAssigned         Boolean @default(true)
+  eventReminder         Boolean @default(true)
+  scheduleApproved      Boolean @default(true)
+  attendanceCorrected   Boolean @default(true)
+  accountCreated        Boolean @default(true)
+  system                Boolean @default(true)
+
+  // Timestamps
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@index([userId])
+  @@map("notification_preferences")
+}
+
+// ============================================
+// DOCUMENT MANAGEMENT
+// ============================================
+
+model Document {
+  id                String   @id @default(cuid())
+  userId            String?
+  user              User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Document Details
+  type              DocumentType
+  referenceNumber   String   @unique
+  title             String
+
+  // File
+  fileUrl           String
+  fileSize          Int?
+  mimeType          String?
+
+  // Metadata
+  academicYear      String?  @db.VarChar(100)
+  semester          String?  @db.VarChar(100)
+  month             Int?
+  year              Int?
+
+  // Timestamps
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@map("documents")
+}
+
+enum DocumentType {
+  APPLICATION_FORM
+  SCHEDULE_FORM
+  EVALUATION_FORM
+  HR_ONBOARDING
+  AGREEMENT
+  PAYMENT_RECEIPT
+  CERTIFICATE
+  OTHER
+}
+
+// ============================================
+// CMS & SETTINGS
+// ============================================
+
+model CMSContent {
+  id                String   @id @default(cuid())
+  page              String
+  section           String?  @db.VarChar(100)
+
+  // Content
+  title             String?
+  content           String?  @db.Text
+
+  // Media
+  imageUrl          String?
+  videoUrl          String?
+
+  // Order
+  order             Int      @default(0)
+
+  // Status
+  isActive          Boolean  @default(true)
+
+  // Timestamps
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@map("cms_contents")
+}
+
+enum AnnouncementPriority {
+  LOW
+  NORMAL
+  HIGH
+  URGENT
+}
+
+model Announcement {
+  id                String   @id @default(cuid())
+
+  // Content
+  title             String
+  content           String   @db.Text
+  excerpt           String?  @db.Text
+
+  // Media
+  imageUrl          String?
+
+  // Status
+  isPublished       Boolean  @default(false)
+  isPinned          Boolean  @default(false)
+  priority          AnnouncementPriority @default(NORMAL)
+
+  // Author
+  authorId          String?
+  author            User?    @relation(fields: [authorId], references: [id])
+
+  // Schedule
+  publishedAt       DateTime?
+
+  // Timestamps
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@map("announcements")
+}
+
+model SystemSettings {
+  id                String   @id @default(cuid())
+
+  // General
+  siteName          String   @default("UMAK Student Assistant Management System")
+  siteDescription   String?
+  logoUrl           String?
+
+  // Contact
+  contactEmail      String?
+  contactPhone      String?  @db.VarChar(50)
+  contactAddress    String?  @db.VarChar(255)
+
+  // Social
+  facebookUrl       String?
+  twitterUrl        String?
+  instagramUrl      String?
+  linkedinUrl       String?
+
+  // Settings
+  academicYear      String?  @db.VarChar(100)
+  currentSemester   String?
+  applicationOpen   Boolean  @default(false)
+  renewalOpen       Boolean  @default(false)
+  maxWorkHoursPerDay Int     @default(4)
+  monthlyPaymentFee Float    @default(20.00)
+
+  // Payment Collection
+  paymentCollectionEnabled Boolean @default(false)
+  gcashQrUrl       String?
+  gcashNumber       String?
+  paymentInstructions String? @db.Text
+
+  // Attendance
+  lateGraceMinutes  Int      @default(15)
+
+  // Interview Rubric Weights
+  rubricAcademic    Float    @default(25)
+  rubricInterview   Float    @default(25)
+  rubricSkills      Float    @default(25)
+  rubricCharacter   Float    @default(25)
+
+  // Timestamps
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@map("system_settings")
+}
+
+// ============================================
+// ORGANIZATION CHART
+// ============================================
+
+model OrgChart {
+  id                String   @id @default(cuid())
+
+  // University President
+  presidentName     String
+  presidentTitle    String   @default("University President")
+  presidentEmail    String?
+
+  // VP for Student Services
+  vpName            String
+  vpTitle           String   @default("Vice President for Student Services and Community Development")
+  vpEmail           String?
+
+  // SA Adviser
+  adviserName       String
+  adviserTitle      String   @default("UMak SAS Adviser")
+  adviserEmail      String?
+
+  // Timestamps
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@map("org_chart")
+}
+
+// ============================================
+// ACTIVITY LOGS
+// ============================================
+
+model ActivityLog {
+  id                String   @id @default(cuid())
+  userId            String?
+  user              User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  // Action
+  action            String
+  entityType        String?
+  entityId          String?
+
+  // Details
+  details           String?  @db.Text
+  ipAddress         String?
+  userAgent         String?  @db.Text
+
+  // Timestamp
+  createdAt         DateTime @default(now())
+
+  @@index([createdAt])
+  @@map("activity_logs")
+}
+
+// ============================================
+// RENEWAL SYSTEM
+// ============================================
+
+enum RenewalStatus {
+  PENDING_REVIEW
+  UNDER_REVIEW
+  APPROVED
+  REJECTED
+  REQUIRES_CHANGES
+}
+
+model Renewal {
+  id                String   @id @default(cuid())
+  userId            String   @unique
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Statement of Intent
+  statementOfIntent String?  @db.Text
+
+  // Availability Schedule (JSON: { monday: ["07:00","08:00"], ... })
+  availabilityJson  String?  @db.Text
+
+  // Whether adviser requires weekly availability submission
+  availabilityRequired Boolean @default(false)
+
+  // Office Transfer
+  requestTransfer   Boolean  @default(false)
+  transferReason    String?  @db.Text
+  newOfficeId       String?
+  newOffice         Office?  @relation("RenewalOffice", fields: [newOfficeId], references: [id])
+
+  // Uploaded Documents
+  intentLetterUrl   String?
+  reportOfGradeUrl  String?
+  corUrl            String?
+
+  // Status
+  status            RenewalStatus @default(PENDING_REVIEW)
+  reviewNotes       String?  @db.Text
+  reviewedBy        String?
+  reviewedAt        DateTime?
+
+  // Academic Period
+  academicYear      String?  @db.VarChar(100)
+  semester          String?  @db.VarChar(100)
+
+  // Timestamps
+  submittedAt       DateTime?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  // Relations
+  formFieldResponses FormFieldResponse[]
+
+  @@map("renewals")
+}
+
+// ============================================
+// CMS FORM BUILDER
+// ============================================
+
+enum FormFieldType {
+  TEXT
+  TEXTAREA
+  NUMBER
+  EMAIL
+  PHONE
+  DATE
+  SELECT
+  CHECKBOX
+  FILE_UPLOAD
+  HEADING
+  PARAGRAPH
+}
+
+enum FormContext {
+  APPLICATION
+  RENEWAL
+}
+
+model FormField {
+  id                String   @id @default(cuid())
+
+  // Field Details
+  label             String
+  fieldType         FormFieldType
+  context           FormContext
+
+  // Configuration (JSON: options, placeholder, validation rules, etc.)
+  configJson        String?  @db.Text
+
+  // Validation
+  isRequired        Boolean  @default(false)
+
+  // Ordering
+  orderIndex        Int      @default(0)
+
+  // Group/Section
+  section           String?  @db.VarChar(100)
+  step              Int?
+
+  // Status
+  isActive          Boolean  @default(true)
+
+  // Timestamps
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  // Relations
+  responses         FormFieldResponse[]
+
+  @@map("form_fields")
+}
+
+model FormFieldResponse {
+  id                String   @id @default(cuid())
+
+  formFieldId       String
+  formField         FormField @relation(fields: [formFieldId], references: [id], onDelete: Cascade)
+
+  // Respondent
+  userId            String?
+  user              User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  applicationId     String?
+  application       Application? @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  renewalId         String?
+  renewal           Renewal?  @relation(fields: [renewalId], references: [id], onDelete: Cascade)
+
+  // Response
+  value             String?
+
+  // File Upload
+  fileUrl           String?
+  fileName          String?
+
+  // Timestamps
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@map("form_field_responses")
+}
+
+// ============================================
+// FORM TEMPLATES
+// ============================================
+
+model FormTemplate {
+  id                String   @id @default(cuid())
+
+  // Template Details
+  name              String
+  type              String
+
+  // Content
+  templateData      String   @db.Text
+  fileUrl           String?
+
+  // Status
+  isActive          Boolean  @default(true)
+  version           Int      @default(1)
+
+  // Timestamps
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@map("form_templates")
+}

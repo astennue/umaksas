@@ -1,0 +1,652 @@
+"use client";
+
+import { useState, useEffect } from "react";
+import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
+import {
+  Settings,
+  Save,
+  Loader2,
+  GraduationCap,
+  Calendar,
+  DollarSign,
+  Clock,
+  ToggleLeft,
+  ToggleRight,
+  Shield,
+  QrCode,
+  Smartphone,
+  FileText,
+  Upload,
+  X,
+  AlertTriangle,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
+import { Textarea } from "@/components/ui/textarea";
+import { Skeleton } from "@/components/ui/skeleton";
+import { SelectItem } from "@/components/ui/select";
+import { BetterSelect } from "@/components/ui/better-select";
+import { Separator } from "@/components/ui/separator";
+import { cn } from "@/lib/utils";
+
+interface SystemSettingsData {
+  id: string;
+  siteName: string;
+  siteDescription: string | null;
+  contactEmail: string | null;
+  contactPhone: string | null;
+  contactAddress: string | null;
+  academicYear: string | null;
+  currentSemester: string | null;
+  applicationOpen: boolean;
+  renewalOpen: boolean;
+  maxWorkHoursPerDay: number;
+  monthlyPaymentFee: number;
+  paymentCollectionEnabled: boolean;
+  gcashQrUrl: string | null;
+  gcashNumber: string | null;
+  paymentInstructions: string | null;
+}
+
+export default function SettingsPage() {
+  const { data: session, status: authStatus } = useSession();
+  const router = useRouter();
+  const user = session?.user as { id: string; role: string } | undefined;
+
+  const [settings, setSettings] = useState<SystemSettingsData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+
+  // Form fields - Academic
+  const [academicYear, setAcademicYear] = useState("");
+  const [currentSemester, setCurrentSemester] = useState("");
+  const [applicationOpen, setApplicationOpen] = useState(false);
+  const [renewalOpen, setRenewalOpen] = useState(false);
+  const [maxWorkHours, setMaxWorkHours] = useState(4);
+  const [monthlyPayment, setMonthlyPayment] = useState(20);
+
+  // Form fields - Payment Collection
+  const [paymentCollectionEnabled, setPaymentCollectionEnabled] = useState(false);
+  const [gcashQrUrl, setGcashQrUrl] = useState("");
+  const [gcashNumber, setGcashNumber] = useState("");
+  const [paymentInstructions, setPaymentInstructions] = useState("");
+
+  const userRole = user?.role;
+  const isSuperAdmin = userRole === "SUPER_ADMIN";
+  const isAdviser = userRole === "ADVISER";
+  const canModifyPaymentSettings = isSuperAdmin;
+  const canViewPaymentSettings = isSuperAdmin;
+
+  // Auth check
+  useEffect(() => {
+    if (authStatus === "unauthenticated") {
+      router.push("/portal-login");
+    }
+  }, [authStatus, router]);
+
+  useEffect(() => {
+    if (user && user.role !== "SUPER_ADMIN" && user.role !== "ADVISER") {
+      router.push("/dashboard");
+    }
+  }, [user, router]);
+
+  // Fetch settings
+  useEffect(() => {
+    if (!user?.id) return;
+
+    const fetchSettings = async () => {
+      try {
+        const res = await fetch("/api/system-settings");
+        if (res.ok) {
+          const data = await res.json();
+          setSettings(data);
+          setAcademicYear(data.academicYear || "");
+          setCurrentSemester(data.currentSemester || "");
+          setApplicationOpen(data.applicationOpen);
+          setRenewalOpen(data.renewalOpen);
+          setMaxWorkHours(data.maxWorkHoursPerDay);
+          setMonthlyPayment(data.monthlyPaymentFee);
+          setPaymentCollectionEnabled(data.paymentCollectionEnabled || false);
+          setGcashQrUrl(data.gcashQrUrl || "");
+          setGcashNumber(data.gcashNumber || "");
+          setPaymentInstructions(data.paymentInstructions || "");
+        }
+      } catch (error) {
+        console.error("Error fetching settings:", error);
+        toast.error("Failed to load settings");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchSettings();
+  }, [user?.id]);
+
+  // Upload GCash QR code
+  const handleQrUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error("File size must be less than 10MB");
+      return;
+    }
+
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("type", "photo");
+
+      const uploadRes = await fetch("/api/upload", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!uploadRes.ok) {
+        const uploadData = await uploadRes.json();
+        throw new Error(uploadData.error || "Failed to upload file");
+      }
+
+      const uploadData = await uploadRes.json();
+      setGcashQrUrl(uploadData.url);
+      toast.success("GCash QR code uploaded");
+    } catch (error: unknown) {
+      toast.error(error instanceof Error ? error.message : "Failed to upload QR code");
+    }
+  };
+
+  const handleSave = async () => {
+    setSaving(true);
+    try {
+      const payload: Record<string, unknown> = {
+        academicYear: academicYear || null,
+        currentSemester: currentSemester || null,
+        applicationOpen,
+        renewalOpen,
+        maxWorkHoursPerDay: maxWorkHours,
+        monthlyPaymentFee: monthlyPayment,
+      };
+
+      // Only include payment settings if user has permission
+      if (canModifyPaymentSettings) {
+        payload.paymentCollectionEnabled = paymentCollectionEnabled;
+        payload.gcashQrUrl = gcashQrUrl || null;
+        payload.gcashNumber = gcashNumber || null;
+        payload.paymentInstructions = paymentInstructions || null;
+      }
+
+      const res = await fetch("/api/system-settings", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to save settings");
+
+      toast.success("Settings saved successfully");
+      setSettings(data);
+    } catch (error) {
+      console.error("Save error:", error);
+      toast.error(error instanceof Error ? error.message : "Failed to save settings");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (authStatus === "loading" || loading) {
+    return (
+      <div className="space-y-6">
+        <Skeleton className="h-8 w-48" />
+        <div className="grid gap-6 lg:grid-cols-2">
+          <Skeleton className="h-80 rounded-xl" />
+          <Skeleton className="h-80 rounded-xl" />
+        </div>
+      </div>
+    );
+  }
+
+  if (!session || (userRole !== "SUPER_ADMIN" && userRole !== "ADVISER")) {
+    return null;
+  }
+
+  const roleLabel = isSuperAdmin
+    ? "Super Administrator Access"
+    : "Adviser Access";
+
+  const roleIcon = isSuperAdmin
+    ? Shield
+    : GraduationCap;
+
+  const RoleIcon = roleIcon;
+
+  return (
+    <div className="max-w-4xl mx-auto space-y-6">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
+            <Settings className="h-6 w-6" />
+            System Settings
+          </h1>
+          <p className="text-sm text-muted-foreground mt-1">
+            Manage application and renewal seasons, academic settings, and system configuration
+          </p>
+        </div>
+        <Button
+          onClick={handleSave}
+          disabled={saving}
+          className="bg-blue-700 hover:bg-blue-800"
+        >
+          {saving ? (
+            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+          ) : (
+            <Save className="mr-2 h-4 w-4" />
+          )}
+          Save Settings
+        </Button>
+      </div>
+
+      {/* Role Badge */}
+      <Badge className={cn(
+        "border-amber-500/20",
+        isSuperAdmin
+          ? "bg-amber-500/10 text-amber-600 dark:text-amber-400"
+          : "bg-blue-500/10 text-blue-600 dark:text-blue-400"
+      )} variant="secondary">
+        <RoleIcon className="mr-1.5 h-3 w-3" />
+        {roleLabel}
+      </Badge>
+
+      {/* Payment Collection Section - Full width */}
+      {canViewPaymentSettings && (
+        <Card className="border-0 shadow-lg rounded-xl">
+          <CardHeader className="pb-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#004EE0]/10">
+                    <Smartphone className="h-5 w-5 text-[#004EE0]" />
+                  </div>
+                  Payment Collection
+                </CardTitle>
+                <CardDescription className="mt-1.5">
+                  {canModifyPaymentSettings
+                    ? "Enable GCash payment collection for organizational fees and configure payment settings"
+                    : "View current payment collection settings and GCash payment details"}
+                </CardDescription>
+              </div>
+              {canModifyPaymentSettings && (
+                <div className="flex items-center gap-3">
+                  <span className="text-xs text-muted-foreground">
+                    {paymentCollectionEnabled ? "Active" : "Inactive"}
+                  </span>
+                  <Switch
+                    checked={paymentCollectionEnabled}
+                    onCheckedChange={setPaymentCollectionEnabled}
+                  />
+                </div>
+              )}
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            {/* Toggle Banner */}
+            <div className={cn(
+              "flex items-center justify-between gap-4 rounded-lg border p-4 transition-colors",
+              paymentCollectionEnabled
+                ? "bg-green-50 border-green-200 dark:bg-green-950/20 dark:border-green-800"
+                : "bg-gray-50 border-gray-200 dark:bg-gray-900 dark:border-gray-800"
+            )}>
+              <div className="flex items-center gap-3 min-w-0">
+                <div className={cn(
+                  "flex h-10 w-10 shrink-0 items-center justify-center rounded-xl transition-colors",
+                  paymentCollectionEnabled
+                    ? "bg-green-100 text-green-600 dark:bg-green-900/20 dark:text-green-400"
+                    : "bg-gray-100 text-gray-400 dark:bg-gray-800 dark:text-gray-500"
+                )}>
+                  {paymentCollectionEnabled
+                    ? <ToggleRight className="h-5 w-5" />
+                    : <ToggleLeft className="h-5 w-5" />}
+                </div>
+                <div className="min-w-0">
+                  <p className="text-sm font-semibold text-gray-900 dark:text-white">
+                    Organizational Fee Collection
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    {paymentCollectionEnabled
+                      ? "Active — Student assistants will see payment prompts"
+                      : "Inactive — Payment collection is currently disabled"}
+                  </p>
+                </div>
+              </div>
+              {canModifyPaymentSettings && (
+                <Switch
+                  checked={paymentCollectionEnabled}
+                  onCheckedChange={setPaymentCollectionEnabled}
+                />
+              )}
+            </div>
+
+            {/* GCash Configuration */}
+            {canModifyPaymentSettings && (
+              <>
+                <Separator />
+
+                <div className="space-y-4">
+                  <h3 className="text-sm font-semibold flex items-center gap-2">
+                    <QrCode className="h-4 w-4 text-[#004EE0]" />
+                    GCash Configuration
+                  </h3>
+
+                  {/* QR Code Upload */}
+                  <div className="space-y-2">
+                    <Label>GCash QR Code</Label>
+                    {gcashQrUrl ? (
+                      <div className="relative inline-block">
+                        <div className="rounded-lg border p-2 bg-white">
+                          <img
+                            src={gcashQrUrl}
+                            alt="GCash QR Code"
+                            className="h-40 w-40 object-contain"
+                          />
+                        </div>
+                        {canModifyPaymentSettings && (
+                          <Button
+                            variant="destructive"
+                            size="icon"
+                            className="absolute -top-2 -right-2 h-6 w-6 rounded-full"
+                            onClick={() => setGcashQrUrl("")}
+                          >
+                            <X className="h-3 w-3" />
+                          </Button>
+                        )}
+                      </div>
+                    ) : (
+                      <div
+                        className="flex flex-col items-center justify-center rounded-lg border-2 border-dashed p-6 cursor-pointer hover:border-[#004EE0]/50 hover:bg-[#004EE0]/5 transition-colors max-w-xs"
+                        onClick={() => {
+                          const input = document.createElement("input");
+                          input.type = "file";
+                          input.accept = ".jpg,.jpeg,.png,.webp";
+                          input.onchange = (e) => handleQrUpload(e as unknown as React.ChangeEvent<HTMLInputElement>);
+                          input.click();
+                        }}
+                      >
+                        <Upload className="mb-2 h-8 w-8 text-muted-foreground" />
+                        <p className="text-sm text-muted-foreground text-center">
+                          Click to upload GCash QR code
+                        </p>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          JPG, PNG, or WebP (max 10MB)
+                        </p>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* GCash Number */}
+                  <div className="space-y-2">
+                    <Label htmlFor="gcashNumber" className="flex items-center gap-2">
+                      <Smartphone className="h-4 w-4 text-muted-foreground" />
+                      GCash Number
+                    </Label>
+                    <Input
+                      id="gcashNumber"
+                      value={gcashNumber}
+                      onChange={(e) => setGcashNumber(e.target.value)}
+                      placeholder="e.g., 0917 123 4567"
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      The GCash number that student assistants will send their payments to
+                    </p>
+                  </div>
+
+                  {/* Payment Instructions */}
+                  <div className="space-y-2">
+                    <Label htmlFor="paymentInstructions" className="flex items-center gap-2">
+                      <FileText className="h-4 w-4 text-muted-foreground" />
+                      Payment Instructions
+                    </Label>
+                    <Textarea
+                      id="paymentInstructions"
+                      value={paymentInstructions}
+                      onChange={(e) => setPaymentInstructions(e.target.value)}
+                      placeholder={"Step-by-step instructions for student assistants:\n\n1. Open GCash app\n2. Scan the QR code or enter the GCash number\n3. Send the exact amount\n4. Take a screenshot of the receipt\n5. Upload the screenshot as proof of payment"}
+                      rows={6}
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      These instructions will be shown to student assistants when they pay
+                    </p>
+                  </div>
+                </div>
+              </>
+            )}
+
+            {/* Warning */}
+            <div className="rounded-lg bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 p-3">
+              <div className="flex gap-2">
+                <AlertTriangle className="h-4 w-4 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
+                <p className="text-xs text-amber-800 dark:text-amber-300">
+                  <strong>Important:</strong> Turning ON payment collection will immediately show payment prompts to all active student assistants. Ensure the GCash QR code and number are correctly set before enabling.
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      <div className="grid gap-6 lg:grid-cols-2">
+        {/* Season Controls */}
+        <Card className="border-0 shadow-lg rounded-xl">
+          <CardHeader className="pb-4">
+            <CardTitle className="text-lg flex items-center gap-2">
+              <Calendar className="h-5 w-5 text-blue-600" />
+              Season Controls
+            </CardTitle>
+            <CardDescription>
+              Toggle application and renewal seasons to allow or restrict submissions
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            {/* Application Season */}
+            <div className="flex items-center justify-between gap-4 rounded-lg border p-4">
+              <div className="flex items-center gap-3 min-w-0">
+                <div className={cn(
+                  "flex h-10 w-10 shrink-0 items-center justify-center rounded-xl transition-colors",
+                  applicationOpen
+                    ? "bg-green-100 text-green-600 dark:bg-green-900/20 dark:text-green-400"
+                    : "bg-gray-100 text-gray-400 dark:bg-gray-800 dark:text-gray-500"
+                )}>
+                  {applicationOpen ? <ToggleRight className="h-5 w-5" /> : <ToggleLeft className="h-5 w-5" />}
+                </div>
+                <div className="min-w-0">
+                  <p className="text-sm font-semibold text-gray-900 dark:text-white">Application Season</p>
+                  <p className="text-xs text-muted-foreground">
+                    {applicationOpen
+                      ? "New applications are being accepted"
+                      : "Applications are currently closed"}
+                  </p>
+                </div>
+              </div>
+              <Switch
+                checked={applicationOpen}
+                onCheckedChange={setApplicationOpen}
+              />
+            </div>
+
+            {/* Renewal Season */}
+            <div className="flex items-center justify-between gap-4 rounded-lg border p-4">
+              <div className="flex items-center gap-3 min-w-0">
+                <div className={cn(
+                  "flex h-10 w-10 shrink-0 items-center justify-center rounded-xl transition-colors",
+                  renewalOpen
+                    ? "bg-green-100 text-green-600 dark:bg-green-900/20 dark:text-green-400"
+                    : "bg-gray-100 text-gray-400 dark:bg-gray-800 dark:text-gray-500"
+                )}>
+                  {renewalOpen ? <ToggleRight className="h-5 w-5" /> : <ToggleLeft className="h-5 w-5" />}
+                </div>
+                <div className="min-w-0">
+                  <p className="text-sm font-semibold text-gray-900 dark:text-white">Renewal Season</p>
+                  <p className="text-xs text-muted-foreground">
+                    {renewalOpen
+                      ? "SA renewals are being accepted"
+                      : "Renewals are currently closed"}
+                  </p>
+                </div>
+              </div>
+              <Switch
+                checked={renewalOpen}
+                onCheckedChange={setRenewalOpen}
+              />
+            </div>
+
+            <div className="rounded-lg bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 p-3">
+              <p className="text-xs text-amber-800 dark:text-amber-300">
+                <strong>Note:</strong> Turning ON a season will immediately allow submissions. Turning it OFF will not affect existing submissions.
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Academic Settings */}
+        <Card className="border-0 shadow-lg rounded-xl">
+          <CardHeader className="pb-4">
+            <CardTitle className="text-lg flex items-center gap-2">
+              <GraduationCap className="h-5 w-5 text-blue-600" />
+              Academic Settings
+            </CardTitle>
+            <CardDescription>
+              Configure academic year, semester, and payment settings
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="academicYear">Academic Year</Label>
+              <Input
+                id="academicYear"
+                value={academicYear}
+                onChange={(e) => setAcademicYear(e.target.value)}
+                placeholder="e.g., 2025-2026"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="semester">Current Semester</Label>
+              <BetterSelect value={currentSemester} onValueChange={setCurrentSemester} placeholder="Select semester">
+                  <SelectItem value="1st Semester">1st Semester</SelectItem>
+                  <SelectItem value="2nd Semester">2nd Semester</SelectItem>
+                  <SelectItem value="Summer">Summer</SelectItem>
+              </BetterSelect>
+            </div>
+
+            <Separator />
+
+            <div className="space-y-2">
+              <Label htmlFor="maxWorkHours" className="flex items-center gap-2">
+                <Clock className="h-4 w-4 text-muted-foreground" />
+                Max Work Hours Per Day
+              </Label>
+              <Input
+                id="maxWorkHours"
+                type="number"
+                value={maxWorkHours}
+                onChange={(e) => setMaxWorkHours(parseInt(e.target.value) || 4)}
+                min={1}
+                max={8}
+              />
+              <p className="text-xs text-muted-foreground">
+                Maximum hours a Student Assistant can work per day (recommended: 4)
+              </p>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="monthlyPayment" className="flex items-center gap-2">
+                <DollarSign className="h-4 w-4 text-muted-foreground" />
+                Monthly Payment Fee
+              </Label>
+              <Input
+                id="monthlyPayment"
+                type="number"
+                value={monthlyPayment}
+                onChange={(e) => setMonthlyPayment(parseFloat(e.target.value) || 0)}
+                min={0}
+                step={0.01}
+              />
+              <p className="text-xs text-muted-foreground">
+                Monthly organizational fee amount for Student Assistants
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Current Status */}
+      <Card className="border-0 shadow-lg rounded-xl">
+        <CardHeader className="pb-4">
+          <CardTitle className="text-lg">Current Status Summary</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="rounded-lg border p-4 text-center">
+              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1">Academic Year</p>
+              <p className="text-lg font-bold text-gray-900 dark:text-white">{academicYear || "Not set"}</p>
+            </div>
+            <div className="rounded-lg border p-4 text-center">
+              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1">Semester</p>
+              <p className="text-lg font-bold text-gray-900 dark:text-white">{currentSemester || "Not set"}</p>
+            </div>
+            <div className="rounded-lg border p-4 text-center">
+              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1">Application</p>
+              <Badge variant="secondary" className={cn(
+                applicationOpen
+                  ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300"
+                  : "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300"
+              )}>
+                {applicationOpen ? "Open" : "Closed"}
+              </Badge>
+            </div>
+            <div className="rounded-lg border p-4 text-center">
+              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1">Renewal</p>
+              <Badge variant="secondary" className={cn(
+                renewalOpen
+                  ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300"
+                  : "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300"
+              )}>
+                {renewalOpen ? "Open" : "Closed"}
+              </Badge>
+            </div>
+            {canViewPaymentSettings && (
+              <>
+                <div className="rounded-lg border p-4 text-center sm:col-span-2">
+                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1">Payment Collection</p>
+                  <Badge variant="secondary" className={cn(
+                    paymentCollectionEnabled
+                      ? "bg-[#004EE0]/10 text-[#004EE0] dark:bg-[#004EE0]/20"
+                      : "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400"
+                  )}>
+                    {paymentCollectionEnabled ? "Active" : "Inactive"}
+                  </Badge>
+                </div>
+                <div className="rounded-lg border p-4 text-center sm:col-span-2">
+                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1">GCash Number</p>
+                  <p className="text-lg font-bold text-gray-900 dark:text-white">{gcashNumber || "Not set"}</p>
+                </div>
+              </>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}

@@ -1,0 +1,510 @@
+"use client";
+
+import { useEffect, useState, useMemo, useCallback } from "react";
+import { useSession } from "next-auth/react";
+import { motion } from "framer-motion";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import { SelectItem } from "@/components/ui/select";
+import { BetterSelect } from "@/components/ui/better-select";
+import {
+  Search,
+  Users,
+  ArrowUpDown,
+  X,
+  Building2,
+  GraduationCap,
+  UserCircle,
+} from "lucide-react";
+import { PublicLayout } from "@/components/public/public-layout";
+import { SACard, type SACardData } from "@/components/sa-wall/sa-card";
+import { SADetailModal } from "@/components/sa-wall/sa-detail-modal";
+import { useAttendanceSocket } from "@/hooks/use-attendance-socket";
+
+type SortOption = "name" | "college" | "office";
+
+export default function SAWallPage() {
+  const { data: session } = useSession();
+  const isAuthenticated = !!session?.user;
+  const userRole = (session?.user as { role?: string })?.role || "";
+  const isStaffRole = ["SUPER_ADMIN", "ADVISER", "OFFICER", "OFFICE_SUPERVISOR", "HRMO"].includes(userRole);
+  const showProfileButton = isAuthenticated && isStaffRole;
+
+  const [sas, setSas] = useState<SACardData[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [collegeFilter, setCollegeFilter] = useState<string>("all");
+  const [officeFilter, setOfficeFilter] = useState<string>("all");
+  const [genderFilter, setGenderFilter] = useState<string>("all");
+  const [sortBy, setSortBy] = useState<SortOption>("name");
+  const [selectedSA, setSelectedSA] = useState<SACardData | null>(null);
+
+  const { isConnected, onDutySAs } = useAttendanceSocket();
+
+  // Fetch SA data
+  const fetchSAs = useCallback(async () => {
+    try {
+      const params = new URLSearchParams();
+      if (searchQuery) params.set("search", searchQuery);
+      if (collegeFilter !== "all") params.set("college", collegeFilter);
+      if (officeFilter !== "all") params.set("office", officeFilter);
+      if (genderFilter !== "all") params.set("sex", genderFilter);
+      params.set("sort", sortBy);
+
+      const res = await fetch(`/api/sa-wall?${params.toString()}`);
+      if (!res.ok) throw new Error("Failed to fetch");
+      const data = await res.json();
+      setSas(data);
+    } catch (err) {
+      console.error("Failed to fetch SAs:", err);
+    } finally {
+      setLoading(false);
+    }
+  }, [searchQuery, collegeFilter, officeFilter, genderFilter, sortBy]);
+
+  useEffect(() => {
+    fetchSAs();
+  }, [fetchSAs]);
+
+  // Merge real-time on-duty status with API data
+  const mergedSAs = useMemo(() => {
+    return sas.map((sa) => ({
+      ...sa,
+      isOnDuty: onDutySAs.has(sa.id) || sa.isOnDuty,
+    }));
+  }, [sas, onDutySAs]);
+
+  // Get unique colleges and offices for filters
+  const colleges = useMemo(() => {
+    const set = new Set<string>();
+    sas.forEach((sa) => {
+      if (sa.college) set.add(sa.college);
+    });
+    return Array.from(set).sort();
+  }, [sas]);
+
+  const offices = useMemo(() => {
+    const set = new Set<string>();
+    sas.forEach((sa) => {
+      if (sa.officeName) set.add(sa.officeName);
+    });
+    return Array.from(set).sort();
+  }, [sas]);
+
+  // Stats
+  const onDutyCount = mergedSAs.filter((sa) => sa.isOnDuty).length;
+  const totalFiltered = mergedSAs.length;
+  const uniqueColleges = useMemo(() => {
+    const set = new Set<string>();
+    sas.forEach((sa) => {
+      if (sa.college) set.add(sa.college);
+    });
+    return set.size;
+  }, [sas]);
+  const uniqueOffices = useMemo(() => {
+    const set = new Set<string>();
+    sas.forEach((sa) => {
+      if (sa.officeName) set.add(sa.officeName);
+    });
+    return set.size;
+  }, [sas]);
+  const genderStats = useMemo(() => {
+    let female = 0;
+    let male = 0;
+    sas.forEach((sa) => {
+      if (sa.sex?.toLowerCase() === "female") female++;
+      else if (sa.sex?.toLowerCase() === "male") male++;
+    });
+    return { female, male };
+  }, [sas]);
+
+  // Clear all filters
+  const hasFilters =
+    searchQuery || collegeFilter !== "all" || officeFilter !== "all" || genderFilter !== "all";
+  const clearFilters = () => {
+    setSearchQuery("");
+    setCollegeFilter("all");
+    setOfficeFilter("all");
+    setGenderFilter("all");
+  };
+
+  // Stagger animation variants
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    show: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.04,
+      },
+    },
+  };
+
+  const itemVariants = {
+    hidden: { opacity: 0, y: 20 },
+    show: { opacity: 1, y: 0 },
+  };
+
+  return (
+    <PublicLayout>
+      {/* Hero Banner */}
+      <div className="relative bg-gradient-to-r from-blue-900 via-blue-800 to-blue-900 overflow-hidden">
+        {/* Decorative amber circles */}
+        <div className="animate-blob absolute top-10 left-[10%] w-64 h-64 rounded-full bg-amber-500/10 blur-3xl" />
+        <div className="animate-blob-delay absolute bottom-10 right-[10%] w-72 h-72 rounded-full bg-amber-500/10 blur-3xl" />
+        <motion.div
+          className="pointer-events-none absolute -top-40 -right-40 h-80 w-80 rounded-full bg-blue-500/20 dark:bg-blue-500/10 blur-3xl"
+          animate={{ x: [0, 30, -20, 0], y: [0, -30, 20, 0], scale: [1, 1.1, 0.95, 1] }}
+          transition={{ duration: 20, repeat: Infinity, ease: "easeInOut" }}
+        />
+        <motion.div
+          className="pointer-events-none absolute -bottom-40 -left-40 h-80 w-80 rounded-full bg-amber-500/20 dark:bg-amber-500/10 blur-3xl"
+          animate={{ x: [0, -25, 15, 0], y: [0, 25, -15, 0], scale: [1, 0.95, 1.1, 1] }}
+          transition={{ duration: 25, repeat: Infinity, ease: "easeInOut" }}
+        />
+
+        <div className="relative container mx-auto px-4 sm:px-6 lg:px-8 pt-12 pb-16 sm:pt-16 sm:pb-20">
+          <div className="flex flex-col items-center text-center">
+            {/* Pill badge */}
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.4 }}
+            >
+              <Badge className="bg-amber-500/20 text-amber-300 hover:bg-amber-500/30 border-amber-500/30 px-4 py-1.5 text-sm font-medium">
+                <Users className="w-4 h-4 mr-1.5" />
+                Student Assistant Directory
+              </Badge>
+            </motion.div>
+
+            {/* Title */}
+            <motion.h1
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.1 }}
+              className="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight mt-5"
+            >
+              <span className="text-white">Student Assistants</span>
+              <span className="text-amber-400">Wall</span>
+            </motion.h1>
+
+            {/* Subtitle */}
+            <motion.p
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.2 }}
+              className="text-blue-100/80 text-base sm:text-lg max-w-xl mt-4"
+            >
+              Browse all active Student Assistants, see who&apos;s currently on
+              duty, and explore offices across all colleges.
+            </motion.p>
+
+            {/* Stats row */}
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.3 }}
+              className="flex items-center gap-3 sm:gap-5 mt-6 text-blue-200 text-sm"
+            >
+              <div className="flex items-center gap-2">
+                <span className="relative flex h-2 w-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75" />
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500" />
+                </span>
+                <span>
+                  <span className="font-bold text-white">{onDutyCount}</span>{" "}
+                  Active SAs
+                </span>
+              </div>
+              <span className="text-blue-400/50">•</span>
+              <div className="flex items-center gap-2">
+                <Building2 className="w-4 h-4 text-blue-300" />
+                <span>
+                  <span className="font-bold text-white">{uniqueOffices}</span>{" "}
+                  Offices
+                </span>
+              </div>
+              <span className="text-blue-400/50">•</span>
+              <div className="flex items-center gap-2">
+                <GraduationCap className="w-4 h-4 text-blue-300" />
+                <span>
+                  <span className="font-bold text-white">
+                    {uniqueColleges}
+                  </span>{" "}
+                  Colleges
+                </span>
+              </div>
+              <span className="text-blue-400/50">·</span>
+              <div className="flex items-center gap-2">
+                <UserCircle className="w-4 h-4 text-blue-300" />
+                <span>
+                  <span className="font-bold text-white">
+                    {genderStats.female}
+                  </span>{" "}
+                  Female
+                  <span className="text-blue-400/50 mx-0.5">·</span>
+                  <span className="font-bold text-white">
+                    {genderStats.male}
+                  </span>{" "}
+                  Male
+                </span>
+              </div>
+            </motion.div>
+          </div>
+        </div>
+
+        {/* Wave SVG divider */}
+        <div className="absolute bottom-0 left-0 right-0">
+          <svg
+            viewBox="0 0 1440 80"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+            className="w-full h-auto"
+            preserveAspectRatio="none"
+          >
+            <path
+              d="M0 40C240 70 480 10 720 40C960 70 1200 10 1440 40V80H0V40Z"
+              className="fill-slate-50 dark:fill-gray-950"
+            />
+          </svg>
+        </div>
+      </div>
+
+      {/* Page background */}
+      <div className="relative overflow-hidden bg-gradient-to-br from-slate-50 via-blue-50/30 to-amber-50/20 dark:from-gray-950 dark:via-gray-900 dark:to-gray-950 min-h-screen">
+        {/* Subtle gradient orbs behind filter bar and grid */}
+        <div className="pointer-events-none absolute inset-0">
+          <motion.div
+            className="absolute -top-20 left-[20%] h-[350px] w-[350px] rounded-full bg-blue-500/[0.04] dark:bg-blue-500/[0.06] blur-3xl"
+            animate={{ x: [0, 20, -15, 0], y: [0, -20, 15, 0], scale: [1, 1.06, 0.94, 1] }}
+            transition={{ duration: 24, repeat: Infinity, ease: "easeInOut" }}
+          />
+          <motion.div
+            className="absolute top-[30%] -right-20 h-[300px] w-[300px] rounded-full bg-amber-500/[0.04] dark:bg-amber-500/[0.06] blur-3xl"
+            animate={{ x: [0, -18, 22, 0], y: [0, 18, -12, 0], scale: [1, 0.94, 1.08, 1] }}
+            transition={{ duration: 28, repeat: Infinity, ease: "easeInOut" }}
+          />
+          <motion.div
+            className="absolute -bottom-32 left-[40%] h-[400px] w-[400px] rounded-full bg-violet-500/[0.03] dark:bg-violet-500/[0.05] blur-3xl"
+            animate={{ x: [0, 15, -20, 0], y: [0, -15, 20, 0], scale: [1, 1.08, 0.92, 1] }}
+            transition={{ duration: 30, repeat: Infinity, ease: "easeInOut" }}
+          />
+        </div>
+        {/* Search & Filter Bar */}
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8 -mt-4 relative z-10">
+          <div className="bg-white/80 dark:bg-gray-800/50 backdrop-blur-sm rounded-2xl shadow-lg border border-blue-100 dark:border-gray-700 p-4 sm:p-6">
+            <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center">
+              {/* Search */}
+              <div className="relative flex-1 w-full">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <Input
+                  placeholder="Search by name, college, or office..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="h-12 rounded-lg pl-10 pr-9 bg-white border-blue-200 focus:border-blue-500 text-sm"
+                />
+                {searchQuery && (
+                  <button
+                    onClick={() => setSearchQuery("")}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                )}
+              </div>
+
+              {/* Filter dropdowns */}
+              <div className="flex items-center gap-2 flex-wrap w-full sm:w-auto">
+                <BetterSelect value={collegeFilter} onValueChange={setCollegeFilter} placeholder="All Colleges" className="h-12 w-[170px] border-blue-200">
+                    <SelectItem value="all">All Colleges</SelectItem>
+                    {colleges.map((college) => (
+                      <SelectItem key={college} value={college}>
+                        {college}
+                      </SelectItem>
+                    ))}
+                </BetterSelect>
+
+                <BetterSelect value={officeFilter} onValueChange={setOfficeFilter} placeholder="All Offices" className="h-12 w-[170px] border-blue-200">
+                    <SelectItem value="all">All Offices</SelectItem>
+                    {offices.map((office) => (
+                      <SelectItem key={office} value={office}>
+                        {office}
+                      </SelectItem>
+                    ))}
+                </BetterSelect>
+
+                <BetterSelect value={genderFilter} onValueChange={setGenderFilter} placeholder="All Genders" className="h-12 w-[140px] border-blue-200">
+                    <SelectItem value="all">All Genders</SelectItem>
+                    <SelectItem value="male">Male</SelectItem>
+                    <SelectItem value="female">Female</SelectItem>
+                </BetterSelect>
+
+                <BetterSelect
+                  value={sortBy}
+                  onValueChange={(v) => setSortBy(v as SortOption)}
+                  placeholder="Sort by"
+                  className="h-12 w-[140px] border-blue-200"
+                >
+                    <SelectItem value="name">Name</SelectItem>
+                    <SelectItem value="college">College</SelectItem>
+                    <SelectItem value="office">Office</SelectItem>
+                </BetterSelect>
+
+                {hasFilters && (
+                  <button
+                    onClick={clearFilters}
+                    className="h-12 text-sm text-blue-700 dark:text-blue-400 hover:text-blue-900 dark:hover:text-blue-300 font-medium px-3 py-2 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
+                  >
+                    Clear all
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* Active filter chips */}
+            {hasFilters && (
+              <div className="flex items-center gap-2 mt-3 flex-wrap">
+                {searchQuery && (
+                  <Badge
+                    variant="secondary"
+                    className="text-xs bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 gap-1.5 px-2.5 py-1 rounded-full border border-blue-200 dark:border-blue-800"
+                  >
+                    Search: &quot;{searchQuery}&quot;
+                    <button onClick={() => setSearchQuery("")}>
+                      <X className="w-3 h-3" />
+                    </button>
+                  </Badge>
+                )}
+                {collegeFilter !== "all" && (
+                  <Badge
+                    variant="secondary"
+                    className="text-xs bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 gap-1.5 px-2.5 py-1 rounded-full border border-blue-200 dark:border-blue-800"
+                  >
+                    {collegeFilter}
+                    <button onClick={() => setCollegeFilter("all")}>
+                      <X className="w-3 h-3" />
+                    </button>
+                  </Badge>
+                )}
+                {officeFilter !== "all" && (
+                  <Badge
+                    variant="secondary"
+                    className="text-xs bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 gap-1.5 px-2.5 py-1 rounded-full border border-blue-200 dark:border-blue-800"
+                  >
+                    {officeFilter}
+                    <button onClick={() => setOfficeFilter("all")}>
+                      <X className="w-3 h-3" />
+                    </button>
+                  </Badge>
+                )}
+                {genderFilter !== "all" && (
+                  <Badge
+                    variant="secondary"
+                    className="text-xs bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 gap-1.5 px-2.5 py-1 rounded-full border border-blue-200 dark:border-blue-800"
+                  >
+                    {genderFilter === "male" ? "Male" : "Female"}
+                    <button onClick={() => setGenderFilter("all")}>
+                      <X className="w-3 h-3" />
+                    </button>
+                  </Badge>
+                )}
+              </div>
+            )}
+
+            {/* Results count */}
+            {!loading && (
+              <div className="mt-3">
+                <p className="text-sm text-gray-500 dark:text-gray-400">
+                  Showing{" "}
+                  <span className="font-semibold text-gray-900 dark:text-gray-100">
+                    {totalFiltered}
+                  </span>{" "}
+                  of{" "}
+                  <span className="font-semibold text-gray-900 dark:text-gray-100">
+                    {totalFiltered}
+                  </span>{" "}
+                  Student Assistants
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Card grid */}
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          {loading ? (
+            <div className="flex items-center justify-center py-20">
+              <div className="text-center">
+                <div className="w-10 h-10 border-3 border-blue-700 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+                <p className="text-sm text-gray-500 dark:text-gray-400">
+                  Loading Student Assistants...
+                </p>
+              </div>
+            </div>
+          ) : mergedSAs.length === 0 ? (
+            <div className="flex items-center justify-center py-20">
+              <div className="text-center">
+                <div className="w-16 h-16 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center mx-auto mb-4">
+                  <Users className="w-8 h-8 text-gray-300 dark:text-gray-600" />
+                </div>
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+                  No Student Assistants found
+                </h3>
+                <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                  Try adjusting your search or filter criteria.
+                </p>
+                {hasFilters && (
+                  <button
+                    onClick={clearFilters}
+                    className="mt-4 text-sm text-blue-700 dark:text-blue-400 hover:text-blue-900 dark:hover:text-blue-300 font-medium"
+                  >
+                    Clear all filters
+                  </button>
+                )}
+              </div>
+            </div>
+          ) : (
+            <motion.div
+              className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
+              variants={containerVariants}
+              initial="hidden"
+              animate="show"
+            >
+              {mergedSAs.map((sa, index) => (
+                <motion.div key={sa.id} variants={itemVariants}>
+                  <SACard
+                    sa={sa}
+                    index={index}
+                    onClick={() => setSelectedSA(sa)}
+                    isAuthenticated={showProfileButton}
+                  />
+                </motion.div>
+              ))}
+            </motion.div>
+          )}
+
+          {/* Footer count */}
+          {!loading && mergedSAs.length > 0 && (
+            <div className="mt-8 text-center">
+              <p className="text-xs text-gray-400 dark:text-gray-500">
+                Showing {totalFiltered} Student Assistant
+                {totalFiltered !== 1 ? "s" : ""}
+                {onDutyCount > 0 &&
+                  ` · ${onDutyCount} currently on duty`}
+              </p>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* SA Detail Modal */}
+      <SADetailModal
+        sa={selectedSA}
+        open={!!selectedSA}
+        onOpenChange={(open) => {
+          if (!open) setSelectedSA(null);
+        }}
+        isAuthenticated={showProfileButton}
+      />
+    </PublicLayout>
+  );
+}

@@ -1,0 +1,17 @@
+node_modules/
+.next/
+*.db
+*.db-journal
+.env
+dev.log
+server.log
+.zscripts/
+Caddyfile
+agent-ctx/
+upload/
+components.json
+mini-services/attendance-service/bun.lock
+db/
+tsconfig.tsbuildinfo
+skills/
+worklog.md
