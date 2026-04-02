@@ -74,10 +74,11 @@ const COLORS = {
   l5: { border: "#D4B860", avatar: "#C5A000", badge: "#fef3c7", text: "#92710c" },
 } as const
 
-// ── Uniform card size for ALL levels — bigger and roomier ──
-const CARD_W = 240
-const CARD_GAP = 20
-const AVATAR_SIZE = 100
+// ── Uniform card size for ALL levels — fits 6 officers in container ──
+// 6 × 176 + 5 × 16 = 1136px → fits in max-w-7xl (1216px usable)
+const CARD_W = 176
+const CARD_GAP = 16
+const AVATAR_SIZE = 80
 
 const POSITION_ORDER: Record<string, number> = {
   VICE_PRESIDENT_INTERNAL: 0,
@@ -224,14 +225,14 @@ function OrgCard({
       <div
         className="flex flex-col items-center"
         style={{
-          padding: "20px 16px 18px",
+          padding: "16px 12px 14px",
           overflowWrap: "break-word",
           wordBreak: "break-word",
         }}
       >
         {/* Avatar — large, supports photo or initials */}
         <div
-          className="rounded-full overflow-hidden shrink-0 shadow-lg ring-4 ring-white"
+          className="rounded-full overflow-hidden shrink-0 shadow-md ring-3 ring-white"
           style={{ width: AVATAR_SIZE, height: AVATAR_SIZE }}
         >
           {photoUrl ? (
@@ -249,7 +250,7 @@ function OrgCard({
               style={{
                 backgroundColor: colors.avatar,
                 color: "#ffffff",
-                fontSize: 28,
+                fontSize: 22,
                 letterSpacing: "0.03em",
               }}
             >
@@ -260,12 +261,12 @@ function OrgCard({
 
         {/* Role badge — supports 2-line text */}
         <div
-          className="mt-3.5 inline-flex items-center gap-1.5 rounded-full font-semibold uppercase tracking-wider"
+          className="mt-3 inline-flex items-center gap-1 rounded-full font-semibold uppercase tracking-wider"
           style={{
             backgroundColor: colors.badge,
             color: colors.text,
-            fontSize: 9,
-            padding: "4px 12px",
+            fontSize: 8,
+            padding: "3px 8px",
             maxWidth: "100%",
             lineHeight: 1.3,
             // Allow 2-line wrapping
@@ -282,9 +283,9 @@ function OrgCard({
 
         {/* Name */}
         <h3
-          className="mt-2.5 font-bold leading-snug text-center"
+          className="mt-2 font-bold leading-snug text-center"
           style={{
-            fontSize: 14,
+            fontSize: 13,
             maxWidth: "100%",
             color: "#111827",
             display: "-webkit-box",
@@ -553,8 +554,8 @@ export function OrgChart() {
      DESKTOP (lg+) — Full tree layout
      ══════════════════════════════════════════════════════════════════════ */
   const desktopTree = (
-    <div className="hidden lg:flex lg:flex-col lg:items-center w-full overflow-x-auto py-6">
-      <div className="flex flex-col items-center" style={{ minWidth: "fit-content" }}>
+    <div className="hidden lg:flex lg:flex-col lg:items-center w-full py-6">
+      <div className="flex flex-col items-center">
         {/* L1: UMak President */}
         <LevelWrapper delay={0}>
           <OrgCard
