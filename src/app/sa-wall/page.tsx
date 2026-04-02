@@ -147,7 +147,7 @@ export default function SAWallPage() {
   return (
     <PublicLayout>
       {/* Hero Banner */}
-      <div className="relative bg-gradient-to-r from-blue-900 via-blue-800 to-blue-900 overflow-hidden">
+      <div className="relative live-gradient bg-gradient-to-r from-blue-900 via-blue-800 to-blue-900 overflow-hidden">
         {/* Decorative amber circles */}
         <div className="animate-blob absolute top-10 left-[10%] w-64 h-64 rounded-full bg-amber-500/10 blur-3xl" />
         <div className="animate-blob-delay absolute bottom-10 right-[10%] w-72 h-72 rounded-full bg-amber-500/10 blur-3xl" />
@@ -291,7 +291,7 @@ export default function SAWallPage() {
         </div>
         {/* Search & Filter Bar */}
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 pt-8 relative z-10">
-          <div className="bg-white/80 dark:bg-gray-800/50 backdrop-blur-sm rounded-2xl shadow-lg border border-blue-100 dark:border-gray-700 p-4 sm:p-6">
+          <div className="glow-border bg-white/80 dark:bg-gray-800/50 backdrop-blur-sm rounded-2xl shadow-lg border border-blue-100 dark:border-gray-700 p-4 sm:p-6">
             <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center">
               {/* Search */}
               <div className="relative flex-1 w-full">

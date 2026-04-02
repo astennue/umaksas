@@ -196,7 +196,7 @@ export default function HomePage() {
   return (
     <PublicLayout>
       {/* ─── 1. Hero Section ─── */}
-      <section className="relative overflow-hidden bg-gradient-to-br from-blue-700 via-blue-800 to-blue-900 text-white">
+      <section className="relative overflow-hidden text-white live-gradient bg-gradient-to-br from-blue-700 via-blue-800 via-blue-900 to-blue-700">
         {/* Decorative blurred circles */}
         <div className="pointer-events-none absolute inset-0">
           <div className="animate-blob absolute -top-24 right-[10%] h-[480px] w-[480px] rounded-full bg-blue-500/20 blur-3xl" />
@@ -386,7 +386,7 @@ export default function HomePage() {
           <div className="mt-10 grid gap-4 sm:mt-14 sm:gap-6 lg:grid-cols-4">
             {features.map((f, i) => (
               <SectionReveal key={f.title} delay={i * 0.1}>
-                <Card className="h-full border-0 bg-gradient-to-br from-white to-gray-50 shadow-lg transition-shadow hover:shadow-xl dark:from-gray-800 dark:to-gray-900">
+                <Card className="shimmer-card h-full border-0 bg-gradient-to-br from-white to-gray-50 shadow-lg transition-shadow hover:shadow-xl dark:from-gray-800 dark:to-gray-900">
                   <CardHeader>
                     <div
                       className={`mb-2 flex h-12 w-12 items-center justify-center rounded-xl ${iconColorMap[f.color]}`}
@@ -408,7 +408,7 @@ export default function HomePage() {
       </section>
 
       {/* ─── 3. How It Works ─── */}
-      <section className="relative overflow-hidden bg-gradient-to-br from-blue-700 via-blue-800 to-blue-900 py-12 sm:py-16 lg:py-20 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
+      <section className="relative overflow-hidden live-gradient bg-gradient-to-br from-blue-700 via-blue-800 via-blue-900 to-blue-700 py-12 sm:py-16 lg:py-20 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
         {/* Subtle gradient orbs */}
         <div className="pointer-events-none absolute inset-0">
           <motion.div
@@ -536,7 +536,7 @@ export default function HomePage() {
 
             {/* Right – CTA card */}
             <SectionReveal delay={0.2}>
-              <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-blue-700 to-blue-900 p-5 text-white shadow-2xl sm:p-8">
+              <div className="shimmer-card relative overflow-hidden rounded-2xl bg-gradient-to-br from-blue-700 to-blue-900 p-5 text-white shadow-2xl sm:p-8">
                 <div className="pointer-events-none absolute -top-10 -right-10 h-32 w-32 rounded-full bg-amber-500/20 blur-2xl" />
                 <div className="pointer-events-none absolute -bottom-10 -left-10 h-32 w-32 rounded-full bg-white/5 blur-2xl" />
                 <div className="relative">
@@ -583,7 +583,7 @@ export default function HomePage() {
       </section>
 
       {/* ─── 5. CTA Section ─── */}
-      <section className="relative overflow-hidden bg-gradient-to-br from-blue-700 via-blue-800 to-blue-900 py-12 sm:py-16 lg:py-20 text-white">
+      <section className="relative overflow-hidden live-gradient bg-gradient-to-br from-blue-700 via-blue-800 via-blue-900 to-blue-700 py-12 sm:py-16 lg:py-20 text-white">
         <div className="pointer-events-none absolute inset-0">
           <div className="absolute top-0 left-1/4 h-64 w-64 rounded-full bg-amber-500/10 blur-3xl" />
           <div className="absolute bottom-0 right-1/4 h-64 w-64 rounded-full bg-white/5 blur-3xl" />

@@ -187,7 +187,7 @@ function TrackPageContent() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
         >
-          <Card className="mb-8">
+          <Card className="glow-border mb-8">
             <CardContent className="p-6">
               <form onSubmit={handleSubmit} className="flex flex-col gap-3 sm:flex-row">
                 <div className="flex-1">

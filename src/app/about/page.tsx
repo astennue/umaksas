@@ -95,7 +95,7 @@ export default function AboutPage() {
   return (
     <PublicLayout>
       {/* ─── 1. Hero Section ─── */}
-      <section className="relative overflow-hidden bg-gradient-to-br from-blue-700 via-blue-800 to-blue-900 text-white">
+      <section className="relative overflow-hidden live-gradient text-white bg-gradient-to-br from-blue-700 via-blue-800 via-blue-900 to-blue-700">
         {/* Decorative circles */}
         <div className="pointer-events-none absolute inset-0">
           <div className="animate-blob absolute -top-24 right-[10%] h-[480px] w-[480px] rounded-full bg-blue-500/20 blur-3xl" />
@@ -227,7 +227,7 @@ export default function AboutPage() {
           <div className="mx-auto grid max-w-5xl grid-cols-1 gap-6 lg:grid-cols-2">
             {/* Mission */}
             <SectionReveal delay={0.1}>
-              <Card className="h-full border-0 shadow-lg transition-shadow hover:shadow-xl dark:border dark:border-white/10">
+              <Card className="shimmer-card h-full border-0 shadow-lg transition-shadow hover:shadow-xl dark:border dark:border-white/10">
                 {/* Blue accent bar */}
                 <div className="rounded-t-xl bg-gradient-to-r from-blue-700 to-blue-600 px-8 pt-8 pb-6 text-white">
                   <div className="flex items-center gap-3">
@@ -269,7 +269,7 @@ export default function AboutPage() {
 
             {/* Vision */}
             <SectionReveal delay={0.2}>
-              <Card className="h-full border-0 shadow-lg transition-shadow hover:shadow-xl dark:border dark:border-white/10">
+              <Card className="shimmer-card h-full border-0 shadow-lg transition-shadow hover:shadow-xl dark:border dark:border-white/10">
                 {/* Amber accent bar */}
                 <div className="rounded-t-xl bg-gradient-to-r from-amber-500 to-amber-400 px-8 pt-8 pb-6 text-white">
                   <div className="flex items-center gap-3">
@@ -325,7 +325,7 @@ export default function AboutPage() {
               ].map((v) => (
                 <Card
                   key={v.label}
-                  className="cursor-default border-0 py-5 shadow-md transition-all hover:shadow-lg group"
+                  className="shimmer-card cursor-default border-0 py-5 shadow-md transition-all hover:shadow-lg group"
                 >
                   <CardContent className="p-0 text-center">
                     <div

@@ -151,7 +151,7 @@ export default function AnnouncementsPage() {
   return (
     <PublicLayout>
       {/* Hero Section */}
-      <section className="relative overflow-hidden bg-gradient-to-r from-blue-900 via-blue-800 to-blue-900">
+      <section className="relative overflow-hidden live-gradient bg-gradient-to-r from-blue-900 via-blue-800 to-blue-900">
         {/* Decorative blurs */}
         <div className="pointer-events-none absolute inset-0">
           <div className="absolute -top-24 -right-24 h-64 w-64 rounded-full bg-amber-500/10 blur-3xl" />
@@ -409,7 +409,7 @@ export default function AnnouncementsPage() {
                       exit={{ opacity: 0, scale: 0.95 }}
                       transition={{ duration: 0.3, delay: Math.min(index * 0.05, 0.3) }}
                     >
-                      <div className="group h-full overflow-hidden rounded-xl border-0 bg-white shadow-lg transition-all duration-300 hover:-translate-y-1 hover:shadow-xl dark:bg-gray-800">
+                      <div className="shimmer-card group h-full overflow-hidden rounded-xl border-0 bg-white shadow-lg transition-all duration-300 hover:-translate-y-1 hover:shadow-xl dark:bg-gray-800">
                         {/* Priority bar */}
                         <div className={`h-1.5 ${config.bar}`} />
 

@@ -490,7 +490,7 @@ export default function ApplyPage() {
 
   return (
     <PublicLayout>
-      <div className="relative overflow-hidden mx-auto max-w-4xl px-4 py-6 sm:px-6 lg:px-8">
+      <div className="relative overflow-hidden mx-auto max-w-5xl px-4 py-8 sm:px-6 lg:px-8">
         {/* Subtle gradient orbs */}
         <div className="pointer-events-none absolute inset-0">
           <motion.div
@@ -564,7 +564,7 @@ export default function ApplyPage() {
               exit="exit"
               transition={{ duration: 0.3, ease: "easeInOut" }}
             >
-              <Card className="border-0 shadow-lg">
+              <Card className="glow-border border-0 shadow-lg">
                 <CardHeader>
                   <div className="flex items-center gap-3">
                     <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-amber-500">
