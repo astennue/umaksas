@@ -493,7 +493,7 @@ export default function AboutPage() {
           />
 
           <SectionReveal delay={0.1}>
-            <div className="mx-auto max-w-7xl">
+            <div className="overflow-hidden">
               <OrgChart />
             </div>
           </SectionReveal>
