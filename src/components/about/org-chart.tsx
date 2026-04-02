@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect, useRef } from "react"
+import Image from "next/image"
 import { motion, useInView } from "framer-motion"
 import {
   Crown,
@@ -60,10 +61,10 @@ interface OrgChartData {
 }
 
 /* ══════════════════════════════════════════════════════════════════════
-   Constants
+   Constants — ALL cards share the same dimensions
    ══════════════════════════════════════════════════════════════════════ */
 
-const LINE_COLOR = "#94A3B8" // slate-400, slightly darker for visibility
+const LINE_COLOR = "#94A3B8"
 
 const COLORS = {
   l1: { border: "#003366", avatar: "#003366", badge: "#e8eef6", text: "#003366" },
@@ -73,13 +74,11 @@ const COLORS = {
   l5: { border: "#D4B860", avatar: "#C5A000", badge: "#fef3c7", text: "#92710c" },
 } as const
 
-type LevelColorKey = keyof typeof COLORS
+// ── Uniform card size for ALL levels ──
+const CARD_W = 200
+const CARD_GAP = 16
+const AVATAR_SIZE = 80
 
-// Officer card dimensions
-const OFFICER_CARD_W = 156
-const OFFICER_CARD_GAP = 14
-
-// Position display order for L5 officers
 const POSITION_ORDER: Record<string, number> = {
   VICE_PRESIDENT_INTERNAL: 0,
   VICE_PRESIDENT_EXTERNAL: 1,
@@ -89,7 +88,6 @@ const POSITION_ORDER: Record<string, number> = {
   PUBLIC_RELATION_OFFICER: 5,
 }
 
-// Short position labels for officer cards (compact display)
 const SHORT_POSITION_LABELS: Record<string, string> = {
   VICE_PRESIDENT_INTERNAL: "VP - Internal",
   VICE_PRESIDENT_EXTERNAL: "VP - External",
@@ -99,7 +97,6 @@ const SHORT_POSITION_LABELS: Record<string, string> = {
   PUBLIC_RELATION_OFFICER: "PRO",
 }
 
-// Level labels for mobile view
 const LEVEL_LABELS: Record<string, string> = {
   l1: "University President",
   l2: "OVPSSCD",
@@ -125,21 +122,21 @@ function getInitials(name: string): string {
 function getPositionIcon(position: string) {
   switch (position) {
     case "PRESIDENT":
-      return <Crown className="w-3.5 h-3.5" />
+      return <Crown className="w-4 h-4" />
     case "VICE_PRESIDENT_INTERNAL":
-      return <ArrowLeftRight className="w-3.5 h-3.5" />
+      return <ArrowLeftRight className="w-4 h-4" />
     case "VICE_PRESIDENT_EXTERNAL":
-      return <ExternalLink className="w-3.5 h-3.5" />
+      return <ExternalLink className="w-4 h-4" />
     case "SECRETARY":
-      return <PenLine className="w-3.5 h-3.5" />
+      return <PenLine className="w-4 h-4" />
     case "TREASURER":
-      return <Wallet className="w-3.5 h-3.5" />
+      return <Wallet className="w-4 h-4" />
     case "AUDITOR":
-      return <ClipboardCheck className="w-3.5 h-3.5" />
+      return <ClipboardCheck className="w-4 h-4" />
     case "PUBLIC_RELATION_OFFICER":
-      return <Megaphone className="w-3.5 h-3.5" />
+      return <Megaphone className="w-4 h-4" />
     default:
-      return <User className="w-3.5 h-3.5" />
+      return <User className="w-4 h-4" />
   }
 }
 
@@ -178,7 +175,6 @@ const cardVariants = {
    Sub-components
    ══════════════════════════════════════════════════════════════════════ */
 
-/* ── Text overflow utilities ── */
 const truncateStyle: React.CSSProperties = {
   overflow: "hidden",
   textOverflow: "ellipsis",
@@ -189,98 +185,93 @@ const truncateStyle: React.CSSProperties = {
 
 const breakWordStyle: React.CSSProperties = {
   overflowWrap: "break-word",
-  wordWrap: "break-word",
   wordBreak: "break-word",
   overflow: "hidden",
   maxWidth: "100%",
 }
 
-/* ── Avatar with initials ── */
-function OrgAvatar({
-  initials,
-  bgColor,
-  size = 48,
-}: {
-  initials: string
-  bgColor: string
-  size?: number
-}) {
-  const fontSize = size >= 52 ? 16 : size >= 44 ? 14 : size >= 38 ? 12 : 10
-  return (
-    <div
-      className="rounded-full flex items-center justify-center font-bold shrink-0 shadow-sm"
-      style={{
-        width: size,
-        height: size,
-        backgroundColor: bgColor,
-        color: "#ffffff",
-        fontSize,
-        letterSpacing: "0.02em",
-      }}
-    >
-      {initials}
-    </div>
-  )
-}
-
-/* ── Leader Card (used for L1–L4) ── */
-function LeaderCard({
+/* ── Unified Card used for ALL levels (L1–L5) ── */
+function OrgCard({
   name,
   title,
   email,
   initials,
+  photoUrl,
   colors,
   icon,
-  compact = false,
 }: {
   name: string
   title: string
   email?: string | null
   initials: string
+  photoUrl?: string | null
   colors: { border: string; avatar: string; badge: string; text: string }
   icon: React.ReactNode
-  compact?: boolean
 }) {
   return (
     <motion.div
-      className="relative bg-white rounded-xl shadow-md"
+      className="relative bg-white rounded-2xl shadow-md flex flex-col"
       style={{
-        maxWidth: compact ? 240 : 300,
-        minWidth: compact ? 200 : 260,
-        width: "100%",
+        width: CARD_W,
+        minWidth: CARD_W,
+        maxWidth: CARD_W,
         border: `2px solid ${colors.border}`,
         overflow: "hidden",
       }}
       whileHover={{
-        scale: 1.03,
-        boxShadow: "0 10px 35px rgba(0,0,0,0.13)",
+        scale: 1.04,
+        boxShadow: "0 12px 40px rgba(0,0,0,0.14)",
+        borderColor: colors.avatar,
       }}
       transition={{ duration: 0.2 }}
     >
       {/* Top accent bar */}
-      <div className="w-full" style={{ height: 4, backgroundColor: colors.border }} />
+      <div className="w-full shrink-0" style={{ height: 5, backgroundColor: colors.border }} />
 
       <div
         className="flex flex-col items-center"
         style={{
-          padding: compact ? "14px 16px 12px" : "22px 20px 18px",
+          padding: "18px 14px 16px",
           overflowWrap: "break-word",
           wordBreak: "break-word",
         }}
       >
-        <OrgAvatar
-          initials={initials}
-          bgColor={colors.avatar}
-          size={compact ? 44 : 54}
-        />
+        {/* Avatar — large, supports photo or initials */}
+        <div
+          className="rounded-full overflow-hidden shrink-0 shadow-md"
+          style={{ width: AVATAR_SIZE, height: AVATAR_SIZE }}
+        >
+          {photoUrl ? (
+            <Image
+              src={photoUrl}
+              alt={name}
+              width={AVATAR_SIZE}
+              height={AVATAR_SIZE}
+              className="object-cover w-full h-full"
+              unoptimized
+            />
+          ) : (
+            <div
+              className="w-full h-full rounded-full flex items-center justify-center font-bold"
+              style={{
+                backgroundColor: colors.avatar,
+                color: "#ffffff",
+                fontSize: 22,
+                letterSpacing: "0.03em",
+              }}
+            >
+              {initials}
+            </div>
+          )}
+        </div>
 
         {/* Role badge */}
         <div
-          className="mt-2.5 inline-flex items-center gap-1.5 rounded-full font-semibold uppercase tracking-wider"
+          className="mt-3 inline-flex items-center gap-1.5 rounded-full font-semibold uppercase tracking-wider"
           style={{
             backgroundColor: colors.badge,
             color: colors.text,
-            fontSize: compact ? 9 : 10,
+            fontSize: 9,
             padding: "3px 10px",
             maxWidth: "100%",
             overflow: "hidden",
@@ -294,9 +285,9 @@ function LeaderCard({
 
         {/* Name */}
         <h3
-          className="mt-2.5 font-bold leading-snug text-center"
+          className="mt-2 font-bold leading-snug text-center"
           style={{
-            fontSize: compact ? 13 : 15,
+            fontSize: 13,
             maxWidth: "100%",
             color: "#111827",
             display: "-webkit-box",
@@ -316,17 +307,10 @@ function LeaderCard({
             className="mt-1.5 flex items-center gap-1.5 w-full justify-center"
             style={{ maxWidth: "100%" }}
           >
-            <Mail
-              className="shrink-0"
-              style={{
-                width: compact ? 11 : 13,
-                height: compact ? 11 : 13,
-                color: "#9CA3AF",
-              }}
-            />
+            <Mail className="shrink-0" style={{ width: 11, height: 11, color: "#9CA3AF" }} />
             <span
               style={{
-                fontSize: compact ? 10 : 11,
+                fontSize: 10,
                 color: "#9CA3AF",
                 ...truncateStyle,
               }}
@@ -341,190 +325,42 @@ function LeaderCard({
   )
 }
 
-/* ── Officer Card (used for L5) ── */
-function OfficerCard({
-  name,
-  positionLabel,
-  email,
-  initials,
-  positionIcon,
-}: {
-  name: string
-  positionLabel: string
-  email?: string | null
-  initials: string
-  positionIcon: React.ReactNode
-}) {
-  const c = COLORS.l5
-
-  return (
-    <motion.div
-      className="relative bg-white rounded-xl shadow-md"
-      style={{
-        width: OFFICER_CARD_W,
-        minWidth: OFFICER_CARD_W,
-        maxWidth: OFFICER_CARD_W,
-        border: `2px solid ${c.border}`,
-        overflow: "hidden",
-      }}
-      whileHover={{
-        scale: 1.04,
-        boxShadow: "0 8px 30px rgba(0,0,0,0.13)",
-        borderColor: "#C5A000",
-      }}
-      transition={{ duration: 0.2 }}
-    >
-      {/* Top accent bar */}
-      <div className="w-full" style={{ height: 3, backgroundColor: c.border }} />
-
-      <div
-        className="flex flex-col items-center"
-        style={{
-          padding: "12px 8px 10px",
-          overflowWrap: "break-word",
-          wordBreak: "break-word",
-        }}
-      >
-        <OrgAvatar initials={initials} bgColor={c.avatar} size={38} />
-
-        {/* Name */}
-        <h4
-          className="mt-2 font-bold leading-snug text-center"
-          style={{
-            fontSize: 11,
-            maxWidth: "100%",
-            color: "#111827",
-            display: "-webkit-box",
-            WebkitLineClamp: 2,
-            WebkitBoxOrient: "vertical",
-            whiteSpace: "normal",
-            overflow: "hidden",
-            wordBreak: "break-word",
-          }}
-          title={name}
-        >
-          {name}
-        </h4>
-
-        {/* Position label */}
-        <div
-          className="mt-1 font-medium text-center"
-          style={{
-            fontSize: 9,
-            maxWidth: "100%",
-            color: "#6B7280",
-            ...breakWordStyle,
-            display: "-webkit-box",
-            WebkitLineClamp: 2,
-            WebkitBoxOrient: "vertical",
-            whiteSpace: "normal",
-          }}
-          title={positionLabel}
-        >
-          {positionLabel}
-        </div>
-
-        {/* Email */}
-        {email && (
-          <div
-            className="mt-1 flex items-center gap-1 w-full justify-center"
-            style={{ maxWidth: "100%" }}
-          >
-            <Mail
-              className="shrink-0"
-              style={{ width: 9, height: 9, color: "#9CA3AF" }}
-            />
-            <span
-              style={{
-                fontSize: 8,
-                color: "#9CA3AF",
-                ...truncateStyle,
-              }}
-              title={email}
-            >
-              {email}
-            </span>
-          </div>
-        )}
-
-        {/* Role icon */}
-        <div className="mt-2" style={{ color: c.text }}>
-          {positionIcon}
-        </div>
-      </div>
-    </motion.div>
-  )
-}
-
-/* ── Vertical connector line (single parent → single child) ── */
-function VerticalLine({ height = 48 }: { height?: number }) {
+/* ── Vertical connector line ── */
+function VerticalLine({ height = 40 }: { height?: number }) {
   return (
     <div className="flex justify-center" aria-hidden="true">
       <svg width={2} height={height} className="block">
-        <line
-          x1={1}
-          y1={0}
-          x2={1}
-          y2={height}
-          stroke={LINE_COLOR}
-          strokeWidth={2}
-        />
+        <line x1={1} y1={0} x2={1} y2={height} stroke={LINE_COLOR} strokeWidth={2} />
       </svg>
     </div>
   )
 }
 
-/* ── Tree branch connector: 1 parent → N children (SVG) ── */
+/* ── Tree branch connector: 1 parent → N children ── */
 function TreeBranchConnector({ childCount }: { childCount: number }) {
   if (childCount <= 0) return null
-  if (childCount === 1) return <VerticalLine height={48} />
+  if (childCount === 1) return <VerticalLine height={40} />
 
-  const totalW =
-    childCount * OFFICER_CARD_W + (childCount - 1) * OFFICER_CARD_GAP
-  const midY = 24
-  const firstChildCenter = OFFICER_CARD_W / 2
-  const lastChildCenter = totalW - OFFICER_CARD_W / 2
+  const totalW = childCount * CARD_W + (childCount - 1) * CARD_GAP
+  const midY = 22
 
   return (
     <div className="flex justify-center" aria-hidden="true">
       <svg
         width={totalW}
-        height={48}
-        viewBox={`0 0 ${totalW} 48`}
+        height={44}
+        viewBox={`0 0 ${totalW} 44`}
         className="block"
       >
-        {/* Vertical drop from parent center to horizontal bar */}
-        <line
-          x1={totalW / 2}
-          y1={0}
-          x2={totalW / 2}
-          y2={midY}
-          stroke={LINE_COLOR}
-          strokeWidth={2}
-        />
-        {/* Horizontal bar spanning first to last child center */}
-        <line
-          x1={firstChildCenter}
-          y1={midY}
-          x2={lastChildCenter}
-          y2={midY}
-          stroke={LINE_COLOR}
-          strokeWidth={2}
-        />
+        {/* Vertical drop from parent center */}
+        <line x1={totalW / 2} y1={0} x2={totalW / 2} y2={midY} stroke={LINE_COLOR} strokeWidth={2} />
+        {/* Horizontal bar */}
+        <line x1={CARD_W / 2} y1={midY} x2={totalW - CARD_W / 2} y2={midY} stroke={LINE_COLOR} strokeWidth={2} />
         {/* Vertical drops to each child */}
         {Array.from({ length: childCount }, (_, i) => {
-          const cx =
-            i * (OFFICER_CARD_W + OFFICER_CARD_GAP) + OFFICER_CARD_W / 2
+          const cx = i * (CARD_W + CARD_GAP) + CARD_W / 2
           return (
-            <line
-              key={i}
-              x1={cx}
-              y1={midY}
-              x2={cx}
-              y2={48}
-              stroke={LINE_COLOR}
-              strokeWidth={2}
-            />
+            <line key={i} x1={cx} y1={midY} x2={cx} y2={44} stroke={LINE_COLOR} strokeWidth={2} />
           )
         })}
       </svg>
@@ -555,7 +391,7 @@ function LevelWrapper({
   )
 }
 
-/* ── Level badge (mobile only) ── */
+/* ── Level badge (mobile) ── */
 function LevelBadge({
   label,
   color,
@@ -566,19 +402,14 @@ function LevelBadge({
   icon: React.ReactNode
 }) {
   return (
-    <div
-      className="flex items-center gap-1.5 mb-2"
-      style={{ color }}
-    >
+    <div className="flex items-center gap-1.5 mb-2" style={{ color }}>
       {icon}
-      <span className="text-xs font-semibold uppercase tracking-widest">
-        {label}
-      </span>
+      <span className="text-xs font-semibold uppercase tracking-widest">{label}</span>
     </div>
   )
 }
 
-/* ── Student Assistants Link Button ── */
+/* ── Student Assistants Link ── */
 function SAWallLink() {
   return (
     <LevelWrapper delay={0.7}>
@@ -605,7 +436,7 @@ function SAWallLink() {
   )
 }
 
-/* ── Officer Grid (shared between tablet & mobile) ── */
+/* ── Officer Grid (tablet & mobile) ── */
 function OfficerGrid({
   officers,
   gridClass,
@@ -623,24 +454,20 @@ function OfficerGrid({
     >
       {officers.map((officer) => (
         <motion.div key={officer.id} variants={cardVariants} className="flex justify-center">
-          <OfficerCard
+          <OrgCard
             name={officer.user.fullName}
-            positionLabel={
-              SHORT_POSITION_LABELS[officer.position] || officer.positionLabel
-            }
+            title={SHORT_POSITION_LABELS[officer.position] || officer.positionLabel}
             email={officer.user.email}
             initials={getInitials(officer.user.fullName)}
-            positionIcon={getPositionIcon(officer.position)}
+            photoUrl={officer.user.photoUrl}
+            colors={COLORS.l5}
+            icon={getPositionIcon(officer.position)}
           />
         </motion.div>
       ))}
     </motion.div>
   )
 }
-
-/* ══════════════════════════════════════════════════════════════════════
-   Level icon helper
-   ══════════════════════════════════════════════════════════════════════ */
 
 function getLevelIcon(level: string) {
   switch (level) {
@@ -660,7 +487,7 @@ function getLevelIcon(level: string) {
 }
 
 /* ══════════════════════════════════════════════════════════════════════
-   MAIN COMPONENT — OrgChart
+   MAIN COMPONENT
    ══════════════════════════════════════════════════════════════════════ */
 
 export function OrgChart() {
@@ -668,7 +495,6 @@ export function OrgChart() {
   const [allOfficers, setAllOfficers] = useState<OrgChartNode[]>([])
   const [loading, setLoading] = useState(true)
 
-  /* ── Data fetching ── */
   useEffect(() => {
     async function fetchData() {
       try {
@@ -684,7 +510,6 @@ export function OrgChart() {
 
         if (officersRes.ok) {
           const data = await officersRes.json()
-          // Officers API returns all non-adviser officers (including PRESIDENT)
           setAllOfficers(data.officers || [])
         }
       } catch (error) {
@@ -697,13 +522,11 @@ export function OrgChart() {
     fetchData()
   }, [])
 
-  /* ── Derived data ── */
   const sasPresident = allOfficers.find((o) => o.position === "PRESIDENT")
   const otherOfficers = sortOfficersByPosition(
     allOfficers.filter((o) => o.position !== "PRESIDENT")
   )
 
-  /* ── Loading state ── */
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
@@ -728,77 +551,71 @@ export function OrgChart() {
   const officerCount = otherOfficers.length
 
   /* ══════════════════════════════════════════════════════════════════════
-     DESKTOP (lg+) — Full tree layout with SVG connectors
+     DESKTOP (lg+) — Full tree layout
      ══════════════════════════════════════════════════════════════════════ */
   const desktopTree = (
     <div className="hidden lg:flex lg:flex-col lg:items-center w-full overflow-x-auto pb-4">
-      <div
-        className="flex flex-col items-center"
-        style={{ minWidth: "fit-content" }}
-      >
-        {/* ══ L1: UMak President ══ */}
+      <div className="flex flex-col items-center" style={{ minWidth: "fit-content" }}>
+        {/* L1: UMak President */}
         <LevelWrapper delay={0}>
-          <LeaderCard
+          <OrgCard
             name={orgChartData.presidentName}
             title={orgChartData.presidentTitle}
             email={orgChartData.presidentEmail}
             initials={getInitials(orgChartData.presidentName)}
             colors={COLORS.l1}
-            icon={<Building2 className="w-3.5 h-3.5" />}
+            icon={<Building2 className="w-4 h-4" />}
           />
         </LevelWrapper>
 
-        {/* Connector L1 → L2 */}
-        <VerticalLine height={44} />
+        <VerticalLine height={36} />
 
-        {/* ══ L2: OVPSSCD ══ */}
+        {/* L2: OVPSSCD */}
         <LevelWrapper delay={0.1}>
-          <LeaderCard
+          <OrgCard
             name={orgChartData.vpName}
             title={orgChartData.vpTitle}
             email={orgChartData.vpEmail}
             initials={getInitials(orgChartData.vpName)}
             colors={COLORS.l2}
-            icon={<Shield className="w-3.5 h-3.5" />}
-            compact
+            icon={<Shield className="w-4 h-4" />}
           />
         </LevelWrapper>
 
-        {/* Connector L2 → L3 */}
-        <VerticalLine height={44} />
+        <VerticalLine height={36} />
 
-        {/* ══ L3: SAS Adviser ══ */}
+        {/* L3: SAS Adviser */}
         <LevelWrapper delay={0.2}>
-          <LeaderCard
+          <OrgCard
             name={orgChartData.adviserName}
             title={orgChartData.adviserTitle}
             email={orgChartData.adviserEmail}
             initials={getInitials(orgChartData.adviserName)}
             colors={COLORS.l3}
-            icon={<Star className="w-3.5 h-3.5" />}
+            icon={<Star className="w-4 h-4" />}
           />
         </LevelWrapper>
 
-        {/* Connector L3 → L4 */}
-        <VerticalLine height={44} />
+        <VerticalLine height={36} />
 
-        {/* ══ L4: SAS President ══ */}
+        {/* L4: SAS President */}
         {sasPresident ? (
           <LevelWrapper delay={0.3}>
-            <LeaderCard
+            <OrgCard
               name={sasPresident.user.fullName}
               title={sasPresident.positionLabel}
               email={sasPresident.user.email}
               initials={getInitials(sasPresident.user.fullName)}
+              photoUrl={sasPresident.user.photoUrl}
               colors={COLORS.l4}
-              icon={<Crown className="w-3.5 h-3.5" />}
+              icon={<Crown className="w-4 h-4" />}
             />
           </LevelWrapper>
         ) : (
           <LevelWrapper delay={0.3}>
             <div
-              className="px-6 py-3 rounded-xl border-2 border-dashed text-center"
-              style={{ borderColor: COLORS.l4.border, maxWidth: 260 }}
+              className="px-6 py-4 rounded-2xl border-2 border-dashed text-center"
+              style={{ borderColor: COLORS.l4.border, width: CARD_W }}
             >
               <p className="text-sm font-medium" style={{ color: COLORS.l4.text }}>
                 No SAS President assigned
@@ -812,10 +629,10 @@ export function OrgChart() {
           <>
             <TreeBranchConnector childCount={officerCount} />
 
-            {/* ══ L5: Officers ══ */}
+            {/* L5: Officers */}
             <motion.div
               className="flex"
-              style={{ gap: OFFICER_CARD_GAP }}
+              style={{ gap: CARD_GAP }}
               variants={containerVariants}
               initial="hidden"
               whileInView="show"
@@ -823,15 +640,14 @@ export function OrgChart() {
             >
               {otherOfficers.map((officer) => (
                 <motion.div key={officer.id} variants={cardVariants}>
-                  <OfficerCard
+                  <OrgCard
                     name={officer.user.fullName}
-                    positionLabel={
-                      SHORT_POSITION_LABELS[officer.position] ||
-                      officer.positionLabel
-                    }
+                    title={SHORT_POSITION_LABELS[officer.position] || officer.positionLabel}
                     email={officer.user.email}
                     initials={getInitials(officer.user.fullName)}
-                    positionIcon={getPositionIcon(officer.position)}
+                    photoUrl={officer.user.photoUrl}
+                    colors={COLORS.l5}
+                    icon={getPositionIcon(officer.position)}
                   />
                 </motion.div>
               ))}
@@ -839,79 +655,76 @@ export function OrgChart() {
           </>
         )}
 
-        {/* Connector L5 → L6 (Student Assistants) */}
-        {officerCount > 0 && <VerticalLine height={36} />}
+        {/* Connector L5 → L6 */}
+        {officerCount > 0 && <VerticalLine height={32} />}
 
-        {/* ══ L6: Student Assistants Link ══ */}
+        {/* L6: Student Assistants */}
         <SAWallLink />
       </div>
     </div>
   )
 
   /* ══════════════════════════════════════════════════════════════════════
-     TABLET (md–lg) — Stacked cards with vertical line connectors
+     TABLET (md–lg)
      ══════════════════════════════════════════════════════════════════════ */
   const tabletView = (
     <div className="hidden md:flex md:flex-col md:items-center lg:hidden w-full">
-      {/* L1: UMak President */}
       <LevelWrapper delay={0}>
-        <LeaderCard
+        <OrgCard
           name={orgChartData.presidentName}
           title={orgChartData.presidentTitle}
           email={orgChartData.presidentEmail}
           initials={getInitials(orgChartData.presidentName)}
           colors={COLORS.l1}
-          icon={<Building2 className="w-3.5 h-3.5" />}
+          icon={<Building2 className="w-4 h-4" />}
         />
       </LevelWrapper>
 
-      <VerticalLine height={32} />
+      <VerticalLine height={28} />
 
-      {/* L2: OVPSSCD */}
       <LevelWrapper delay={0.08}>
-        <LeaderCard
+        <OrgCard
           name={orgChartData.vpName}
           title={orgChartData.vpTitle}
           email={orgChartData.vpEmail}
           initials={getInitials(orgChartData.vpName)}
           colors={COLORS.l2}
-          icon={<Shield className="w-3.5 h-3.5" />}
+          icon={<Shield className="w-4 h-4" />}
         />
       </LevelWrapper>
 
-      <VerticalLine height={32} />
+      <VerticalLine height={28} />
 
-      {/* L3: SAS Adviser */}
       <LevelWrapper delay={0.16}>
-        <LeaderCard
+        <OrgCard
           name={orgChartData.adviserName}
           title={orgChartData.adviserTitle}
           email={orgChartData.adviserEmail}
           initials={getInitials(orgChartData.adviserName)}
           colors={COLORS.l3}
-          icon={<Star className="w-3.5 h-3.5" />}
+          icon={<Star className="w-4 h-4" />}
         />
       </LevelWrapper>
 
-      <VerticalLine height={32} />
+      <VerticalLine height={28} />
 
-      {/* L4: SAS President */}
       {sasPresident ? (
         <LevelWrapper delay={0.24}>
-          <LeaderCard
+          <OrgCard
             name={sasPresident.user.fullName}
             title={sasPresident.positionLabel}
             email={sasPresident.user.email}
             initials={getInitials(sasPresident.user.fullName)}
+            photoUrl={sasPresident.user.photoUrl}
             colors={COLORS.l4}
-            icon={<Crown className="w-3.5 h-3.5" />}
+            icon={<Crown className="w-4 h-4" />}
           />
         </LevelWrapper>
       ) : (
         <LevelWrapper delay={0.24}>
           <div
-            className="px-5 py-2.5 rounded-xl border-2 border-dashed text-center"
-            style={{ borderColor: COLORS.l4.border, maxWidth: 240 }}
+            className="px-5 py-3 rounded-2xl border-2 border-dashed text-center"
+            style={{ borderColor: COLORS.l4.border, width: CARD_W }}
           >
             <p className="text-sm font-medium" style={{ color: COLORS.l4.text }}>
               No SAS President assigned
@@ -920,103 +733,76 @@ export function OrgChart() {
         </LevelWrapper>
       )}
 
-      {/* Connector to officers */}
-      {officerCount > 0 && <VerticalLine height={32} />}
+      {officerCount > 0 && <VerticalLine height={28} />}
 
-      {/* L5: Officers — 3-column grid */}
       {officerCount > 0 && (
         <OfficerGrid
           officers={otherOfficers}
-          gridClass="grid grid-cols-3 gap-4 w-full max-w-lg"
+          gridClass="grid grid-cols-3 gap-4 w-full max-w-[680px]"
         />
       )}
 
       <div className="h-6" />
-
-      {/* L6: Student Assistants */}
       <SAWallLink />
     </div>
   )
 
   /* ══════════════════════════════════════════════════════════════════════
-     MOBILE (<md) — Stacked cards with level labels, no connectors
+     MOBILE (<md)
      ══════════════════════════════════════════════════════════════════════ */
   const mobileView = (
     <div className="md:hidden flex flex-col items-center gap-5 w-full">
-      {/* L1: UMak President */}
       <LevelWrapper delay={0}>
-        <LevelBadge
-          label={LEVEL_LABELS.l1}
-          color={COLORS.l1.text}
-          icon={getLevelIcon("l1")}
-        />
-        <LeaderCard
+        <LevelBadge label={LEVEL_LABELS.l1} color={COLORS.l1.text} icon={getLevelIcon("l1")} />
+        <OrgCard
           name={orgChartData.presidentName}
           title={orgChartData.presidentTitle}
           email={orgChartData.presidentEmail}
           initials={getInitials(orgChartData.presidentName)}
           colors={COLORS.l1}
-          icon={<Building2 className="w-3.5 h-3.5" />}
-          compact
+          icon={<Building2 className="w-4 h-4" />}
         />
       </LevelWrapper>
 
-      {/* L2: OVPSSCD */}
       <LevelWrapper delay={0.06}>
-        <LevelBadge
-          label={LEVEL_LABELS.l2}
-          color={COLORS.l2.text}
-          icon={getLevelIcon("l2")}
-        />
-        <LeaderCard
+        <LevelBadge label={LEVEL_LABELS.l2} color={COLORS.l2.text} icon={getLevelIcon("l2")} />
+        <OrgCard
           name={orgChartData.vpName}
           title={orgChartData.vpTitle}
           email={orgChartData.vpEmail}
           initials={getInitials(orgChartData.vpName)}
           colors={COLORS.l2}
-          icon={<Shield className="w-3.5 h-3.5" />}
-          compact
+          icon={<Shield className="w-4 h-4" />}
         />
       </LevelWrapper>
 
-      {/* L3: SAS Adviser */}
       <LevelWrapper delay={0.12}>
-        <LevelBadge
-          label={LEVEL_LABELS.l3}
-          color={COLORS.l3.text}
-          icon={getLevelIcon("l3")}
-        />
-        <LeaderCard
+        <LevelBadge label={LEVEL_LABELS.l3} color={COLORS.l3.text} icon={getLevelIcon("l3")} />
+        <OrgCard
           name={orgChartData.adviserName}
           title={orgChartData.adviserTitle}
           email={orgChartData.adviserEmail}
           initials={getInitials(orgChartData.adviserName)}
           colors={COLORS.l3}
-          icon={<Star className="w-3.5 h-3.5" />}
-          compact
+          icon={<Star className="w-4 h-4" />}
         />
       </LevelWrapper>
 
-      {/* L4: SAS President */}
       <LevelWrapper delay={0.18}>
-        <LevelBadge
-          label={LEVEL_LABELS.l4}
-          color={COLORS.l4.text}
-          icon={getLevelIcon("l4")}
-        />
+        <LevelBadge label={LEVEL_LABELS.l4} color={COLORS.l4.text} icon={getLevelIcon("l4")} />
         {sasPresident ? (
-          <LeaderCard
+          <OrgCard
             name={sasPresident.user.fullName}
             title={sasPresident.positionLabel}
             email={sasPresident.user.email}
             initials={getInitials(sasPresident.user.fullName)}
+            photoUrl={sasPresident.user.photoUrl}
             colors={COLORS.l4}
-            icon={<Crown className="w-3.5 h-3.5" />}
-            compact
+            icon={<Crown className="w-4 h-4" />}
           />
         ) : (
           <div
-            className="px-5 py-2.5 rounded-xl border-2 border-dashed text-center w-full"
+            className="w-full px-5 py-3 rounded-2xl border-2 border-dashed text-center"
             style={{ borderColor: COLORS.l4.border }}
           >
             <p className="text-sm font-medium" style={{ color: COLORS.l4.text }}>
@@ -1026,14 +812,9 @@ export function OrgChart() {
         )}
       </LevelWrapper>
 
-      {/* L5: Officers — 2-column grid */}
       {officerCount > 0 && (
         <LevelWrapper delay={0.24}>
-          <LevelBadge
-            label={LEVEL_LABELS.l5}
-            color={COLORS.l5.text}
-            icon={getLevelIcon("l5")}
-          />
+          <LevelBadge label={LEVEL_LABELS.l5} color={COLORS.l5.text} icon={getLevelIcon("l5")} />
           <OfficerGrid
             officers={otherOfficers}
             gridClass="grid grid-cols-2 gap-3 w-full"
@@ -1042,8 +823,6 @@ export function OrgChart() {
       )}
 
       <div className="h-4" />
-
-      {/* L6: Student Assistants */}
       <SAWallLink />
     </div>
   )
