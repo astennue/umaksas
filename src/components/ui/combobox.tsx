@@ -83,10 +83,10 @@ export function Combobox({
         type="button"
         onClick={() => { if (!disabled) handleToggle() }}
         className={cn(
-          "flex h-9 w-full items-center justify-between rounded-md border border-gray-300 bg-white px-3 py-2 text-sm shadow-sm transition-colors",
-          "hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500",
+          "flex h-9 w-full items-center justify-between rounded-md border border-gray-300 bg-white px-3 py-2 text-sm shadow-sm transition-colors dark:border-gray-600 dark:bg-gray-800 dark:shadow-gray-900/50",
+          "hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:hover:bg-gray-700",
           "disabled:cursor-not-allowed disabled:opacity-50",
-          !selectedOption && "text-gray-500",
+          !selectedOption && "text-gray-500 dark:text-gray-400",
           open && "ring-2 ring-blue-500 border-blue-500"
         )}
         disabled={disabled}
@@ -94,20 +94,20 @@ export function Combobox({
         <span className="truncate">{selectedOption?.label || placeholder}</span>
         {value ? (
           <X
-            className="w-4 h-4 text-gray-400 shrink-0 ml-2 hover:text-gray-600"
+            className="w-4 h-4 text-gray-400 shrink-0 ml-2 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300"
             onClick={(e) => { e.stopPropagation(); onChange?.(""); }}
           />
         ) : (
-          <ChevronDown className={cn("w-4 h-4 text-gray-400 shrink-0 ml-2 transition-transform", open && "rotate-180")} />
+          <ChevronDown className={cn("w-4 h-4 text-gray-400 shrink-0 ml-2 transition-transform dark:text-gray-500", open && "rotate-180")} />
         )}
       </button>
 
       {/* Dropdown */}
       {open && (
-        <div className="absolute z-50 mt-1 w-full rounded-md border border-gray-200 bg-white shadow-lg">
+        <div className="absolute z-50 mt-1 w-full rounded-md border border-gray-200 bg-white shadow-lg dark:border-gray-700 dark:bg-gray-800 dark:shadow-gray-900/50">
           {/* Search input */}
           {searchable && (
-            <div className="flex items-center border-b border-gray-100 px-3 py-2">
+            <div className="flex items-center border-b border-gray-100 px-3 py-2 dark:border-gray-700">
               <Search className="w-4 h-4 text-gray-400 shrink-0 mr-2" />
               <input
                 ref={inputRef}
@@ -115,7 +115,7 @@ export function Combobox({
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder={searchPlaceholder}
-                className="flex-1 text-sm bg-transparent border-0 outline-none placeholder:text-gray-400"
+                className="flex-1 text-sm bg-transparent border-0 outline-none placeholder:text-gray-400 dark:text-gray-200"
               />
             </div>
           )}
@@ -123,7 +123,7 @@ export function Combobox({
           {/* Options list */}
           <div className="max-h-60 overflow-y-auto p-1">
             {filtered.length === 0 ? (
-              <div className="py-6 text-center text-sm text-gray-500">
+              <div className="py-6 text-center text-sm text-gray-500 dark:text-gray-400">
                 {emptyMessage}
               </div>
             ) : (
@@ -147,13 +147,13 @@ export function Combobox({
                       className={cn(
                         "flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors text-left",
                         option.value === value
-                          ? "bg-blue-50 text-blue-700 font-medium"
-                          : "text-gray-700 hover:bg-gray-50",
+                          ? "bg-blue-50 text-blue-700 font-medium dark:bg-blue-900/30 dark:text-blue-300"
+                          : "text-gray-700 hover:bg-gray-50 dark:text-gray-200 dark:hover:bg-gray-700",
                         option.disabled && "opacity-50 cursor-not-allowed"
                       )}
                     >
                       {option.value === value && (
-                        <Check className="w-4 h-4 text-blue-600 shrink-0" />
+                        <Check className="w-4 h-4 text-blue-600 shrink-0 dark:text-blue-400" />
                       )}
                       <span className={cn("truncate", option.value !== value && "ml-6")}>
                         {option.label}

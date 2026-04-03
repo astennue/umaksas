@@ -36,10 +36,12 @@ export async function GET() {
         title: a.title,
         content: a.content,
         excerpt: a.excerpt,
+        imageUrl: a.imageUrl,
         priority: a.priority,
         isPinned: a.isPinned,
         publishedAt: a.publishedAt,
         createdAt: a.createdAt,
+        updatedAt: a.updatedAt,
         author: a.authorId ? (authorMap.get(a.authorId) || "Unknown") : "Unknown",
       })),
     });

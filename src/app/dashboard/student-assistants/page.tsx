@@ -139,21 +139,14 @@ export default function StudentAssistantsPage() {
 
   const fetchOffices = useCallback(async () => {
     try {
-      const res = await fetch("/api/sa-wall");
+      const res = await fetch("/api/offices");
       if (!res.ok) return;
       const data = await res.json();
-      // Get unique offices
-      const officeMap = new Map<string, { id: string; name: string; code: string | null }>();
-      data.forEach((sa: { officeName?: string | null }) => {
-        if (sa.officeName) {
-          officeMap.set(sa.officeName, {
-            id: sa.officeName,
-            name: sa.officeName,
-            code: null,
-          });
-        }
-      });
-      setOffices(Array.from(officeMap.values()));
+      setOffices((data.offices || []).map((o: { id: string; name: string; code: string | null }) => ({
+        id: o.id,
+        name: o.name,
+        code: o.code,
+      })));
     } catch {
       // Ignore
     }

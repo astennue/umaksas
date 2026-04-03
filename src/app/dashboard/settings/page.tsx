@@ -87,8 +87,9 @@ export default function SettingsPage() {
   const userRole = user?.role;
   const isSuperAdmin = userRole === "SUPER_ADMIN";
   const isAdviser = userRole === "ADVISER";
-  const canModifyPaymentSettings = isSuperAdmin;
-  const canViewPaymentSettings = isSuperAdmin;
+  const isOfficer = userRole === "OFFICER";
+  const canModifyPaymentSettings = isSuperAdmin || isOfficer;
+  const canViewPaymentSettings = isSuperAdmin || isAdviser || isOfficer;
 
   // Auth check
   useEffect(() => {
@@ -96,12 +97,6 @@ export default function SettingsPage() {
       router.push("/portal-login");
     }
   }, [authStatus, router]);
-
-  useEffect(() => {
-    if (user && user.role !== "SUPER_ADMIN" && user.role !== "ADVISER") {
-      router.push("/dashboard");
-    }
-  }, [user, router]);
 
   // Fetch settings
   useEffect(() => {
@@ -219,22 +214,26 @@ export default function SettingsPage() {
     );
   }
 
-  if (!session || (userRole !== "SUPER_ADMIN" && userRole !== "ADVISER")) {
+  if (!session || (userRole !== "SUPER_ADMIN" && userRole !== "ADVISER" && userRole !== "OFFICER")) {
     return null;
   }
 
   const roleLabel = isSuperAdmin
     ? "Super Administrator Access"
-    : "Adviser Access";
+    : isAdviser
+      ? "Adviser Access"
+      : "Officer Access";
 
   const roleIcon = isSuperAdmin
     ? Shield
-    : GraduationCap;
+    : isAdviser
+      ? GraduationCap
+      : DollarSign;
 
   const RoleIcon = roleIcon;
 
   return (
-    <RoleGuard allowedRoles={["SUPER_ADMIN", "ADVISER"]}>
+    <RoleGuard allowedRoles={["SUPER_ADMIN", "ADVISER", "OFFICER"]}>
     <div className="max-w-4xl mx-auto space-y-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">

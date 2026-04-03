@@ -69,6 +69,7 @@ interface RenewalData {
   intentLetterUrl: string | null;
   reportOfGradeUrl: string | null;
   corUrl: string | null;
+  statementOfIntent: string | null;
   user: {
     firstName: string | null;
     lastName: string | null;
@@ -123,6 +124,7 @@ export default function RenewalPage() {
   const [intentLetterUrl, setIntentLetterUrl] = useState("");
   const [reportOfGradeUrl, setReportOfGradeUrl] = useState("");
   const [corUrl, setCorUrl] = useState("");
+  const [statementOfIntent, setStatementOfIntent] = useState("");
   const [confirmAccurate, setConfirmAccurate] = useState(false);
   const [agreeTerms, setAgreeTerms] = useState(false);
 
@@ -218,6 +220,7 @@ export default function RenewalPage() {
       setIntentLetterUrl(existingRenewal.intentLetterUrl || "");
       setReportOfGradeUrl(existingRenewal.reportOfGradeUrl || "");
       setCorUrl(existingRenewal.corUrl || "");
+      setStatementOfIntent(existingRenewal.statementOfIntent || "");
     }
   }, [existingRenewal]);
 
@@ -333,6 +336,11 @@ export default function RenewalPage() {
   };
 
   const handleSubmit = async () => {
+    if (!statementOfIntent.trim() || statementOfIntent.trim().length < 20) {
+      toast.error("Statement of intent is required (at least 20 characters)");
+      return;
+    }
+
     if (!confirmAccurate || !agreeTerms) {
       toast.error("Please confirm all checkboxes before submitting");
       return;
@@ -349,6 +357,7 @@ export default function RenewalPage() {
         intentLetterUrl,
         reportOfGradeUrl,
         corUrl,
+        statementOfIntent: statementOfIntent.trim(),
       };
 
       const res = await fetch("/api/renewals", {
@@ -558,7 +567,7 @@ export default function RenewalPage() {
               <CardDescription>
                 {currentStep === 1 && "Update your weekly availability for the new semester. (Optional)"}
                 {currentStep === 2 && "Upload the required documents for your renewal."}
-                {currentStep === 3 && "Let us know if you want to transfer to a different office."}
+                {currentStep === 3 && "Provide your statement of intent and let us know if you want to transfer."}
                 {currentStep === 4 && "Review all your information before submitting."}
               </CardDescription>
             </CardHeader>
@@ -734,6 +743,27 @@ export default function RenewalPage() {
               {/* Step 3: Office Transfer */}
               {currentStep === 3 && (
                 <div className="space-y-6">
+                  {/* Statement of Intent (Required) */}
+                  <div className="space-y-2">
+                    <Label htmlFor="statementOfIntent" className="text-sm font-medium">
+                      Statement of Intent <span className="text-red-500">*</span>
+                    </Label>
+                    <p className="text-xs text-muted-foreground">
+                      Share why you want to continue as a Student Assistant. Minimum 20 characters.
+                    </p>
+                    <Textarea
+                      id="statementOfIntent"
+                      value={statementOfIntent}
+                      onChange={(e) => setStatementOfIntent(e.target.value)}
+                      placeholder="Why do you want to continue as a Student Assistant? (at least 20 characters)"
+                      rows={4}
+                      className="resize-none"
+                    />
+                    {statementOfIntent.length > 0 && statementOfIntent.trim().length < 20 && (
+                      <p className="text-xs text-amber-600">{statementOfIntent.trim().length}/20 minimum characters</p>
+                    )}
+                  </div>
+
                   {/* Current office display */}
                   <div className="rounded-lg border p-4 bg-muted/30">
                     <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1">Current Office</p>
@@ -888,6 +918,19 @@ export default function RenewalPage() {
                     )}
                   </div>
 
+                  {/* Statement of Intent Summary */}
+                  <div className="rounded-lg border p-4 space-y-2">
+                    <h4 className="text-sm font-semibold flex items-center gap-2">
+                      <FileText className="h-4 w-4 text-blue-600" />
+                      Statement of Intent
+                    </h4>
+                    {statementOfIntent.trim().length >= 20 ? (
+                      <p className="text-sm text-muted-foreground italic">&quot;{statementOfIntent.trim()}&quot;</p>
+                    ) : (
+                      <p className="text-sm text-red-500">Missing (at least 20 characters required)</p>
+                    )}
+                  </div>
+
                   {/* Academic Period */}
                   <div className="rounded-lg border p-4 space-y-1">
                     <h4 className="text-sm font-semibold flex items-center gap-2">
@@ -945,7 +988,7 @@ export default function RenewalPage() {
                 ) : (
                   <Button
                     onClick={handleSubmit}
-                    disabled={submitting || !confirmAccurate || !agreeTerms || !intentLetterUrl || !reportOfGradeUrl || !corUrl}
+                    disabled={submitting || !confirmAccurate || !agreeTerms || !intentLetterUrl || !reportOfGradeUrl || !corUrl || !statementOfIntent.trim() || statementOfIntent.trim().length < 20}
                     className="bg-blue-700 hover:bg-blue-800"
                   >
                     {submitting ? (

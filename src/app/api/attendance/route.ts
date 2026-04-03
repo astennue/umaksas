@@ -317,11 +317,24 @@ export async function POST(request: NextRequest) {
     }
 
     const user = session.user as { id: string; role: string };
-    if (user.role !== UserRole.STUDENT_ASSISTANT) {
+    if (user.role !== UserRole.STUDENT_ASSISTANT && user.role !== UserRole.OFFICER) {
       return NextResponse.json(
         { error: "Only student assistants can clock in/out" },
         { status: 403 }
       );
+    }
+
+    // Officers must also have an SAProfile to clock in
+    if (user.role === UserRole.OFFICER) {
+      const saProfile = await db.sAProfile.findUnique({
+        where: { userId: user.id },
+      });
+      if (!saProfile) {
+        return NextResponse.json(
+          { error: "Only student assistants with an active profile can clock in/out" },
+          { status: 403 }
+        );
+      }
     }
 
     const body = await request.json();
@@ -336,6 +349,15 @@ export async function POST(request: NextRequest) {
 
     const today = new Date();
     today.setHours(0, 0, 0, 0);
+
+    // Block clock-in on weekends (Saturday = 6, Sunday = 0)
+    const dayOfWeek = today.getDay();
+    if (dayOfWeek === 0 || dayOfWeek === 6) {
+      return NextResponse.json(
+        { error: "Clock-in is not allowed on weekends (Saturday and Sunday)" },
+        { status: 400 }
+      );
+    }
 
     // Get or create today's attendance record
     let record = await db.attendanceRecord.findUnique({

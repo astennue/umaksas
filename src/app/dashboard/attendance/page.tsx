@@ -127,6 +127,9 @@ export default function AttendancePage() {
   const userRole = (session?.user as { role?: string })?.role;
   const userId = (session?.user as { id?: string })?.id;
   const isSA = userRole === "STUDENT_ASSISTANT";
+  // Officer+SA combined: officers who also have an SAProfile can clock in/out
+  const isOfficerWithSA = userRole === "OFFICER"; // We'll check server-side, but show UI
+  const canClockIn = isSA || isOfficerWithSA;
 
   // Data state
   const [records, setRecords] = useState<AttendanceRecord[]>([]);
@@ -524,10 +527,10 @@ export default function AttendancePage() {
             Attendance
           </h1>
           <p className="text-sm text-muted-foreground">
-            {isSA ? "Track your daily attendance and working hours" : "Monitor and manage student assistant attendance"}
+            {canClockIn ? "Track your daily attendance and working hours" : "Monitor and manage student assistant attendance"}
           </p>
         </div>
-        {isSA && dutyStatus === "off_duty" && (
+        {canClockIn && dutyStatus === "off_duty" && (
           <Button
             onClick={() => handleClockAction("clock_in")}
             disabled={loadingAction}
@@ -540,7 +543,7 @@ export default function AttendancePage() {
       </div>
 
       {/* ============== STUDENT ASSISTANT VIEW: Clock Panel ============== */}
-      {isSA && (
+      {canClockIn && (
         <Card className="overflow-hidden border-0 shadow-lg">
           <div className="bg-gradient-to-r from-[#1e3a8a] to-[#1e40af] p-6 text-white">
             <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">

@@ -58,8 +58,8 @@ export async function PUT(request: NextRequest) {
 
     const userRole = (session.user as { role?: string })?.role;
 
-    // Check role - only SUPER_ADMIN and ADVISER can modify settings
-    if (userRole !== "SUPER_ADMIN" && userRole !== "ADVISER") {
+    // Check role - only SUPER_ADMIN, ADVISER, and OFFICER can modify settings
+    if (userRole !== "SUPER_ADMIN" && userRole !== "ADVISER" && userRole !== "OFFICER") {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
@@ -72,6 +72,19 @@ export async function PUT(request: NextRequest) {
       if (attemptedPaymentField) {
         return NextResponse.json(
           { error: "Forbidden. Advisers cannot modify payment settings." },
+          { status: 403 }
+        );
+      }
+    }
+
+    // OFFICER can only modify payment and season fields, NOT academic/rubric fields
+    if (userRole === "OFFICER") {
+      const allowedFields = ["paymentCollectionEnabled", "gcashQrUrl", "gcashNumber", "paymentInstructions", "applicationOpen", "renewalOpen"];
+      const allBodyFields = Object.keys(body);
+      const disallowedField = allBodyFields.find(field => !allowedFields.includes(field));
+      if (disallowedField) {
+        return NextResponse.json(
+          { error: "Forbidden. Officers can only modify payment and season settings." },
           { status: 403 }
         );
       }

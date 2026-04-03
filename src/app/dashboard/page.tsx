@@ -257,13 +257,6 @@ export default function DashboardPage() {
             colorClass="bg-amber-50 text-amber-600 group-hover:bg-amber-100 dark:bg-amber-900/20 dark:text-amber-400 dark:group-hover:bg-amber-900/30"
           />
           <QuickActionCard
-            href="/dashboard/settings"
-            icon={Settings}
-            title="Payment Detail Setup / GCash"
-            subtitle="View payment instructions"
-            colorClass="bg-green-50 text-green-600 group-hover:bg-green-100 dark:bg-green-900/20 dark:text-green-400 dark:group-hover:bg-green-900/30"
-          />
-          <QuickActionCard
             href="/dashboard/schedules"
             icon={Clock}
             title="My Schedule"

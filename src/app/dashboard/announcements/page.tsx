@@ -116,7 +116,7 @@ export default function DashboardAnnouncementsPage() {
   const userRole = (session?.user as { role?: string })?.role;
   const isAdmin = ["SUPER_ADMIN", "ADVISER", "OFFICER"].includes(userRole || "");
   const isSuperAdmin = userRole === "SUPER_ADMIN";
-  const canApprove = ["SUPER_ADMIN", "ADVISER", "PRESIDENT"].includes(userRole || "");
+  const canApprove = ["SUPER_ADMIN", "ADVISER", "OFFICER"].includes(userRole || "");
 
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [loading, setLoading] = useState(true);

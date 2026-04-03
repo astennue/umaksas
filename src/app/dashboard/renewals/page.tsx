@@ -148,7 +148,7 @@ export default function RenewalsManagementPage() {
   // Season toggle
   const [togglingSeason, setTogglingSeason] = useState(false);
 
-  const isReviewer = user?.role && ["SUPER_ADMIN", "ADVISER", "PRESIDENT"].includes(user.role);
+  const isReviewer = user?.role && ["SUPER_ADMIN", "ADVISER", "OFFICER"].includes(user.role);
   const isSuperAdmin = user?.role === "SUPER_ADMIN";
   const canDelete = isSuperAdmin;
 
