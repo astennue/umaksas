@@ -69,12 +69,16 @@ import {
   GraduationCap,
   Users,
   Briefcase,
+  FileBadge,
 } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "sonner";
 import { CRUDToolbar } from "@/components/crud-toolbar";
 import { CRUDActions } from "@/components/crud-actions";
 import { RoleGuard } from "@/components/auth/role-guard";
+import EmptyState from "@/components/ui/empty-state";
+import { useKeyboardShortcuts } from "@/hooks/use-keyboard-shortcuts";
+import SavingIndicator from "@/components/ui/saving-indicator";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -211,6 +215,14 @@ export default function CertificatesPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [revokeReason, setRevokeReason] = useState("");
   const [isRevoking, setIsRevoking] = useState(false);
+
+  // ─── Keyboard Shortcuts ──────────────────────────────────────────────────
+  useKeyboardShortcuts({
+    "/": () => {
+      const input = document.querySelector<HTMLInputElement>("input[placeholder*='Search']");
+      if (input) input.focus();
+    },
+  });
 
   // ─── Fetch Certificates ───────────────────────────────────────────────────
   const fetchCertificates = useCallback(async () => {
@@ -686,17 +698,17 @@ export default function CertificatesPage() {
         {/* Desktop Table */}
         <div className="hidden md:block rounded-lg border bg-white dark:bg-slate-800">
           {certificates.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-16">
-              <Award className="mb-4 h-12 w-12 text-muted-foreground/40" />
-              <h3 className="text-sm font-medium text-muted-foreground">No certificates found</h3>
-              <p className="mt-1 text-xs text-muted-foreground">
-                {search || typeFilter !== "all" || statusFilter !== "all"
-                  ? "Try adjusting your filters"
-                  : canCreate
-                    ? "Issue your first certificate to get started"
-                    : "No certificates have been issued yet"}
-              </p>
-            </div>
+            <EmptyState
+              icon={FileBadge}
+              title="No certificates found"
+              description={search || typeFilter !== "all" || statusFilter !== "all"
+                ? "Try adjusting your filters"
+                : canCreate
+                  ? "Issue your first certificate to get started"
+                  : "No certificates have been issued yet"}
+              action={canCreate ? "Issue Certificate" : undefined}
+              actionOnClick={canCreate ? () => setIssueOpen(true) : undefined}
+            />
           ) : (
             <Table>
               <TableHeader>
@@ -843,15 +855,13 @@ export default function CertificatesPage() {
         {/* Mobile Cards */}
         <div className="space-y-3 md:hidden">
           {certificates.length === 0 ? (
-            <div className="flex flex-col items-center justify-center rounded-lg border border-dashed py-16 text-center">
-              <Award className="mb-4 h-12 w-12 text-muted-foreground/40" />
-              <h3 className="text-sm font-medium text-muted-foreground">No certificates found</h3>
-              <p className="mt-1 text-xs text-muted-foreground">
-                {search || typeFilter !== "all" || statusFilter !== "all"
-                  ? "Try adjusting your filters"
-                  : "No certificates have been issued yet"}
-              </p>
-            </div>
+            <EmptyState
+              icon={FileBadge}
+              title="No certificates found"
+              description={search || typeFilter !== "all" || statusFilter !== "all"
+                ? "Try adjusting your filters"
+                : "No certificates have been issued yet"}
+            />
           ) : (
             certificates.map((cert) => {
               const fullName = `${cert.firstName} ${cert.lastName}`.trim();
@@ -1113,6 +1123,9 @@ export default function CertificatesPage() {
             </div>
 
             <DialogFooter>
+              <div className="flex items-center gap-3 mr-auto">
+                <SavingIndicator isSaving={isSubmitting} />
+              </div>
               <Button variant="outline" onClick={() => { setIssueOpen(false); resetForm(); }}>
                 Cancel
               </Button>

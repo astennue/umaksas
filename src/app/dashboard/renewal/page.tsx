@@ -45,6 +45,8 @@ import {
 } from "@/components/ui/select";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { cn } from "@/lib/utils";
+import { useConfirm } from "@/hooks/use-confirm";
+import SavingIndicator from "@/components/ui/saving-indicator";
 import { AvailabilityGrid } from "@/components/apply/availability-grid";
 import { TOTAL_SLOTS } from "@/lib/validations/application";
 
@@ -127,6 +129,12 @@ export default function RenewalPage() {
   const [statementOfIntent, setStatementOfIntent] = useState("");
   const [confirmAccurate, setConfirmAccurate] = useState(false);
   const [agreeTerms, setAgreeTerms] = useState(false);
+
+  // useConfirm hook
+  const { confirm, ConfirmDialog } = useConfirm();
+
+  // Dirty state tracking
+  const [lastSaved, setLastSaved] = useState<Date | null>(null);
 
   // Upload states
   const [uploadingIntent, setUploadingIntent] = useState(false);
@@ -335,6 +343,9 @@ export default function RenewalPage() {
     setCurrentStep((s) => Math.max(s - 1, 1));
   };
 
+  // Dirty detection
+  const isFormDirty = availability.some(Boolean) || !!statementOfIntent.trim() || !!intentLetterUrl || !!reportOfGradeUrl || !!corUrl || requestTransfer;
+
   const handleSubmit = async () => {
     if (!statementOfIntent.trim() || statementOfIntent.trim().length < 20) {
       toast.error("Statement of intent is required (at least 20 characters)");
@@ -345,6 +356,13 @@ export default function RenewalPage() {
       toast.error("Please confirm all checkboxes before submitting");
       return;
     }
+
+    const confirmed = await confirm({
+      title: "Submit Renewal Application?",
+      description: "Make sure all required fields and documents are complete before submitting.",
+      confirmText: "Submit",
+    });
+    if (!confirmed) return;
 
     setSubmitting(true);
     try {
@@ -374,6 +392,7 @@ export default function RenewalPage() {
 
       toast.success(data.message || "Renewal submitted successfully!");
       setExistingRenewal(data.renewal);
+      setLastSaved(new Date());
     } catch (error) {
       console.error("Submit error:", error);
       toast.error(error instanceof Error ? error.message : "Failed to submit renewal");
@@ -504,9 +523,12 @@ export default function RenewalPage() {
               : `Renew your Student Assistant status for ${settings?.academicYear || "the new semester"}.`}
           </p>
         </div>
-        <Badge variant="outline" className="w-fit">
-          Step {currentStep} of {STEPS.length}
-        </Badge>
+        <div className="flex items-center gap-3 w-fit">
+          <SavingIndicator isSaving={submitting} isDirty={isFormDirty} lastSaved={lastSaved} />
+          <Badge variant="outline">
+            Step {currentStep} of {STEPS.length}
+          </Badge>
+        </div>
       </div>
 
       {/* Review notes from REQUIRES_CHANGES */}
@@ -598,7 +620,10 @@ export default function RenewalPage() {
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => setIntentLetterUrl("")}
+                          onClick={async () => {
+                            const ok = await confirm({ title: "Remove Document?", description: "The uploaded intent letter will be removed. You'll need to upload a new one.", confirmText: "Remove", variant: "destructive" });
+                            if (ok) setIntentLetterUrl("");
+                          }}
                           className="h-7 text-xs text-red-600 hover:text-red-700"
                         >
                           Remove
@@ -652,7 +677,10 @@ export default function RenewalPage() {
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => setReportOfGradeUrl("")}
+                          onClick={async () => {
+                            const ok = await confirm({ title: "Remove Document?", description: "The uploaded report of grades will be removed. You'll need to upload a new one.", confirmText: "Remove", variant: "destructive" });
+                            if (ok) setReportOfGradeUrl("");
+                          }}
                           className="h-7 text-xs text-red-600 hover:text-red-700"
                         >
                           Remove
@@ -706,7 +734,10 @@ export default function RenewalPage() {
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => setCorUrl("")}
+                          onClick={async () => {
+                            const ok = await confirm({ title: "Remove Document?", description: "The uploaded COR will be removed. You'll need to upload a new one.", confirmText: "Remove", variant: "destructive" });
+                            if (ok) setCorUrl("");
+                          }}
                           className="h-7 text-xs text-red-600 hover:text-red-700"
                         >
                           Remove
@@ -1004,6 +1035,8 @@ export default function RenewalPage() {
           </Card>
         </motion.div>
       </AnimatePresence>
+
+      <ConfirmDialog />
     </div>
   );
 }

@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useSession } from "next-auth/react";
+import { useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -82,6 +83,8 @@ const statusConfig: Record<string, { label: string; color: string }> = {
 
 export default function StudentAssistantsPage() {
   const { data: session } = useSession();
+  const searchParams = useSearchParams();
+  const editIdFromQuery = searchParams.get("edit");
   const [students, setStudents] = useState<StudentAssistant[]>([]);
   const [offices, setOffices] = useState<{ id: string; name: string; code: string | null }[]>([]);
   const [loading, setLoading] = useState(true);
@@ -129,6 +132,19 @@ export default function StudentAssistantsPage() {
       setLoading(false);
     }
   }, [page, search, collegeFilter, statusFilter]);
+
+  // Auto-open edit modal when navigated from SA detail page with ?edit=ID
+  useEffect(() => {
+    if (editIdFromQuery && students.length > 0) {
+      const sa = students.find((s) => s.id === editIdFromQuery);
+      if (sa) {
+        setEditSA(sa);
+        setFormOpen(true);
+        // Clean up URL param without re-rendering
+        window.history.replaceState({}, "", "/dashboard/student-assistants");
+      }
+    }
+  }, [editIdFromQuery, students]);
 
   const fetchOffices = useCallback(async () => {
     try {

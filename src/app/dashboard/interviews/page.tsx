@@ -19,6 +19,8 @@ import {
   Search,
   Filter,
 } from "lucide-react";
+import EmptyState from "@/components/ui/empty-state";
+import { useKeyboardShortcuts } from "@/hooks/use-keyboard-shortcuts";
 import { InterviewCard, type InterviewData } from "@/components/interviews/interview-card";
 import { InterviewCalendar } from "@/components/interviews/interview-calendar";
 import { InterviewDetailModal } from "@/components/interviews/interview-detail-modal";
@@ -119,6 +121,13 @@ export default function InterviewsPage() {
 
   const userRole = (session?.user as { role?: string })?.role;
   const canManage = ["SUPER_ADMIN", "ADVISER", "OFFICER"].includes(userRole || "");
+
+  useKeyboardShortcuts({
+    "/": () => {
+      const input = document.querySelector<HTMLInputElement>('input[placeholder*="Search"]');
+      input?.focus();
+    },
+  });
 
   if (loading) {
     return (
@@ -246,15 +255,15 @@ export default function InterviewsPage() {
       ) : (
         <div className="space-y-4">
           {filteredInterviews.length === 0 ? (
-            <div className="flex flex-col items-center justify-center rounded-lg border border-dashed py-16 text-center">
-              <Calendar className="mb-4 h-12 w-12 text-muted-foreground/40" />
-              <h3 className="text-sm font-medium text-muted-foreground">No interviews found</h3>
-              <p className="mt-1 text-xs text-muted-foreground">
-                {search || statusFilter !== "all"
+            <EmptyState
+              icon={Calendar}
+              title="No interviews found"
+              description={
+                search || statusFilter !== "all"
                   ? "Try adjusting your filters"
-                  : "Schedule your first interview to get started"}
-              </p>
-            </div>
+                  : "Schedule your first interview to get started"
+              }
+            />
           ) : (
             <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
               {filteredInterviews.map((interview) => (

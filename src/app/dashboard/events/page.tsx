@@ -43,6 +43,8 @@ import { EventFormDialog } from "@/components/events/event-form-dialog";
 import { CRUDToolbar } from "@/components/crud-toolbar";
 import { CRUDActions } from "@/components/crud-actions";
 import { toast } from "sonner";
+import EmptyState from "@/components/ui/empty-state";
+import { useKeyboardShortcuts } from "@/hooks/use-keyboard-shortcuts";
 
 interface Office {
   id: string;
@@ -73,6 +75,13 @@ export default function EventsPage() {
   const canManage = ["SUPER_ADMIN", "ADVISER", "OFFICER"].includes(userRole || "");
   const isSuperAdmin = userRole === "SUPER_ADMIN";
   const isSA = userRole === "STUDENT_ASSISTANT";
+
+  useKeyboardShortcuts({
+    "/": () => {
+      const input = document.querySelector<HTMLInputElement>('input[placeholder*="Search"]');
+      input?.focus();
+    },
+  });
 
   const fetchEvents = useCallback(async () => {
     try {
@@ -375,31 +384,25 @@ export default function EventsPage() {
       ) : (
         <div className="space-y-4">
           {events.length === 0 ? (
-            <div className="flex flex-col items-center justify-center rounded-lg border border-dashed py-16 text-center">
-              <CalendarDays className="mb-4 h-12 w-12 text-muted-foreground/40" />
-              <h3 className="text-sm font-medium text-muted-foreground">
-                No events found
-              </h3>
-              <p className="mt-1 text-xs text-muted-foreground">
-                {search || statusFilter !== "all" || officeFilter !== "all"
+            <EmptyState
+              icon={CalendarDays}
+              title="No events found"
+              description={
+                search || statusFilter !== "all" || officeFilter !== "all"
                   ? "Try adjusting your filters"
                   : canManage
                     ? "Create your first event to get started"
-                    : "You have no assigned events yet"}
-              </p>
-              {canManage &&
+                    : "You have no assigned events yet"
+              }
+              action={
+                canManage &&
                 !search &&
                 statusFilter === "all" &&
-                officeFilter === "all" && (
-                  <Button
-                    onClick={handleCreateEvent}
-                    className="mt-4 bg-[#1e3a8a] hover:bg-[#1e3a8a]/90"
-                  >
-                    <Plus className="mr-2 h-4 w-4" />
-                    Create Event
-                  </Button>
-                )}
-            </div>
+                officeFilter === "all"
+                  ? { label: "Create Event", onClick: handleCreateEvent }
+                  : undefined
+              }
+            />
           ) : (
             <>
               <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">

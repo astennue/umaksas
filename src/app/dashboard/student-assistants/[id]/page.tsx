@@ -38,7 +38,9 @@ import {
   User,
   File,
   Download,
+  Pencil,
 } from "lucide-react";
+import EmptyState from "@/components/ui/empty-state";
 
 // --- Types ---
 interface SAData {
@@ -321,18 +323,32 @@ export default function SAProfilePage() {
   const initials = `${data.firstName?.charAt(0) || ""}${data.lastName?.charAt(0) || ""}`;
   const statusConf = statusConfig[data.status] || statusConfig.OTHER;
 
+  const userRole = session?.user?.role;
+  const canManage = userRole === "SUPER_ADMIN" || userRole === "ADVISER" || userRole === "OFFICER";
+
   return (
     <div className="space-y-6">
-      {/* Back button */}
-      <Button
-        variant="ghost"
-        size="sm"
-        className="text-muted-foreground hover:text-foreground"
-        onClick={() => router.back()}
-      >
-        <ArrowLeft className="mr-2 h-4 w-4" />
-        Back
-      </Button>
+      {/* Back button + Edit */}
+      <div className="flex items-center justify-between">
+        <Button
+          variant="ghost"
+          size="sm"
+          className="text-muted-foreground hover:text-foreground"
+          onClick={() => router.back()}
+        >
+          <ArrowLeft className="mr-2 h-4 w-4" />
+          Back
+        </Button>
+        {canManage && (
+          <Button
+            size="sm"
+            onClick={() => router.push(`/dashboard/student-assistants?edit=${params.id}`)}
+          >
+            <Pencil className="mr-2 h-3.5 w-3.5" />
+            Edit Profile
+          </Button>
+        )}
+      </div>
 
       {/* Profile Header */}
       <Card className="overflow-hidden">
@@ -499,7 +515,12 @@ export default function SAProfilePage() {
                   </div>
                 </ScrollArea>
               ) : (
-                <p className="text-sm text-muted-foreground italic">No approved schedules found.</p>
+                <EmptyState
+                  icon={Calendar}
+                  title="No schedules found"
+                  description="No approved schedules have been assigned yet."
+                  className="min-h-0 py-8"
+                />
               )}
             </SectionCard>
 
@@ -625,7 +646,12 @@ export default function SAProfilePage() {
                 </div>
               </ScrollArea>
             ) : (
-              <p className="text-sm text-muted-foreground italic">No attendance records found.</p>
+              <EmptyState
+                icon={Clock}
+                title="No attendance records"
+                description="Attendance records will appear here once the SA starts clocking in."
+                className="min-h-0 py-8"
+              />
             )}
           </SectionCard>
         </TabsContent>
@@ -709,13 +735,11 @@ export default function SAProfilePage() {
               )}
             </>
           ) : (
-            <Card className="py-12">
-              <CardContent className="flex flex-col items-center justify-center">
-                <Award className="h-12 w-12 text-muted-foreground/40 mb-4" />
-                <p className="text-sm font-medium text-muted-foreground">No evaluations yet</p>
-                <p className="text-xs text-muted-foreground mt-1">Evaluation records will appear here once submitted.</p>
-              </CardContent>
-            </Card>
+            <EmptyState
+              icon={Star}
+              title="No evaluations yet"
+              description="Evaluation records will appear here once submitted by a supervisor."
+            />
           )}
         </TabsContent>
 
@@ -795,7 +819,12 @@ export default function SAProfilePage() {
                 </div>
               </ScrollArea>
             ) : (
-              <p className="text-sm text-muted-foreground italic">No payment records found.</p>
+              <EmptyState
+                icon={CreditCard}
+                title="No payment records"
+                description="Payment records will appear here once generated."
+                className="min-h-0 py-8"
+              />
             )}
           </SectionCard>
         </TabsContent>
@@ -828,10 +857,12 @@ export default function SAProfilePage() {
                 ))}
               </div>
             ) : (
-              <div className="py-8 text-center">
-                <File className="h-10 w-10 text-muted-foreground/40 mx-auto mb-3" />
-                <p className="text-sm text-muted-foreground">No documents uploaded yet.</p>
-              </div>
+              <EmptyState
+                icon={FileText}
+                title="No documents uploaded"
+                description="Uploaded documents will appear here once available."
+                className="min-h-0 py-8"
+              />
             )}
           </SectionCard>
         </TabsContent>

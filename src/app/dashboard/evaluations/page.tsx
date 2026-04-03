@@ -64,6 +64,10 @@ import { CRUDToolbar } from "@/components/crud-toolbar";
 import { CRUDActions } from "@/components/crud-actions";
 import { RoleGuard } from "@/components/auth/role-guard";
 import { format } from "date-fns";
+import { useConfirm } from "@/hooks/use-confirm";
+import { useKeyboardShortcuts } from "@/hooks/use-keyboard-shortcuts";
+import EmptyState from "@/components/ui/empty-state";
+import SavingIndicator from "@/components/ui/saving-indicator";
 
 // ========== Types ==========
 interface Evaluation {
@@ -240,6 +244,8 @@ export default function EvaluationsPage() {
   const [deleteTarget, setDeleteTarget] = useState<Evaluation | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const { confirm, ConfirmDialog } = useConfirm();
 
   // Form state (1-5 scale)
   const [formSA, setFormSA] = useState("");
@@ -450,8 +456,22 @@ export default function EvaluationsPage() {
     }
   };
 
+  // Keyboard shortcut: / to focus search
+  useKeyboardShortcuts({
+    "/": () => {
+      const input = document.querySelector<HTMLInputElement>("input[placeholder*='Search']");
+      if (input) input.focus();
+    },
+  });
+
   // Submit evaluation (DRAFT → SUBMITTED)
   const handleSubmit = async (id: string) => {
+    const confirmed = await confirm({
+      title: "Submit Evaluation?",
+      description: "This evaluation will be finalized and the SA will be notified.",
+      confirmText: "Submit",
+    });
+    if (!confirmed) return;
     setIsSubmitting(true);
     try {
       const res = await fetch(`/api/evaluations/${id}`, {
@@ -476,6 +496,12 @@ export default function EvaluationsPage() {
 
   // Acknowledge evaluation (SUBMITTED → ACKNOWLEDGED)
   const handleAcknowledge = async (id: string) => {
+    const confirmed = await confirm({
+      title: "Acknowledge Evaluation?",
+      description: "This will mark the evaluation as acknowledged.",
+      confirmText: "Acknowledge",
+    });
+    if (!confirmed) return;
     setIsSubmitting(true);
     try {
       const res = await fetch(`/api/evaluations/${id}`, {
@@ -581,30 +607,20 @@ export default function EvaluationsPage() {
 
           {/* No Office Assigned */}
           {!officeLoading && !supervisorOffice && (
-            <Card>
-              <CardContent className="flex flex-col items-center justify-center py-12 text-center">
-                <Building2 className="mb-3 h-12 w-12 text-muted-foreground/40" />
-                <p className="text-sm font-medium text-muted-foreground">No office assigned</p>
-                <p className="mt-1 text-xs text-muted-foreground">
-                  You are not currently assigned as a supervisor to any office. Contact the administrator.
-                </p>
-              </CardContent>
-            </Card>
+            <EmptyState
+              icon={Building2}
+              title="No office assigned"
+              description="You are not currently assigned as a supervisor to any office. Contact the administrator."
+            />
           )}
 
           {/* SA Cards Grid */}
           {supervisorOffice && assignedSAs.length === 0 && !officeLoading && (
-            <Card>
-              <CardContent className="flex flex-col items-center justify-center py-12 text-center">
-                <Users className="mb-3 h-12 w-12 text-muted-foreground/40" />
-                <p className="text-sm font-medium text-muted-foreground">
-                  No Student Assistants are currently assigned to your office.
-                </p>
-                <p className="mt-1 text-xs text-muted-foreground">
-                  Once SAs are assigned to {supervisorOffice.name}, they will appear here for evaluation.
-                </p>
-              </CardContent>
-            </Card>
+            <EmptyState
+              icon={Users}
+              title="No Student Assistants"
+              description={`Once SAs are assigned to ${supervisorOffice.name}, they will appear here for evaluation.`}
+            />
           )}
 
           {supervisorOffice && assignedSAs.length > 0 && (
@@ -1155,19 +1171,19 @@ export default function EvaluationsPage() {
                     {evaluations.length === 0 ? (
                       <TableRow>
                         <TableCell colSpan={7}>
-                          <div className="flex flex-col items-center justify-center py-12 text-center">
-                            <ClipboardCheck className="mb-3 h-10 w-10 text-muted-foreground/40" />
-                            <p className="text-sm font-medium text-muted-foreground">No evaluations found</p>
-                            <p className="mt-1 text-xs text-muted-foreground">
-                              {search ||
+                          <EmptyState
+                            icon={ClipboardCheck}
+                            title="No evaluations found"
+                            description={
+                              search ||
                               monthFilter !== "all" ||
                               yearFilter !== "all" ||
                               ratingFilter !== "all" ||
                               statusFilter !== "all"
                                 ? "Try adjusting your filters"
-                                : "No evaluations have been created yet"}
-                            </p>
-                          </div>
+                                : "No evaluations have been created yet"
+                            }
+                          />
                         </TableCell>
                       </TableRow>
                     ) : (
@@ -1259,11 +1275,11 @@ export default function EvaluationsPage() {
               <div className="md:hidden">
                 <div className="divide-y">
                   {evaluations.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center py-12 text-center">
-                      <ClipboardCheck className="mb-3 h-10 w-10 text-muted-foreground/40" />
-                      <p className="text-sm font-medium text-muted-foreground">No evaluations found</p>
-                      <p className="mt-1 text-xs text-muted-foreground">Try adjusting your filters</p>
-                    </div>
+                    <EmptyState
+                      icon={ClipboardCheck}
+                      title="No evaluations found"
+                      description="Try adjusting your filters"
+                    />
                   ) : (
                     evaluations.map((ev) => {
                       const rating = ratingConfig[ev.rating || ""];
@@ -1727,12 +1743,14 @@ export default function EvaluationsPage() {
           </div>
 
           <DialogFooter className="flex-col gap-2 sm:flex-row">
+            <SavingIndicator isSaving={isSubmitting} />
             <Button
               variant="outline"
               onClick={() => {
                 setFormOpen(false);
                 resetForm();
               }}
+              disabled={isSubmitting}
             >
               Cancel
             </Button>
@@ -1780,6 +1798,7 @@ export default function EvaluationsPage() {
         </DialogContent>
       </Dialog>
     </div>
+    <ConfirmDialog />
     </RoleGuard>
   );
 }

@@ -75,6 +75,9 @@ import { cn } from "@/lib/utils";
 import { CRUDToolbar } from "@/components/crud-toolbar";
 import { CRUDActions } from "@/components/crud-actions";
 import { RoleGuard } from "@/components/auth/role-guard";
+import EmptyState from "@/components/ui/empty-state";
+import SavingIndicator from "@/components/ui/saving-indicator";
+import { useKeyboardShortcuts } from "@/hooks/use-keyboard-shortcuts";
 
 interface Renewal {
   id: string;
@@ -151,6 +154,13 @@ export default function RenewalsManagementPage() {
   const isReviewer = user?.role && ["SUPER_ADMIN", "ADVISER", "OFFICER"].includes(user.role);
   const isSuperAdmin = user?.role === "SUPER_ADMIN";
   const canDelete = isSuperAdmin;
+
+  useKeyboardShortcuts({
+    "/": () => {
+      const input = document.querySelector<HTMLInputElement>('input[placeholder*="Search"]');
+      input?.focus();
+    },
+  });
 
   const fetchRenewals = useCallback(async () => {
     try {
@@ -464,17 +474,15 @@ export default function RenewalsManagementPage() {
 
       {/* Renewal Cards */}
       {renewals.length === 0 ? (
-        <Card className="border-0 shadow-lg">
-          <CardContent className="py-12 text-center">
-            <RefreshCw className="mx-auto h-12 w-12 text-muted-foreground/25 mb-3" />
-            <p className="text-muted-foreground font-medium">No renewals found</p>
-            <p className="text-sm text-muted-foreground mt-1">
-              {search || statusFilter !== "ALL"
-                ? "Try adjusting your search or filters"
-                : "No renewal applications have been submitted yet"}
-            </p>
-          </CardContent>
-        </Card>
+        <EmptyState
+          icon={FileText}
+          title="No renewals found"
+          description={
+            search || statusFilter !== "ALL"
+              ? "Try adjusting your search or filters"
+              : "No renewal applications have been submitted yet"
+          }
+        />
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {renewals.map((renewal) => {
@@ -818,22 +826,25 @@ export default function RenewalsManagementPage() {
             </div>
           </div>
 
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setReviewOpen(false)}>
-              Cancel
-            </Button>
-            <Button
-              onClick={handleReview}
-              disabled={!reviewStatus || reviewing}
-              className="bg-blue-700 hover:bg-blue-800"
-            >
-              {reviewing ? (
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              ) : (
-                <BadgeCheck className="mr-2 h-4 w-4" />
-              )}
-              Submit Review
-            </Button>
+          <DialogFooter className="flex-col sm:flex-row gap-3 sm:justify-between">
+            <SavingIndicator isSaving={reviewing} />
+            <div className="flex gap-2">
+              <Button variant="outline" onClick={() => setReviewOpen(false)}>
+                Cancel
+              </Button>
+              <Button
+                onClick={handleReview}
+                disabled={!reviewStatus || reviewing}
+                className="bg-blue-700 hover:bg-blue-800"
+              >
+                {reviewing ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                  <BadgeCheck className="mr-2 h-4 w-4" />
+                )}
+                Submit Review
+              </Button>
+            </div>
           </DialogFooter>
         </DialogContent>
       </Dialog>

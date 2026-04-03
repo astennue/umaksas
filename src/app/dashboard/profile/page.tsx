@@ -53,6 +53,8 @@ import {
 import { toast } from "sonner";
 import { format } from "date-fns";
 import Link from "next/link";
+import { useConfirm } from "@/hooks/use-confirm";
+import SavingIndicator from "@/components/ui/saving-indicator";
 
 // Types
 interface SAProfileData {
@@ -191,6 +193,13 @@ export default function ProfilePage() {
   const [isSavingProfile, setIsSavingProfile] = useState(false);
   const [isChangingPassword, setIsChangingPassword] = useState(false);
   const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
+
+  // useConfirm hook
+  const { confirm, ConfirmDialog } = useConfirm();
+
+  // Saving timestamps
+  const [lastSavedProfile, setLastSavedProfile] = useState<Date | null>(null);
+  const [lastSavedPassword, setLastSavedPassword] = useState<Date | null>(null);
 
   // Dialog states
   const [removePhotoDialogOpen, setRemovePhotoDialogOpen] = useState(false);
@@ -333,6 +342,7 @@ export default function ProfilePage() {
       }
 
       toast.success("Profile updated successfully");
+      setLastSavedProfile(new Date());
       fetchProfile();
     } catch (error: unknown) {
       toast.error(error instanceof Error ? error.message : "Failed to save profile");
@@ -364,6 +374,13 @@ export default function ProfilePage() {
       return;
     }
 
+    const confirmed = await confirm({
+      title: "Change Password?",
+      description: "Your password will be updated immediately.",
+      confirmText: "Change Password",
+    });
+    if (!confirmed) return;
+
     setIsChangingPassword(true);
     try {
       const res = await fetch("/api/user/password", {
@@ -381,6 +398,7 @@ export default function ProfilePage() {
       }
 
       toast.success("Password changed successfully");
+      setLastSavedPassword(new Date());
       setCurrentPassword("");
       setNewPassword("");
       setConfirmPassword("");
@@ -612,6 +630,13 @@ export default function ProfilePage() {
               </h3>
               <p className="text-xs text-muted-foreground">Update your personal details</p>
             </div>
+            <SavingIndicator isSaving={isSavingProfile} isDirty={
+              firstName !== (profile.firstName || "") ||
+              middleName !== (profile.middleName || "") ||
+              lastName !== (profile.lastName || "") ||
+              suffix !== (profile.suffix || "") ||
+              phone !== (profile.phone || "")
+            } lastSaved={lastSavedProfile} />
           </div>
           <Separator className="mt-4" />
           <CardContent className="p-4 sm:p-6">
@@ -738,6 +763,7 @@ export default function ProfilePage() {
               </h3>
               <p className="text-xs text-muted-foreground">Update your account password</p>
             </div>
+            <SavingIndicator isSaving={isChangingPassword} lastSaved={lastSavedPassword} />
           </div>
           <Separator className="mt-4" />
           <CardContent className="p-4 sm:p-6">
@@ -1121,6 +1147,8 @@ export default function ProfilePage() {
           </div>
         </CardContent>
       </Card>
+
+      <ConfirmDialog />
 
       {/* Remove Photo Confirmation Dialog */}
       <AlertDialog open={removePhotoDialogOpen} onOpenChange={setRemovePhotoDialogOpen}>

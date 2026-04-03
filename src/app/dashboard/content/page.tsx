@@ -79,6 +79,9 @@ import {
   Search,
 } from "lucide-react";
 import { toast } from "sonner";
+import EmptyState from "@/components/ui/empty-state";
+import { useKeyboardShortcuts } from "@/hooks/use-keyboard-shortcuts";
+import SavingIndicator from "@/components/ui/saving-indicator";
 
 // ============================================
 // Types
@@ -206,6 +209,14 @@ function PageContentTab() {
 
   const userRole = (session?.user as { role?: string })?.role;
   const canManage = userRole === "SUPER_ADMIN";
+
+  // ─── Keyboard Shortcuts ──────────────────────────────────────────────────
+  useKeyboardShortcuts({
+    "/": () => {
+      const input = document.querySelector<HTMLInputElement>("input[placeholder*='Search content']");
+      if (input) input.focus();
+    },
+  });
 
   const fetchContents = useCallback(async () => {
     try {
@@ -443,13 +454,13 @@ function PageContentTab() {
 
       {/* Content Groups */}
       {filtered.length === 0 ? (
-        <div className="flex flex-col items-center justify-center rounded-lg border border-dashed py-16 text-center">
-          <FileText className="mb-4 h-12 w-12 text-muted-foreground/40" />
-          <h3 className="text-sm font-medium text-muted-foreground">No content found</h3>
-          <p className="mt-1 text-xs text-muted-foreground">
-            {search || pageFilter !== "all" ? "Try adjusting your filters" : "Add your first content block to get started"}
-          </p>
-        </div>
+        <EmptyState
+          icon={FileText}
+          title="No content found"
+          description={search || pageFilter !== "all" ? "Try adjusting your filters" : "Add your first content block to get started"}
+          action={canManage ? "Add Content" : undefined}
+          actionOnClick={canManage ? openCreate : undefined}
+        />
       ) : (
         <div className="space-y-6">
           {Object.entries(grouped).map(([page, items]) => (
@@ -662,6 +673,9 @@ function PageContentTab() {
             </div>
           </div>
           <DialogFooter>
+            <div className="flex items-center gap-3 mr-auto">
+              <SavingIndicator isSaving={saving} />
+            </div>
             <Button variant="outline" onClick={() => { setDialogOpen(false); resetForm(); }}>
               Cancel
             </Button>
@@ -987,13 +1001,13 @@ function FormBuilderTab() {
 
       {/* Fields by step */}
       {fields.length === 0 ? (
-        <div className="flex flex-col items-center justify-center rounded-lg border border-dashed py-16 text-center">
-          <LayoutGrid className="mb-4 h-12 w-12 text-muted-foreground/40" />
-          <h3 className="text-sm font-medium text-muted-foreground">No form fields</h3>
-          <p className="mt-1 text-xs text-muted-foreground">
-            Add fields to build your {contextTab === "APPLICATION" ? "application" : "renewal"} form
-          </p>
-        </div>
+        <EmptyState
+          icon={LayoutGrid}
+          title="No form fields"
+          description={`Add fields to build your ${contextTab === "APPLICATION" ? "application" : "renewal"} form`}
+          action={canManage ? "Add Field" : undefined}
+          actionOnClick={canManage ? openCreate : undefined}
+        />
       ) : (
         <div className="space-y-6">
           {Object.entries(grouped).map(([group, groupFields]) => (
@@ -1194,6 +1208,9 @@ function FormBuilderTab() {
             </div>
           </div>
           <DialogFooter>
+            <div className="flex items-center gap-3 mr-auto">
+              <SavingIndicator isSaving={saving} />
+            </div>
             <Button variant="outline" onClick={() => { setDialogOpen(false); resetForm(); }}>
               Cancel
             </Button>

@@ -49,6 +49,7 @@ import {
   XCircle,
   Clock,
   Filter,
+  UserPlus,
 } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "sonner";
@@ -58,6 +59,8 @@ import { SARequestFormDialog } from "@/components/offices/sa-request-form-dialog
 import { CRUDToolbar } from "@/components/crud-toolbar";
 import { CRUDActions } from "@/components/crud-actions";
 import { RoleGuard } from "@/components/auth/role-guard";
+import EmptyState from "@/components/ui/empty-state";
+import { useKeyboardShortcuts } from "@/hooks/use-keyboard-shortcuts";
 
 // =============================================
 // Types
@@ -162,6 +165,14 @@ export default function OfficesPage() {
   const [requestsLoading, setRequestsLoading] = useState(false);
   const [requestStatusFilter, setRequestStatusFilter] = useState("PENDING");
   const [activeTab, setActiveTab] = useState("offices");
+
+  // ─── Keyboard Shortcuts ──────────────────────────────────────────────────
+  useKeyboardShortcuts({
+    "/": () => {
+      const input = document.querySelector<HTMLInputElement>("input[placeholder*='Search']");
+      if (input) input.focus();
+    },
+  });
 
   // =============================================
   // Data Fetching
@@ -433,15 +444,15 @@ export default function OfficesPage() {
 
           {/* Office Cards Grid */}
           {offices.length === 0 ? (
-            <div className="flex flex-col items-center justify-center rounded-lg border border-dashed py-16 text-center">
-              <Building2 className="mb-4 h-12 w-12 text-muted-foreground/40" />
-              <h3 className="text-sm font-medium text-muted-foreground">No offices found</h3>
-              <p className="mt-1 text-xs text-muted-foreground">
-                {search || statusFilter !== "all"
-                  ? "Try adjusting your search or filters"
-                  : "Create your first office to get started"}
-              </p>
-            </div>
+            <EmptyState
+              icon={Building2}
+              title="No offices found"
+              description={search || statusFilter !== "all"
+                ? "Try adjusting your search or filters"
+                : "Create your first office to get started"}
+              action={canCreate ? "Create Office" : undefined}
+              actionOnClick={canCreate ? () => { setEditOffice(null); setFormOpen(true); } : undefined}
+            />
           ) : (
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
               {offices.map((office) => {
@@ -687,17 +698,18 @@ export default function OfficesPage() {
               ))}
             </div>
           ) : saRequests.length === 0 ? (
-            <div className="flex flex-col items-center justify-center rounded-lg border border-dashed py-16 text-center">
-              <FileText className="mb-4 h-12 w-12 text-muted-foreground/40" />
-              <h3 className="text-sm font-medium text-muted-foreground">
-                No SA requests found
-              </h3>
-              <p className="mt-1 text-xs text-muted-foreground">
-                {requestStatusFilter !== "all"
-                  ? "Try a different status filter"
-                  : "Create your first SA request"}
-              </p>
-            </div>
+            <EmptyState
+              icon={UserPlus}
+              title="No SA requests found"
+              description={requestStatusFilter !== "all"
+                ? "Try a different status filter"
+                : "Create your first SA request"}
+              action={canRequestSA ? "New Request" : undefined}
+              actionOnClick={canRequestSA ? () => {
+                setSaRequestOfficeId(null);
+                setSaRequestOpen(true);
+              } : undefined}
+            />
           ) : (
             <div className="space-y-2 max-h-[600px] overflow-y-auto">
               {saRequests.map((req) => {

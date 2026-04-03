@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { ArrowLeft, Bell, CheckCheck, Settings, Inbox, Loader2 } from "lucide-react";
+import { ArrowLeft, Bell, CheckCheck, Settings, Inbox } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -14,12 +14,16 @@ import {
 import { NotificationPreferences } from "@/components/notifications/notification-preferences";
 import { useSession } from "next-auth/react";
 import { useNotifications } from "@/hooks/use-notifications";
+import { useConfirm } from "@/hooks/use-confirm";
+import EmptyState from "@/components/ui/empty-state";
 import Link from "next/link";
 
 export default function NotificationsPage() {
   const { data: session } = useSession();
   const [showPreferences, setShowPreferences] = useState(false);
   const [activeTab, setActiveTab] = useState<"all" | "unread">("all");
+
+  const { confirm, ConfirmDialog } = useConfirm();
 
   const {
     notifications,
@@ -33,6 +37,27 @@ export default function NotificationsPage() {
     unreadOnly: activeTab === "unread",
     interval: 30000,
   });
+
+  const handleDeleteNotification = async (id: string) => {
+    const confirmed = await confirm({
+      title: "Delete Notification",
+      description: "This notification will be permanently removed.",
+      confirmText: "Delete",
+      variant: "destructive",
+    });
+    if (!confirmed) return;
+    deleteNotification(id);
+  };
+
+  const handleMarkAllAsRead = async () => {
+    const confirmed = await confirm({
+      title: "Mark All as Read",
+      description: "All notifications will be marked as read.",
+      confirmText: "Mark all read",
+    });
+    if (!confirmed) return;
+    markAllAsRead();
+  };
 
   const user = session?.user as { role?: string; firstName?: string; lastName?: string } | undefined;
 
@@ -66,7 +91,7 @@ export default function NotificationsPage() {
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={markAllAsRead}
+                  onClick={handleMarkAllAsRead}
                   className="text-xs"
                 >
                   <CheckCheck className="mr-1.5 h-3.5 w-3.5" />
@@ -128,19 +153,13 @@ export default function NotificationsPage() {
               ))}
             </div>
           ) : notifications.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-16 text-center">
-              <div className="flex h-14 w-14 items-center justify-center rounded-full bg-muted">
-                <Inbox className="h-7 w-7 text-muted-foreground" />
-              </div>
-              <h3 className="mt-4 text-sm font-semibold">
-                {activeTab === "unread" ? "No unread notifications" : "No notifications"}
-              </h3>
-              <p className="mt-1 text-sm text-muted-foreground">
-                {activeTab === "unread"
-                  ? "You're all caught up! No new notifications to read."
-                  : "Notifications will appear here when you receive them."}
-              </p>
-            </div>
+            <EmptyState
+              icon={Inbox}
+              title={activeTab === "unread" ? "No unread notifications" : "No notifications yet"}
+              description={activeTab === "unread"
+                ? "You're all caught up! No new notifications to read."
+                : "You're all caught up! New notifications will appear here."}
+            />
           ) : (
             <ScrollArea className="max-h-[60vh]">
               <div className="divide-y">
@@ -149,7 +168,7 @@ export default function NotificationsPage() {
                     key={notification.id}
                     notification={notification}
                     onMarkAsRead={markAsRead}
-                    onDelete={deleteNotification}
+                    onDelete={handleDeleteNotification}
                   />
                 ))}
               </div>
@@ -172,6 +191,7 @@ export default function NotificationsPage() {
         open={showPreferences}
         onOpenChange={setShowPreferences}
       />
+      <ConfirmDialog />
     </>
   );
 }

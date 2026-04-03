@@ -440,12 +440,26 @@ export default function PaymentsPage() {
         throw new Error(updateData.error || "Failed to update payment");
       }
 
+      const updateData = await updateRes.json();
+      const returnedTrackingNumber = updateData.trackingNumber || null;
+
       toast.success("Proof of payment uploaded successfully");
       setProofDialogOpen(false);
       setProofPayment(null);
       setProofUrl("");
       fetchPayments();
       fetchStats();
+
+      // Show tracking receipt dialog if tracking number was returned
+      if (returnedTrackingNumber) {
+        setTrackingPayment({
+          ...proofPayment,
+          trackingNumber: returnedTrackingNumber,
+          status: "PENDING",
+          uploadedAt: new Date().toISOString(),
+        });
+        setTimeout(() => setTrackingDialogOpen(true), 500);
+      }
     } catch (error: unknown) {
       toast.error(error instanceof Error ? error.message : "Failed to upload proof");
     } finally {
@@ -988,7 +1002,7 @@ export default function PaymentsPage() {
                                 Receipt
                               </Button>
                             )}
-                            {payment.status === "PAID" && (
+                            {payment.status === "PAID" && !payment.trackingNumber && (
                               <Button
                                 variant="ghost"
                                 size="sm"
@@ -999,7 +1013,7 @@ export default function PaymentsPage() {
                                 }}
                               >
                                 <Download className="mr-1 h-3 w-3" />
-                                Receipt
+                                View Details
                               </Button>
                             )}
                           </div>
@@ -1140,7 +1154,7 @@ export default function PaymentsPage() {
                           Receipt
                         </Button>
                       )}
-                      {payment.status === "PAID" && (
+                      {payment.status === "PAID" && !payment.trackingNumber && (
                         <Button
                           variant="ghost"
                           size="sm"
@@ -1151,7 +1165,7 @@ export default function PaymentsPage() {
                           }}
                         >
                           <Download className="mr-1 h-3 w-3" />
-                          Receipt
+                          View Details
                         </Button>
                       )}
                     </div>
