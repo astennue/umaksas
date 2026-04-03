@@ -30,6 +30,7 @@ import {
   Settings,
   CreditCard,
   ToggleLeft,
+  Megaphone,
 } from "lucide-react";
 import Image from "next/image";
 import { format } from "date-fns";
@@ -323,16 +324,23 @@ export default function DashboardPage() {
       );
     }
 
-    // Treasurer Dashboard
+    // Officer Dashboard (Treasurer + President + other officers)
     if (userRole === "OFFICER") {
       return (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
           <QuickActionCard
             href="/dashboard/settings"
             icon={DollarSign}
-            title="Set Up QR Code / Payment Details"
-            subtitle="Configure GCash & payment info"
+            title="Set Up QR Code / Payment"
+            subtitle="Configure GCash details"
             colorClass="bg-green-50 text-green-600 group-hover:bg-green-100 dark:bg-green-900/20 dark:text-green-400 dark:group-hover:bg-green-900/30"
+          />
+          <QuickActionCard
+            href="/dashboard/settings"
+            icon={ToggleLeft}
+            title="Toggle Payment Collection"
+            subtitle="Open/Close payment period"
+            colorClass="bg-rose-50 text-rose-600 group-hover:bg-rose-100 dark:bg-rose-900/20 dark:text-rose-400 dark:group-hover:bg-rose-900/30"
           />
           <QuickActionCard
             href="/dashboard/payments"
@@ -343,7 +351,7 @@ export default function DashboardPage() {
           />
           <QuickActionCard
             href="/dashboard/announcements"
-            icon={Bell}
+            icon={Megaphone}
             title="Announcements"
             subtitle="Manage announcements"
             colorClass="bg-blue-50 text-blue-600 group-hover:bg-blue-100 dark:bg-blue-900/20 dark:text-blue-400 dark:group-hover:bg-blue-900/30"

@@ -1,6 +1,12 @@
 import { PrismaClient } from '@prisma/client';
 
-const db = new PrismaClient();
+const db = new PrismaClient({
+  datasources: {
+    db: {
+      url: process.env.DIRECT_DATABASE_URL || process.env.DATABASE_URL,
+    },
+  },
+});
 
 // ============================================
 // EMAIL DUPLICATE TRACKER
@@ -234,7 +240,7 @@ async function main() {
       name: 'Cadena, Erin Isabella R.',
       studentNumber: 'K12255463',
       college: 'CITE',
-      program: 'Bachelor in Secondary Education Major in Mathematics',
+      program: 'Bachelor of Secondary Education Major in Mathematics',
       umakEmail: 'ecadena.k12255463@umak.edu.ph',
       contactNumber: '09649628847',
       personalEmail: 'erinisabellac@gmail.com',
@@ -346,7 +352,7 @@ async function main() {
       name: 'Baluya, Kristel Ann D.',
       studentNumber: 'A12447657',
       college: 'CBFS',
-      program: 'Bachelor of Science in Marketing Management',
+      program: 'Bachelor of Science in Business Administration Major in Marketing Management',
       umakEmail: 'kbaluya.7657@umak.edu.ph',
       contactNumber: '09930668075',
       personalEmail: 'talayui161@gmail.com',
@@ -640,7 +646,7 @@ async function main() {
       name: 'Bendana, Mark R.',
       studentNumber: 'A62345008',
       college: 'IAD',
-      program: 'Bachelor in Multimedia Arts',
+      program: 'Bachelor of Multimedia Arts',
       umakEmail: 'mbendana.a62345008@umak.edu.ph',
       contactNumber: '09653903562',
       personalEmail: 'mark.bendana22@gmail.com',
@@ -1078,7 +1084,10 @@ async function main() {
 
   for (const [, officeInfo] of officeMap) {
     const cleanCode = officeInfo.code.toUpperCase();
-    const emailBase = cleanCode.toLowerCase() + '@umak.edu.ph';
+    // Use actual office email from Excel data, fallback to code-based email
+    const emailBase = officeInfo.email && officeInfo.email.trim() !== ''
+      ? officeInfo.email
+      : cleanCode.toLowerCase() + '@umak.edu.ph';
     const password = `UMAKSAS_Sup_${cleanCode}_2026`;
 
     // Special handling: HRMO office uses the existing HRMO user
@@ -1097,6 +1106,12 @@ async function main() {
         password: hrmo.password,
       });
       console.log(`  HRMO Office -> linked to existing HRMO user (${hrmo.email})`);
+      continue;
+    }
+
+    // Skip offices with no email (CIC, IMC)
+    if (!emailBase || emailBase.trim() === '') {
+      console.log(`  Skipped: ${cleanCode} (no office email)`);
       continue;
     }
 
