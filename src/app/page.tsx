@@ -14,13 +14,14 @@ import {
   Star,
   CheckCircle2,
   ArrowRight,
-  ClipboardList,
+ ClipboardList,
   UserCheck,
   Briefcase,
-  Rocket,
+ Rocket,
   Sparkles,
   Heart,
   Shield,
+  Megaphone,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -174,6 +175,16 @@ const iconColorMap: Record<string, string> = {
 export default function HomePage() {
   const [stats, setStats] = useState({ saCount: 58, officeCount: 42, collegeCount: 10 });
   const [applicationOpen, setApplicationOpen] = useState<boolean | null>(null);
+  const [announcements, setAnnouncements] = useState<Array<{
+    id: string;
+    title: string;
+    excerpt: string | null;
+    content: string | null;
+    imageUrl: string | null;
+    isPinned: boolean;
+    priority: string;
+    createdAt: string;
+  }>>([]);
 
   useEffect(() => {
     fetch("/api/public-stats")
@@ -185,6 +196,12 @@ export default function HomePage() {
       .then((res) => res.json())
       .then((data) => setApplicationOpen(data.applicationOpen ?? false))
       .catch(() => setApplicationOpen(false));
+
+    // Fetch latest announcements
+    fetch("/api/announcements/public")
+      .then((res) => res.json())
+      .then((data) => setAnnouncements(data.announcements || []))
+      .catch(() => {/* ignore */});
   }, []);
 
   const statsItems = [
@@ -642,6 +659,65 @@ export default function HomePage() {
           </SectionReveal>
         </div>
       </section>
+
+      {/* ─── Announcements Ticker ─── */}
+      {announcements.length > 0 && (
+        <section className="bg-white border-y border-gray-100 dark:bg-gray-950 dark:border-gray-800">
+          <div className="mx-auto max-w-6xl px-4 py-5">
+            <div className="flex items-center gap-2 mb-3">
+              <Megaphone className="h-4 w-4 text-yellow-500" />
+              <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Latest Announcements</h3>
+            </div>
+            <div className="space-y-3">
+              {announcements.slice(0, 3).map((a) => (
+                <Link
+                  key={a.id}
+                  href="/announcements"
+                  className="group block rounded-lg border border-gray-100 p-3 transition-all hover:border-yellow-300 hover:shadow-sm dark:bg-gray-900 dark:border-gray-800"
+                >
+                  <div className="flex items-start gap-3">
+                    {a.imageUrl && (
+                      <div className="h-12 w-12 shrink-0 overflow-hidden rounded-md bg-gray-100 dark:bg-gray-800">
+                        <img src={a.imageUrl} alt="" className="h-full w-full object-cover" />
+                      </div>
+                    )}
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2">
+                        {a.isPinned && (
+                          <span className="inline-flex h-4 w-4 items-center justify-center rounded bg-yellow-100 dark:bg-yellow-900/30">
+                            <Star className="h-3 w-3 text-yellow-600 dark:text-yellow-400 fill-yellow-600 dark:fill-yellow-400" />
+                          </span>
+                        )}
+                        <h4 className="text-sm font-semibold text-gray-900 dark:text-white truncate group-hover:text-yellow-600 transition-colors">
+                          {a.title}
+                        </h4>
+                        {a.priority === "URGENT" && (
+                          <Badge className="bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400 text-[10px] border-red-200 dark:border-red-800 shrink-0">URGENT</Badge>
+                        )}
+                      </div>
+                      {a.excerpt && (
+                        <p className="mt-1 text-xs text-gray-500 dark:text-gray-400 line-clamp-2">{a.excerpt}</p>
+                      )}
+                      <p className="mt-1 text-[11px] text-gray-400 dark:text-gray-500">
+                        {a.createdAt ? new Date(a.createdAt).toLocaleDateString("en-PH", { month: "short", day: "numeric", year: "numeric" }) : ""}
+                      </p>
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+            <div className="mt-3 text-center">
+              <Link
+                href="/announcements"
+                className="text-xs font-medium text-yellow-600 hover:text-yellow-700 dark:text-yellow-400 inline-flex items-center gap-1 transition-colors"
+              >
+                View All Announcements
+                <ArrowRight className="h-3 w-3" />
+              </Link>
+            </div>
+          </div>
+        </section>
+      )}
     </PublicLayout>
   );
 }
