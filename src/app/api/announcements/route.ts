@@ -224,7 +224,7 @@ export async function POST(request: NextRequest) {
     const { user } = authResult;
 
     const body = await request.json();
-    const { title, content, excerpt, priority, imageUrl, isPublished } = body;
+    const { title, content, excerpt, priority, imageUrl, isPublished, isPinned } = body;
 
     if (!title || !content) {
       return NextResponse.json(
@@ -254,6 +254,7 @@ export async function POST(request: NextRequest) {
         priority: priority || "NORMAL",
         imageUrl: imageUrl || null,
         isPublished: effectiveIsPublished,
+        isPinned: isPinned ?? false,
         publishedAt: effectiveIsPublished ? new Date() : null,
         authorId: user.id,
       },
