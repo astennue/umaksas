@@ -41,6 +41,9 @@ import { BetterSelect } from "@/components/ui/better-select";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
 import { RoleGuard } from "@/components/auth/role-guard";
+import { useConfirm } from "@/hooks/use-confirm";
+import { useKeyboardShortcuts } from "@/hooks/use-keyboard-shortcuts";
+import { SavingIndicator } from "@/components/ui/saving-indicator";
 
 interface SystemSettingsData {
   id: string;
@@ -69,6 +72,16 @@ export default function SettingsPage() {
   const [settings, setSettings] = useState<SystemSettingsData | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [lastSaved, setLastSaved] = useState<Date | null>(null);
+
+  const { confirm, ConfirmDialog } = useConfirm();
+
+  // Keyboard shortcut: Ctrl/Cmd+S to save
+  useKeyboardShortcuts({
+    "mod+s": () => {
+      handleSave();
+    },
+  }, { enabled: true });
 
   // Form fields - Academic
   const [academicYear, setAcademicYear] = useState("");
@@ -163,7 +176,29 @@ export default function SettingsPage() {
     }
   };
 
+  // Dirty detection for SavingIndicator
+  const dirty = settings
+    ? academicYear !== (settings.academicYear || "") ||
+      currentSemester !== (settings.currentSemester || "") ||
+      applicationOpen !== settings.applicationOpen ||
+      renewalOpen !== settings.renewalOpen ||
+      maxWorkHours !== settings.maxWorkHoursPerDay ||
+      monthlyPayment !== settings.monthlyPaymentFee ||
+      paymentCollectionEnabled !== (settings.paymentCollectionEnabled || false) ||
+      gcashQrUrl !== (settings.gcashQrUrl || "") ||
+      gcashNumber !== (settings.gcashNumber || "") ||
+      paymentInstructions !== (settings.paymentInstructions || "")
+    : false;
+
   const handleSave = async () => {
+    const confirmed = await confirm({
+      title: "Save Settings?",
+      description: "These changes will take effect immediately for all users.",
+      confirmText: "Save",
+      variant: "default",
+    });
+    if (!confirmed) return;
+
     setSaving(true);
     try {
       const payload: Record<string, unknown> = {
@@ -194,6 +229,7 @@ export default function SettingsPage() {
 
       toast.success("Settings saved successfully");
       setSettings(data);
+      setLastSaved(new Date());
     } catch (error) {
       console.error("Save error:", error);
       toast.error(error instanceof Error ? error.message : "Failed to save settings");
@@ -258,6 +294,11 @@ export default function SettingsPage() {
           )}
           Save Settings
         </Button>
+      </div>
+
+      {/* Save indicator row */}
+      <div className="flex items-center gap-2">
+        <SavingIndicator saving={saving} lastSaved={lastSaved} dirty={dirty} />
       </div>
 
       {/* Role Badge */}
@@ -649,6 +690,7 @@ export default function SettingsPage() {
         </CardContent>
       </Card>
     </div>
+    <ConfirmDialog />
     </RoleGuard>
   );
 }

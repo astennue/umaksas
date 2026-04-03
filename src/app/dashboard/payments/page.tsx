@@ -77,11 +77,17 @@ import {
   Copy,
   Check,
   X,
+  Ticket,
 } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { RoleGuard } from "@/components/auth/role-guard";
+import { useConfirm } from "@/hooks/use-confirm";
+import { useKeyboardShortcuts } from "@/hooks/use-keyboard-shortcuts";
+import { EmptyState } from "@/components/ui/empty-state";
+import { SavingIndicator } from "@/components/ui/saving-indicator";
+import { toastWithUndo } from "@/components/ui/undo-toast";
 
 // Types
 interface PaymentUser {
@@ -124,6 +130,7 @@ interface Payment {
   receiptGeneratedAt: string | null;
   transactionNumber: string | null;
   amountPaid: number | null;
+  trackingNumber: string | null;
   createdAt: string;
   updatedAt: string;
   user: PaymentUser;
@@ -251,6 +258,14 @@ export default function PaymentsPage() {
   const [receiptOpen, setReceiptOpen] = useState(false);
   const [receiptPayment, setReceiptPayment] = useState<Payment | null>(null);
 
+  // Tracking dialog
+  const [trackingDialogOpen, setTrackingDialogOpen] = useState(false);
+  const [trackingPayment, setTrackingPayment] = useState<Payment | null>(null);
+  const [trackingCopied, setTrackingCopied] = useState(false);
+
+  // Confirm dialog hook
+  const { confirm, ConfirmDialog } = useConfirm();
+
   // Action states
   const [isGenerating, setIsGenerating] = useState(false);
   const [isVerifying, setIsVerifying] = useState(false);
@@ -261,6 +276,11 @@ export default function PaymentsPage() {
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const payFileInputRef = useRef<HTMLInputElement>(null);
+
+  // Keyboard shortcuts
+  useKeyboardShortcuts({
+    r: () => { fetchPayments(); fetchStats(); toast.success("Data refreshed"); },
+  });
 
   // Build available years
   const currentYear = new Date().getFullYear();
@@ -486,20 +506,33 @@ export default function PaymentsPage() {
         throw new Error(updateData.error || "Failed to submit payment");
       }
 
+      const updateData = await updateRes.json();
+      const returnedTrackingNumber = updateData.trackingNumber || null;
+
       toast.success("Payment submitted successfully! Please wait for verification.");
       setPayNowOpen(false);
-      setPayNowPayment(null);
-      resetPayNowForm();
 
-      // Show transaction receipt
-      setReceiptPayment({
+      // Update local payment state with tracking number
+      const updatedPayment: Payment = {
         ...payNowPayment,
         transactionNumber: payTxNumber.trim(),
         amountPaid: parseFloat(payAmount),
         status: "PENDING",
         uploadedAt: new Date().toISOString(),
-      });
+        trackingNumber: returnedTrackingNumber,
+      };
+      setPayNowPayment(null);
+      resetPayNowForm();
+
+      // Show transaction receipt
+      setReceiptPayment(updatedPayment);
       setReceiptOpen(true);
+
+      // Show tracking dialog if tracking number was returned
+      if (returnedTrackingNumber) {
+        setTrackingPayment(updatedPayment);
+        setTrackingDialogOpen(true);
+      }
 
       fetchPayments();
       fetchStats();
@@ -571,6 +604,23 @@ export default function PaymentsPage() {
     }
   };
 
+  // Open verify dialog with confirmation
+  const openVerifyDialog = async (payment: Payment, action: "verify" | "reject") => {
+    const confirmed = await confirm({
+      title: action === "verify" ? "Approve Payment" : "Reject Payment",
+      description: action === "verify"
+        ? `Are you sure you want to approve the payment for ${getFullName(payment.user)} (${getMonthName(payment.month)} ${payment.year})?`
+        : `Are you sure you want to reject the payment for ${getFullName(payment.user)} (${getMonthName(payment.month)} ${payment.year})? This action will require the student to re-upload their proof.`,
+      confirmText: action === "verify" ? "Approve" : "Reject",
+      variant: action === "reject" ? "destructive" : "default",
+    });
+    if (!confirmed) return;
+    setVerifyPayment(payment);
+    setVerifyAction(action);
+    setVerifyNotes("");
+    setVerifyOpen(true);
+  };
+
   // Handle bulk generate
   const handleGenerate = async () => {
     if (!genMonth || !genYear) {
@@ -596,7 +646,13 @@ export default function PaymentsPage() {
       }
 
       const data = await res.json();
-      toast.success(`Generated ${data.created} payments (${data.skipped} already existed)`);
+      toastWithUndo({
+        message: `Generated ${data.created} payments (${data.skipped} already existed)`,
+        description: `Bulk payment records for ${getMonthName(parseInt(genMonth, 10))} ${genYear} have been created.`,
+        onUndo: async () => {
+          toast.info("Bulk generation undo is not available for this operation.");
+        },
+      });
       setGenerateOpen(false);
       setGenMonth("");
       setGenYear("");
@@ -665,7 +721,14 @@ export default function PaymentsPage() {
           </Button>
           {canGenerate && (
             <Button
-              onClick={() => setGenerateOpen(true)}
+              onClick={async () => {
+                const confirmed = await confirm({
+                  title: "Generate Monthly Payments",
+                  description: "This will create unpaid payment records for all active student assistants for the selected month and year. Existing payments will be skipped. Continue?",
+                  confirmText: "Generate",
+                });
+                if (confirmed) setGenerateOpen(true);
+              }}
               className="bg-[#1e3a8a] hover:bg-[#1e3a8a]/90"
             >
               <Plus className="mr-2 h-4 w-4" />
@@ -769,19 +832,21 @@ export default function PaymentsPage() {
 
       {/* Payments Table (Desktop) / Cards (Mobile) */}
       {payments.length === 0 ? (
-        <div className="flex flex-col items-center justify-center rounded-lg border border-dashed py-16 text-center">
-          <Wallet className="mb-4 h-12 w-12 text-muted-foreground/40" />
-          <h3 className="text-sm font-medium text-muted-foreground">No payments found</h3>
-          <p className="mt-1 text-xs text-muted-foreground">
-            {search || monthFilter !== "all" || yearFilter !== "all" || statusFilter !== "all"
+        <EmptyState
+          icon={Wallet}
+          title="No payments found"
+          description={
+            search || monthFilter !== "all" || yearFilter !== "all" || statusFilter !== "all"
               ? "Try adjusting your filters"
               : isSA && showPaymentCollection
-                ? "Payment collection is active. Payment records will appear here once generated by the administrator. Please check back soon."
+                ? "Payment collection is active. Payment records will appear here once generated by the administrator."
                 : canGenerate
                   ? "Generate monthly payments to get started"
-                  : "No payment records available yet"}
-          </p>
-        </div>
+                  : "No payment records available yet"
+          }
+          action={canGenerate ? { label: "Generate Payments", onClick: () => setGenerateOpen(true), variant: "default" } : undefined}
+          className="rounded-lg border border-dashed"
+        />
       ) : (
         <>
           {/* Desktop Table */}
@@ -895,12 +960,7 @@ export default function PaymentsPage() {
                                   variant="ghost"
                                   size="sm"
                                   className="h-7 text-xs text-green-600 hover:text-green-700 hover:bg-green-50"
-                                  onClick={() => {
-                                    setVerifyPayment(payment);
-                                    setVerifyAction("verify");
-                                    setVerifyNotes("");
-                                    setVerifyOpen(true);
-                                  }}
+                                  onClick={() => openVerifyDialog(payment, "verify")}
                                 >
                                   <CheckCircle2 className="mr-1 h-3 w-3" />
                                   Approve
@@ -909,17 +969,24 @@ export default function PaymentsPage() {
                                   variant="ghost"
                                   size="sm"
                                   className="h-7 text-xs text-red-600 hover:text-red-700 hover:bg-red-50"
-                                  onClick={() => {
-                                    setVerifyPayment(payment);
-                                    setVerifyAction("reject");
-                                    setVerifyNotes("");
-                                    setVerifyOpen(true);
-                                  }}
+                                  onClick={() => openVerifyDialog(payment, "reject")}
                                 >
                                   <XCircle className="mr-1 h-3 w-3" />
                                   Reject
                                 </Button>
                               </>
+                            )}
+                            {/* View Receipt for tracking number */}
+                            {payment.trackingNumber && (payment.status === "PENDING" || payment.status === "PAID") && (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-7 text-xs text-[#1e3a8a] hover:text-[#1e3a8a]/80 hover:bg-blue-50"
+                                onClick={() => { setTrackingPayment(payment); setTrackingDialogOpen(true); }}
+                              >
+                                <Ticket className="mr-1 h-3 w-3" />
+                                Receipt
+                              </Button>
                             )}
                             {payment.status === "PAID" && (
                               <Button
@@ -1045,12 +1112,7 @@ export default function PaymentsPage() {
                             variant="ghost"
                             size="sm"
                             className="h-7 text-xs text-green-600 hover:text-green-700"
-                            onClick={() => {
-                              setVerifyPayment(payment);
-                              setVerifyAction("verify");
-                              setVerifyNotes("");
-                              setVerifyOpen(true);
-                            }}
+                            onClick={() => openVerifyDialog(payment, "verify")}
                           >
                             <CheckCircle2 className="mr-1 h-3 w-3" />
                             Approve
@@ -1059,17 +1121,24 @@ export default function PaymentsPage() {
                             variant="ghost"
                             size="sm"
                             className="h-7 text-xs text-red-600 hover:text-red-700"
-                            onClick={() => {
-                              setVerifyPayment(payment);
-                              setVerifyAction("reject");
-                              setVerifyNotes("");
-                              setVerifyOpen(true);
-                            }}
+                            onClick={() => openVerifyDialog(payment, "reject")}
                           >
                             <XCircle className="mr-1 h-3 w-3" />
                             Reject
                           </Button>
                         </>
+                      )}
+                      {/* View Receipt for tracking number */}
+                      {payment.trackingNumber && (payment.status === "PENDING" || payment.status === "PAID") && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-7 text-xs text-[#1e3a8a] hover:text-[#1e3a8a]/80"
+                          onClick={() => { setTrackingPayment(payment); setTrackingDialogOpen(true); }}
+                        >
+                          <Ticket className="mr-1 h-3 w-3" />
+                          Receipt
+                        </Button>
                       )}
                       {payment.status === "PAID" && (
                         <Button
@@ -1289,12 +1358,9 @@ export default function PaymentsPage() {
                       <Button
                         size="sm"
                         className="bg-green-600 hover:bg-green-700"
-                        onClick={() => {
+                        onClick={async () => {
                           setDetailOpen(false);
-                          setVerifyPayment(detailPayment);
-                          setVerifyAction("verify");
-                          setVerifyNotes("");
-                          setVerifyOpen(true);
+                          await openVerifyDialog(detailPayment, "verify");
                         }}
                       >
                         <CheckCircle2 className="mr-2 h-3 w-3" />
@@ -1303,12 +1369,9 @@ export default function PaymentsPage() {
                       <Button
                         size="sm"
                         variant="destructive"
-                        onClick={() => {
+                        onClick={async () => {
                           setDetailOpen(false);
-                          setVerifyPayment(detailPayment);
-                          setVerifyAction("reject");
-                          setVerifyNotes("");
-                          setVerifyOpen(true);
+                          await openVerifyDialog(detailPayment, "reject");
                         }}
                       >
                         <XCircle className="mr-2 h-3 w-3" />
@@ -1513,6 +1576,9 @@ export default function PaymentsPage() {
             </div>
           )}
           <DialogFooter className="gap-2">
+            <div className="flex items-center gap-2 mr-auto">
+              <SavingIndicator saving={isSubmittingPayment} />
+            </div>
             <Button variant="outline" onClick={() => setPayNowOpen(false)}>
               Cancel
             </Button>
@@ -1611,6 +1677,123 @@ export default function PaymentsPage() {
           <DialogFooter>
             <Button onClick={() => setReceiptOpen(false)} className="bg-[#1e3a8a] hover:bg-[#1e3a8a]/90">
               I Understand
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Tracking Receipt Dialog */}
+      <Dialog open={trackingDialogOpen} onOpenChange={(open) => {
+        setTrackingDialogOpen(open);
+        if (!open) setTrackingCopied(false);
+      }}>
+        <DialogContent className="max-w-md max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#1e3a8a]/10">
+                <Ticket className="h-4 w-4 text-[#1e3a8a]" />
+              </div>
+              Payment Tracking Receipt
+            </DialogTitle>
+            <DialogDescription>
+              Your tracking number and payment submission details
+            </DialogDescription>
+          </DialogHeader>
+          {trackingPayment && (
+            <div className="space-y-4">
+              {/* Tracking Number Display */}
+              <div className="rounded-lg border-2 border-[#1e3a8a]/20 bg-[#1e3a8a]/5 p-5 text-center space-y-3">
+                <p className="text-xs uppercase tracking-widest text-muted-foreground font-medium">Tracking Number</p>
+                <p className="text-2xl font-bold font-mono tracking-wider text-[#1e3a8a] dark:text-blue-400">
+                  {trackingPayment.trackingNumber}
+                </p>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="gap-2"
+                  onClick={() => {
+                    if (trackingPayment.trackingNumber) {
+                      navigator.clipboard.writeText(trackingPayment.trackingNumber);
+                      setTrackingCopied(true);
+                      toast.success("Tracking number copied!");
+                      setTimeout(() => setTrackingCopied(false), 2000);
+                    }
+                  }}
+                >
+                  {trackingCopied ? (
+                    <>
+                      <Check className="h-3.5 w-3.5 text-green-600" />
+                      <span className="text-green-600">Copied!</span>
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="h-3.5 w-3.5" />
+                      <span>Copy Tracking Number</span>
+                    </>
+                  )}
+                </Button>
+              </div>
+
+              <Separator />
+
+              {/* Receipt Details */}
+              <div className="rounded-lg border p-4 bg-white dark:bg-slate-900 space-y-3">
+                <div className="text-center space-y-0.5">
+                  <p className="text-[10px] uppercase tracking-widest text-muted-foreground">UMak SAS</p>
+                  <p className="text-sm font-bold">Payment Submission Receipt</p>
+                </div>
+
+                <Separator />
+
+                <div className="space-y-2.5 text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">SA Name</span>
+                    <span className="font-medium text-right">{getFullName(trackingPayment.user)}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Month / Year</span>
+                    <span className="font-medium">{getMonthName(trackingPayment.month)} {trackingPayment.year}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Amount</span>
+                    <span className="font-bold text-[#1e3a8a] dark:text-blue-400">{formatCurrency(trackingPayment.amountPaid || trackingPayment.amount)}</span>
+                  </div>
+                  {trackingPayment.transactionNumber && (
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Transaction No.</span>
+                      <span className="font-mono text-xs">{trackingPayment.transactionNumber}</span>
+                    </div>
+                  )}
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Date Submitted</span>
+                    <span>{format(new Date(trackingPayment.uploadedAt || new Date()), "MMM d, yyyy 'at' h:mm a")}</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-muted-foreground">Current Status</span>
+                    <Badge className={
+                      trackingPayment.status === "PAID"
+                        ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 gap-1"
+                        : "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 gap-1"
+                    } variant="secondary">
+                      {trackingPayment.status === "PAID"
+                        ? <><CheckCircle2 className="h-3 w-3" /> Verified</>
+                        : <><Clock className="h-3 w-3" /> Pending Verification</>
+                      }
+                    </Badge>
+                  </div>
+                </div>
+
+                <Separator />
+
+                <p className="text-[10px] text-center text-muted-foreground leading-relaxed">
+                  Save this tracking number for your records. You can use it to inquire about your payment status.
+                </p>
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button onClick={() => { setTrackingDialogOpen(false); setTrackingCopied(false); }} variant="outline">
+              Close
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -1861,6 +2044,7 @@ export default function PaymentsPage() {
         </DialogContent>
       </Dialog>
     </div>
+    <ConfirmDialog />
     </RoleGuard>
   );
 }

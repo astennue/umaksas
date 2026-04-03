@@ -16,6 +16,8 @@ import {
   GraduationCap,
   UserCircle,
 } from "lucide-react";
+import { useKeyboardShortcuts } from "@/hooks/use-keyboard-shortcuts";
+import { EmptyState } from "@/components/ui/empty-state";
 import { PublicLayout } from "@/components/public/public-layout";
 import { SACard, type SACardData } from "@/components/sa-wall/sa-card";
 import { SADetailModal } from "@/components/sa-wall/sa-detail-modal";
@@ -40,6 +42,13 @@ export default function SAWallPage() {
   const [selectedSA, setSelectedSA] = useState<SACardData | null>(null);
 
   const { isConnected, onDutySAs } = useAttendanceSocket();
+
+  useKeyboardShortcuts({
+    "/": () => {
+      const searchInput = document.querySelector<HTMLInputElement>("input[placeholder*='Search']");
+      searchInput?.focus();
+    },
+  });
 
   // Fetch SA data
   const fetchSAs = useCallback(async () => {
@@ -425,27 +434,12 @@ export default function SAWallPage() {
               </div>
             </div>
           ) : mergedSAs.length === 0 ? (
-            <div className="flex items-center justify-center py-20">
-              <div className="text-center">
-                <div className="w-16 h-16 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center mx-auto mb-4">
-                  <Users className="w-8 h-8 text-gray-300 dark:text-gray-600" />
-                </div>
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-                  No Student Assistants found
-                </h3>
-                <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                  Try adjusting your search or filter criteria.
-                </p>
-                {hasFilters && (
-                  <button
-                    onClick={clearFilters}
-                    className="mt-4 text-sm text-yellow-700 dark:text-yellow-400 hover:text-yellow-900 dark:hover:text-yellow-300 font-medium"
-                  >
-                    Clear all filters
-                  </button>
-                )}
-              </div>
-            </div>
+            <EmptyState
+              icon={Users}
+              title="No Student Assistants found"
+              description={hasFilters ? "Try adjusting your search or filter criteria." : "No student assistants have been added yet."}
+              action={hasFilters ? { label: "Clear all filters", onClick: clearFilters, variant: "outline" } : undefined}
+            />
           ) : (
             <motion.div
               className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"

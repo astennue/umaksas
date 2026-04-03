@@ -7,6 +7,7 @@ import { useEffect } from "react";
 import { DashboardSidebar } from "@/components/dashboard/sidebar";
 import { DashboardHeader } from "@/components/dashboard/header";
 import { MobileBottomNav } from "@/components/dashboard/mobile-bottom-nav";
+import { OfflineBanner } from "@/components/ui/offline-banner";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useSidebarStore } from "@/stores/sidebar-store";
 import { cn } from "@/lib/utils";
@@ -50,6 +51,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
         "lg:ml-64",
         collapsed && "lg:ml-[68px]"
       )}>
+        <OfflineBanner />
         <DashboardHeader />
         <main className="flex-1 px-4 py-6 pb-20 sm:px-6 lg:px-8 lg:pb-6">
           {children}

@@ -20,16 +20,6 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import {
   Users,
   Search,
   Filter,
@@ -52,6 +42,9 @@ import { SAFormModal } from "@/components/dashboard/sa-form-modal";
 import { CRUDToolbar } from "@/components/crud-toolbar";
 import { CRUDActions } from "@/components/crud-actions";
 import { RoleGuard } from "@/components/auth/role-guard";
+import { EmptyState } from "@/components/ui/empty-state";
+import { useConfirm } from "@/hooks/use-confirm";
+import { useKeyboardShortcuts } from "@/hooks/use-keyboard-shortcuts";
 
 interface StudentAssistant {
   id: string;
@@ -104,8 +97,8 @@ export default function StudentAssistantsPage() {
   const [editSA, setEditSA] = useState<StudentAssistant | null>(null);
   const [detailSA, setDetailSA] = useState<StudentAssistant | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
-  const [deleteSA, setDeleteSA] = useState<StudentAssistant | null>(null);
-  const [deleteOpen, setDeleteOpen] = useState(false);
+  // Confirmation dialog
+  const { confirm, ConfirmDialog } = useConfirm();
   const [isDeleting, setIsDeleting] = useState(false);
 
   const userRole = (session?.user as { role?: string })?.role;
@@ -157,27 +150,13 @@ export default function StudentAssistantsPage() {
     fetchOffices();
   }, [fetchStudents, fetchOffices]);
 
-  const handleDelete = async () => {
-    if (!deleteSA) return;
-    setIsDeleting(true);
-    try {
-      const res = await fetch(`/api/student-assistants/${deleteSA.id}`, {
-        method: "DELETE",
-      });
-      if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.error || "Failed to remove student assistant");
-      }
-      toast.success("Student assistant archived");
-      setDeleteOpen(false);
-      setDeleteSA(null);
-      fetchStudents();
-    } catch (error: unknown) {
-      toast.error(error instanceof Error ? error.message : "Failed to remove student assistant");
-    } finally {
-      setIsDeleting(false);
-    }
-  };
+  // Keyboard shortcut: "/" to focus search input
+  useKeyboardShortcuts({
+    "/": () => {
+      const searchInput = document.querySelector<HTMLInputElement>("input[placeholder*='Search']");
+      searchInput?.focus();
+    },
+  });
 
   // Get unique colleges from loaded students
   const colleges = Array.from(
@@ -260,14 +239,21 @@ export default function StudentAssistantsPage() {
 
       {/* SA Cards */}
       {students.length === 0 ? (
-        <div className="flex flex-col items-center justify-center rounded-lg border border-dashed py-16 text-center">
-          <Users className="mb-4 h-12 w-12 text-muted-foreground/40" />
-          <h3 className="text-sm font-medium text-muted-foreground">No student assistants found</h3>
-          <p className="mt-1 text-xs text-muted-foreground">
-            {search || collegeFilter !== "all" || statusFilter !== "all"
-              ? "Try adjusting your filters"
-              : "Add your first student assistant to get started"}
-          </p>
+        <div className="rounded-lg border bg-white dark:bg-slate-800">
+          <EmptyState
+            icon={Users}
+            title="No student assistants found"
+            description={
+              search || collegeFilter !== "all" || statusFilter !== "all"
+                ? "Try adjusting your filters"
+                : "Add your first student assistant to get started"
+            }
+            action={
+              canCreate
+                ? { label: "Add Student Assistant", onClick: () => { setEditSA(null); setFormOpen(true); } }
+                : undefined
+            }
+          />
         </div>
       ) : (
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
@@ -353,10 +339,33 @@ export default function StudentAssistantsPage() {
                         variant="ghost"
                         size="sm"
                         className="h-7 text-xs text-red-600 hover:text-red-700"
-                        onClick={() => { setDeleteSA(sa); setDeleteOpen(true); }}
+                        disabled={isDeleting}
+                        onClick={async () => {
+                          const confirmed = await confirm({
+                            title: "Archive Student Assistant",
+                            description: `Are you sure you want to archive ${sa.firstName} ${sa.lastName}? This will deactivate their account and mark their profile as archived. This action can be reversed by editing their status.`,
+                            confirmText: "Archive",
+                            variant: "destructive",
+                          });
+                          if (!confirmed) return;
+                          setIsDeleting(true);
+                          try {
+                            const res = await fetch(`/api/student-assistants/${sa.id}`, { method: "DELETE" });
+                            if (!res.ok) {
+                              const data = await res.json();
+                              throw new Error(data.error || "Failed to remove student assistant");
+                            }
+                            toast.success("Student assistant archived");
+                            fetchStudents();
+                          } catch (error: unknown) {
+                            toast.error(error instanceof Error ? error.message : "Failed to remove student assistant");
+                          } finally {
+                            setIsDeleting(false);
+                          }
+                        }}
                       >
                         <Trash2 className="mr-1 h-3 w-3" />
-                        Remove
+                        {isDeleting ? "Archiving..." : "Remove"}
                       </Button>
                     )}
                   </div>
@@ -488,28 +497,8 @@ export default function StudentAssistantsPage() {
         mode={editSA ? "edit" : "add"}
       />
 
-      {/* Delete Confirmation */}
-      <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Archive Student Assistant</AlertDialogTitle>
-            <AlertDialogDescription>
-              Are you sure you want to archive {deleteSA ? `${deleteSA.firstName} ${deleteSA.lastName}` : "this student assistant"}?
-              This will deactivate their account and mark their profile as archived. This action can be reversed by editing their status.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleDelete}
-              disabled={isDeleting}
-              className="bg-red-600 hover:bg-red-700"
-            >
-              {isDeleting ? "Archiving..." : "Archive"}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      {/* Confirmation Dialog */}
+      <ConfirmDialog />
     </div>
     </RoleGuard>
   );

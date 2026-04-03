@@ -840,6 +840,9 @@ model Payment {
   receiptUrl        String?
   receiptGeneratedAt DateTime?
 
+  // SA Submission Tracking
+  trackingNumber    String?  @unique  // Auto-generated when SA submits proof, serves as receipt reference
+
   // Timestamps
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt

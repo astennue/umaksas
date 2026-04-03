@@ -35,6 +35,7 @@ import {
 import Image from "next/image";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
+import { EmptyState } from "@/components/ui/empty-state";
 
 interface DashboardStats {
   totalSAs: number;
@@ -580,10 +581,12 @@ export default function DashboardPage() {
             </CardHeader>
             <CardContent className="pt-0">
               {recentApplications.length === 0 ? (
-                <div className="flex flex-col items-center py-8 text-center">
-                  <FileText className="mb-2 h-10 w-10 text-muted-foreground/25" />
-                  <p className="text-sm text-muted-foreground">No applications yet</p>
-                </div>
+                <EmptyState
+                  icon={FileText}
+                  title="No applications yet"
+                  description="Applications will appear here once submitted."
+                  className="py-8"
+                />
               ) : (
                 <div className="space-y-1">
                   <div className="hidden sm:grid sm:grid-cols-[1fr_1fr_auto] gap-2 px-2 pb-2 border-b border-gray-100 dark:border-gray-800">
@@ -631,10 +634,12 @@ export default function DashboardPage() {
             </CardHeader>
             <CardContent className="pt-0">
               {recentInterviews.length === 0 ? (
-                <div className="flex flex-col items-center py-8 text-center">
-                  <Calendar className="mb-2 h-10 w-10 text-muted-foreground/25" />
-                  <p className="text-sm text-muted-foreground">No interviews scheduled</p>
-                </div>
+                <EmptyState
+                  icon={Calendar}
+                  title="No interviews scheduled"
+                  description="Interviews will appear here once scheduled."
+                  className="py-8"
+                />
               ) : (
                 <div className="space-y-1">
                   <div className="hidden sm:grid sm:grid-cols-[1fr_1fr_auto] gap-2 px-2 pb-2 border-b border-gray-100 dark:border-gray-800">

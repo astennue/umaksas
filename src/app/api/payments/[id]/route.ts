@@ -95,6 +95,8 @@ export async function PUT(
           return NextResponse.json({ error: "Can only upload proof for unpaid or rejected payments" }, { status: 400 });
         }
 
+        const trackingNumber = `TRK-${new Date().getFullYear()}${String(new Date().getMonth() + 1).padStart(2, '0')}${Date.now().toString(36).toUpperCase()}`;
+
         const updated = await db.payment.update({
           where: { id },
           data: {
@@ -103,6 +105,7 @@ export async function PUT(
             status: PaymentStatus.PENDING,
             ...(transactionNumber && { transactionNumber }),
             ...(amountPaid !== undefined && amountPaid !== null && { amountPaid: parseFloat(amountPaid) }),
+            trackingNumber,
           },
           include: {
             user: {
@@ -126,7 +129,7 @@ export async function PUT(
           },
         });
 
-        return NextResponse.json({ payment: updated });
+        return NextResponse.json({ payment: updated, trackingNumber });
       }
 
       return NextResponse.json({ error: "Forbidden action" }, { status: 403 });

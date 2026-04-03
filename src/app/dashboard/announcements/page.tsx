@@ -19,7 +19,6 @@ import {
   Megaphone,
   FileText,
   Archive,
-  AlertTriangle,
   ImagePlus,
   X,
   CheckCircle2,
@@ -39,16 +38,6 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import {
   Select,
   SelectContent,
   SelectItem,
@@ -59,6 +48,9 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { CRUDToolbar } from "@/components/crud-toolbar";
 import { CRUDActions } from "@/components/crud-actions";
 import { RoleGuard } from "@/components/auth/role-guard";
+import { EmptyState } from "@/components/ui/empty-state";
+import { useConfirm } from "@/hooks/use-confirm";
+import { useKeyboardShortcuts } from "@/hooks/use-keyboard-shortcuts";
 
 interface Announcement {
   id: string;
@@ -130,10 +122,8 @@ export default function DashboardAnnouncementsPage() {
   const [formLoading, setFormLoading] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
 
-  // Delete dialog
-  const [deleteOpen, setDeleteOpen] = useState(false);
-  const [deletingId, setDeletingId] = useState<string | null>(null);
-  const [deleteLoading, setDeleteLoading] = useState(false);
+  // Confirmation dialog
+  const { confirm, ConfirmDialog } = useConfirm();
 
   // Image upload
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -323,6 +313,14 @@ export default function DashboardAnnouncementsPage() {
 
   // Toggle publish
   const togglePublish = async (announcement: Announcement) => {
+    if (announcement.isPublished) {
+      const confirmed = await confirm({
+        title: "Unpublish Announcement",
+        description: "This announcement will be hidden from the public. You can re-publish it later.",
+        confirmText: "Unpublish",
+      });
+      if (!confirmed) return;
+    }
     try {
       const res = await fetch(`/api/announcements/${announcement.id}`, {
         method: "PUT",
@@ -353,23 +351,10 @@ export default function DashboardAnnouncementsPage() {
     }
   };
 
-  // Delete
-  const confirmDelete = async () => {
-    if (!deletingId) return;
-    setDeleteLoading(true);
-    try {
-      const res = await fetch(`/api/announcements/${deletingId}`, { method: "DELETE" });
-      if (!res.ok) throw new Error();
-      toast.success("Announcement deleted");
-      setDeleteOpen(false);
-      setDeletingId(null);
-      fetchAnnouncements();
-    } catch {
-      toast.error("Failed to delete announcement");
-    } finally {
-      setDeleteLoading(false);
-    }
-  };
+  // Keyboard shortcut: "n" to create new announcement
+  useKeyboardShortcuts({
+    n: () => { if (isAdmin) openCreate(); },
+  });
 
   return (
     <RoleGuard allowedRoles={["SUPER_ADMIN", "ADVISER", "OFFICER"]}>
@@ -447,29 +432,22 @@ export default function DashboardAnnouncementsPage() {
           ))}
         </div>
       ) : filteredAnnouncements.length === 0 ? (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          className="flex flex-col items-center justify-center rounded-xl border-0 bg-white py-16 shadow-lg dark:bg-gray-800"
-        >
-          <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-blue-50 dark:bg-blue-900/20">
-            <Megaphone className="h-8 w-8 text-blue-500" />
-          </div>
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-            No Announcements Found
-          </h3>
-          <p className="mt-2 max-w-sm text-center text-sm text-gray-500 dark:text-gray-400">
-            {searchQuery || activeFilter !== "ALL"
-              ? "No announcements match your current filters."
-              : "Get started by creating your first announcement."}
-          </p>
-          {!searchQuery && activeFilter === "ALL" && isAdmin && (
-            <Button onClick={openCreate} className="mt-4 bg-blue-700 hover:bg-blue-800 text-white">
-              <Plus className="mr-2 h-4 w-4" />
-              Create Announcement
-            </Button>
-          )}
-        </motion.div>
+        <div className="rounded-xl border-0 bg-white shadow-lg dark:bg-gray-800">
+          <EmptyState
+            icon={Megaphone}
+            title="No Announcements Found"
+            description={
+              searchQuery || activeFilter !== "ALL"
+                ? "No announcements match your current filters."
+                : "Get started by creating your first announcement."
+            }
+            action={
+              !searchQuery && activeFilter === "ALL" && isAdmin
+                ? { label: "Create Announcement", onClick: openCreate }
+                : undefined
+            }
+          />
+        </div>
       ) : (
         <div className="space-y-4">
           <AnimatePresence mode="popLayout">
@@ -599,9 +577,22 @@ export default function DashboardAnnouncementsPage() {
                             <Button
                               variant="ghost"
                               size="sm"
-                              onClick={() => {
-                                setDeletingId(announcement.id);
-                                setDeleteOpen(true);
+                              onClick={async () => {
+                                const confirmed = await confirm({
+                                  title: "Delete Announcement",
+                                  description: "Delete this announcement? This cannot be undone.",
+                                  confirmText: "Delete",
+                                  variant: "destructive",
+                                });
+                                if (!confirmed) return;
+                                try {
+                                  const res = await fetch(`/api/announcements/${announcement.id}`, { method: "DELETE" });
+                                  if (!res.ok) throw new Error();
+                                  toast.success("Announcement deleted");
+                                  fetchAnnouncements();
+                                } catch {
+                                  toast.error("Failed to delete announcement");
+                                }
                               }}
                               className="h-8 w-8 p-0 text-gray-500 hover:text-red-600 hover:bg-red-50 dark:hover:text-red-400 dark:hover:bg-red-900/20"
                               title="Delete"
@@ -808,37 +799,8 @@ export default function DashboardAnnouncementsPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Delete Confirmation */}
-      <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
-        <AlertDialogContent className="border-0 shadow-2xl">
-          <AlertDialogHeader>
-            <AlertDialogTitle className="flex items-center gap-2">
-              <AlertTriangle className="h-5 w-5 text-red-500" />
-              Delete Announcement
-            </AlertDialogTitle>
-            <AlertDialogDescription>
-              Are you sure you want to delete this announcement? This action cannot be undone and the announcement will be permanently removed.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel className="border-gray-200 dark:border-gray-700">Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={confirmDelete}
-              disabled={deleteLoading}
-              className="bg-red-600 hover:bg-red-700 text-white"
-            >
-              {deleteLoading ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Deleting...
-                </>
-              ) : (
-                "Delete"
-              )}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      {/* Confirmation Dialog */}
+      <ConfirmDialog />
     </div>
     </RoleGuard>
   );

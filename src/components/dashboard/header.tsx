@@ -4,6 +4,7 @@ import { useSession, signOut } from "next-auth/react";
 import { usePathname } from "next/navigation";
 import { useTheme } from "next-themes";
 import { NotificationBell } from "@/components/notifications/notification-bell";
+import { useNotifications } from "@/hooks/use-notifications";
 import { NotificationPopup } from "@/components/notifications/notification-popup";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -61,6 +62,7 @@ export function DashboardHeader() {
   const { data: session } = useSession();
   const pathname = usePathname();
   const { setTheme, resolvedTheme } = useTheme();
+  const { unreadCount } = useNotifications({ enabled: true, unreadOnly: true, limit: 1 });
   const user = session?.user as {
     role?: string;
     firstName?: string;
@@ -124,8 +126,15 @@ export function DashboardHeader() {
               </div>
             </div>
 
-            {/* Notification Bell */}
-            <NotificationBell />
+            {/* Notification Bell with unread badge */}
+            <div className="relative">
+              <NotificationBell />
+              {unreadCount > 0 && (
+                <span className="pointer-events-none absolute -right-1 -top-1 flex h-5 min-w-[20px] items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold leading-none text-white animate-pulse ring-2 ring-white dark:ring-gray-900">
+                  {unreadCount > 99 ? "99+" : unreadCount}
+                </span>
+              )}
+            </div>
 
             {/* Theme Toggle */}
             {resolvedTheme && (

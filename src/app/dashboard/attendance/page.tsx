@@ -53,6 +53,10 @@ import {
 } from "lucide-react";
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isSameDay, isToday, addMonths, subMonths, startOfWeek, endOfWeek, parseISO } from "date-fns";
 import { toast } from "sonner";
+import { useConfirm } from "@/hooks/use-confirm";
+import { useKeyboardShortcuts } from "@/hooks/use-keyboard-shortcuts";
+import { StatusTransition } from "@/components/ui/status-transition";
+import { EmptyState } from "@/components/ui/empty-state";
 
 // ============== TYPES ==============
 interface AttendanceRecord {
@@ -181,6 +185,9 @@ export default function AttendancePage() {
 
   // Active tab
   const [activeTab, setActiveTab] = useState("records");
+
+  // Confirmation dialog
+  const { confirm, ConfirmDialog } = useConfirm();
 
   // ============== FETCH SYSTEM SETTINGS & SCHEDULE ==============
   const fetchSystemSettings = useCallback(async () => {
@@ -456,6 +463,17 @@ export default function AttendancePage() {
     }
   };
 
+  // ============== KEYBOARD SHORTCUTS ==============
+  useKeyboardShortcuts(
+    {
+      c: () => { if (dutyStatus === "off_duty") handleClockAction("clock_in"); },
+      o: () => { if (dutyStatus === "on_duty") handleClockAction("clock_out"); },
+      b: () => { if (dutyStatus === "on_duty") handleClockAction("break_start"); },
+      e: () => { if (dutyStatus === "on_break") handleClockAction("break_end"); },
+    },
+    { enabled: canClockIn && !loadingAction },
+  );
+
   // ============== CORRECTION REQUEST ==============
   const handleRequestCorrection = () => {
     if (!todayRecord) return;
@@ -603,23 +621,15 @@ export default function AttendancePage() {
             <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
               {/* Left: Clock Display */}
               <div className="flex flex-col items-center gap-3 md:items-start">
-                <div className="flex items-center gap-2">
-                  {dutyStatus === "on_duty" && (
-                    <span className="relative flex h-3 w-3">
-                      <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-green-400 opacity-75" />
-                      <span className="relative inline-flex h-3 w-3 rounded-full bg-green-500" />
-                    </span>
-                  )}
-                  {dutyStatus === "on_break" && (
-                    <span className="relative flex h-3 w-3">
-                      <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-amber-400 opacity-75" />
-                      <span className="relative inline-flex h-3 w-3 rounded-full bg-amber-500" />
-                    </span>
-                  )}
-                  <span className="text-sm font-medium text-blue-100">
-                    {dutyStatus === "on_duty" ? "On Duty" : dutyStatus === "on_break" ? "On Break" : "Off Duty"}
-                  </span>
-                </div>
+                <StatusTransition
+                  status={dutyStatus}
+                  config={{
+                    on_duty: { label: "On Duty", color: "bg-green-500 text-white" },
+                    on_break: { label: "On Break", color: "bg-amber-500 text-white" },
+                    off_duty: { label: "Off Duty", color: "bg-slate-400 text-white" },
+                  }}
+                  badgeClassName="text-xs"
+                />
                 <div className="text-5xl font-bold tracking-tight md:text-6xl">
                   {format(currentTime, "hh:mm:ss a")}
                 </div>
@@ -658,7 +668,14 @@ export default function AttendancePage() {
                   <>
                     <Button
                       size="lg"
-                      onClick={() => handleClockAction("clock_out")}
+                      onClick={async () => {
+                        const ok = await confirm({
+                          title: "Clock Out?",
+                          description: "Are you sure you want to end your duty session?",
+                          variant: "destructive",
+                        });
+                        if (ok) handleClockAction("clock_out");
+                      }}
                       disabled={loadingAction}
                       className="bg-red-500 hover:bg-red-600 text-white px-8"
                     >
@@ -668,7 +685,13 @@ export default function AttendancePage() {
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => handleClockAction("break_start")}
+                      onClick={async () => {
+                        const ok = await confirm({
+                          title: "Start Break?",
+                          description: "You'll be marked as on break. Continue?",
+                        });
+                        if (ok) handleClockAction("break_start");
+                      }}
                       disabled={loadingAction}
                       className="border-blue-300 text-blue-100 hover:bg-blue-500/30 hover:text-white"
                     >
@@ -982,13 +1005,11 @@ export default function AttendancePage() {
 
                 {/* Records Table */}
                 {records.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center py-16 text-center">
-                    <ClipboardList className="mb-4 h-12 w-12 text-muted-foreground/40" />
-                    <h3 className="text-sm font-medium text-muted-foreground">No attendance records found</h3>
-                    <p className="mt-1 text-xs text-muted-foreground">
-                      {isSA ? "Clock in to start tracking your attendance" : "No records match your filters"}
-                    </p>
-                  </div>
+                  <EmptyState
+                    icon={ClipboardList}
+                    title="No attendance records"
+                    description={isSA || canClockUser ? "Clock in to start tracking your attendance" : "No records match your filters"}
+                  />
                 ) : (
                   <div className="overflow-x-auto">
                     <table className="w-full text-sm">
@@ -1314,6 +1335,7 @@ export default function AttendancePage() {
           )}
         </DialogContent>
       </Dialog>
+      <ConfirmDialog />
     </div>
   );
 }

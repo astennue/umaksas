@@ -97,11 +97,6 @@ export function NotificationBell({ className }: NotificationBellProps) {
           aria-label={`Notifications${unreadCount > 0 ? ` (${unreadCount} unread)` : ""}`}
         >
           <Bell className="h-5 w-5" />
-          {unreadCount > 0 && (
-            <span className="absolute -right-0.5 -top-0.5 flex h-5 min-w-[20px] items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold leading-none text-white ring-2 ring-background">
-              {unreadCount > 99 ? "99+" : unreadCount}
-            </span>
-          )}
         </Button>
 
         {isOpen && (

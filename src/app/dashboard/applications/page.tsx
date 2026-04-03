@@ -53,6 +53,9 @@ import {
 } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "sonner";
+import { useConfirm } from "@/hooks/use-confirm";
+import { useKeyboardShortcuts } from "@/hooks/use-keyboard-shortcuts";
+import { EmptyState } from "@/components/ui/empty-state";
 import { ScheduleInterviewDialog } from "@/components/interviews/schedule-interview-dialog";
 
 interface Application {
@@ -111,8 +114,16 @@ export default function ApplicationsPage() {
   const [scheduleOpen, setScheduleOpen] = useState(false);
 
   // Approve/Reject state
-  const [confirmApproveOpen, setConfirmApproveOpen] = useState(false);
   const [confirmRejectOpen, setConfirmRejectOpen] = useState(false);
+
+  const { confirm, ConfirmDialog } = useConfirm();
+
+  useKeyboardShortcuts({
+    "/": () => {
+      const searchInput = document.querySelector<HTMLInputElement>("input[placeholder='Search by name, email...']");
+      searchInput?.focus();
+    },
+  });
   const [rejectReason, setRejectReason] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
@@ -170,7 +181,6 @@ export default function ApplicationsPage() {
       }
 
       toast.success("Application approved successfully");
-      setConfirmApproveOpen(false);
       setDetailOpen(false);
       fetchApplications();
     } catch (error: unknown) {
@@ -286,15 +296,15 @@ export default function ApplicationsPage() {
 
       {/* Application Cards */}
       {applications.length === 0 ? (
-        <div className="flex flex-col items-center justify-center rounded-lg border border-dashed py-16 text-center">
-          <FileText className="mb-4 h-12 w-12 text-muted-foreground/40" />
-          <h3 className="text-sm font-medium text-muted-foreground">No applications found</h3>
-          <p className="mt-1 text-xs text-muted-foreground">
-            {search || statusFilter !== "all"
+        <EmptyState
+          icon={FileText}
+          title="No applications found"
+          description={
+            search || statusFilter !== "all"
               ? "Try adjusting your filters"
-              : "Applications will appear here when submitted"}
-          </p>
-        </div>
+              : "Applications will appear here when submitted"
+          }
+        />
       ) : (
         <>
           {/* Desktop Table */}
@@ -690,7 +700,16 @@ export default function ApplicationsPage() {
                 <div className="flex flex-col gap-2 border-t pt-4 sm:flex-row">
                   <Button
                     className="flex-1 bg-green-600 hover:bg-green-700 text-white"
-                    onClick={() => setConfirmApproveOpen(true)}
+                    onClick={async () => {
+                      const name = `${selectedApp.firstName || ""} ${selectedApp.lastName || ""}`.trim() || selectedApp.applicantEmail;
+                      const ok = await confirm({
+                        title: "Approve Application",
+                        description: `Are you sure you want to approve the application from ${name}? The applicant will be notified about the decision.`,
+                        confirmText: "Approve",
+                      });
+                      if (!ok) return;
+                      handleApprove();
+                    }}
                   >
                     <CheckCircle2 className="mr-2 h-4 w-4" />
                     Approve Application
@@ -727,35 +746,6 @@ export default function ApplicationsPage() {
           )}
         </DialogContent>
       </Dialog>
-
-      {/* Approve Confirmation Dialog */}
-      <AlertDialog open={confirmApproveOpen} onOpenChange={setConfirmApproveOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Approve Application</AlertDialogTitle>
-            <AlertDialogDescription>
-              Are you sure you want to approve the application from{" "}
-              <span className="font-semibold text-foreground">
-                {selectedApp
-                  ? `${selectedApp.firstName || ""} ${selectedApp.lastName || ""}`.trim() || selectedApp.applicantEmail
-                  : "this applicant"}
-              </span>
-              ? The applicant will be notified about the decision.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={submitting}>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleApprove}
-              disabled={submitting}
-              className="bg-green-600 hover:bg-green-700 focus:ring-green-600"
-            >
-              {submitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Approve
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
 
       {/* Reject Confirmation Dialog */}
       <AlertDialog open={confirmRejectOpen} onOpenChange={setConfirmRejectOpen}>
@@ -796,6 +786,7 @@ export default function ApplicationsPage() {
       </AlertDialog>
 
       {/* Schedule Interview Dialog */}
+      {ConfirmDialog}
       {scheduleApp && (
         <ScheduleInterviewDialog
           applicationId={scheduleApp.id}

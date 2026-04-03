@@ -22,16 +22,8 @@ import {
   DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+import { useConfirm } from "@/hooks/use-confirm";
+import { EmptyState } from "@/components/ui/empty-state";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   CalendarDays,
@@ -200,10 +192,9 @@ export default function SchedulesPage() {
   const [editingSchedule, setEditingSchedule] = useState<ScheduleItem | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
   const [detailSchedule, setDetailSchedule] = useState<ScheduleItem | null>(null);
-  const [deleteOpen, setDeleteOpen] = useState(false);
-  const [deleteTarget, setDeleteTarget] = useState<ScheduleItem | null>(null);
-  const [isDeleting, setIsDeleting] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const { confirm, ConfirmDialog } = useConfirm();
 
   // Day schedules for the time grid (existing schedules on the selected day)
   const [daySchedules, setDaySchedules] = useState<ScheduleItem[]>([]);
@@ -459,25 +450,27 @@ export default function SchedulesPage() {
 
   // ─── Delete Handler ─────────────────────────────────────────────────────
 
-  const handleDelete = async () => {
-    if (!deleteTarget) return;
-    setIsDeleting(true);
+  const handleDeleteSchedule = async (schedule: ScheduleItem, onClose?: () => void) => {
+    const typeLabel = TYPE_CONFIG[schedule.type]?.label || "schedule";
+    const dayLabel = DAYS_OF_WEEK[schedule.dayOfWeek]?.full || "";
+    const ok = await confirm({
+      title: "Delete Schedule",
+      description: `Delete the ${typeLabel} on ${dayLabel} (${formatTime(schedule.startTime)} - ${formatTime(schedule.endTime)})? This action cannot be undone.`,
+      confirmText: "Delete",
+      variant: "destructive",
+    });
+    if (!ok) return;
     try {
-      const res = await fetch(`/api/schedules/${deleteTarget.id}`, {
-        method: "DELETE",
-      });
+      const res = await fetch(`/api/schedules/${schedule.id}`, { method: "DELETE" });
       if (!res.ok) {
         const data = await res.json();
         throw new Error(data.error || "Failed to delete schedule");
       }
       toast.success("Schedule deleted");
-      setDeleteOpen(false);
-      setDeleteTarget(null);
+      onClose?.();
       fetchSchedules();
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Failed to delete schedule");
-    } finally {
-      setIsDeleting(false);
     }
   };
 
@@ -613,28 +606,18 @@ export default function SchedulesPage() {
 
       {/* Empty State */}
       {schedules.length === 0 ? (
-        <div className="flex flex-col items-center justify-center rounded-lg border border-dashed py-16 text-center">
-          <CalendarDays className="mb-4 h-12 w-12 text-muted-foreground/40" />
-          <h3 className="text-sm font-medium text-muted-foreground">No schedules found</h3>
-          <p className="mt-1 text-xs text-muted-foreground">
-            {typeFilter !== "all" || statusFilter !== "all" || dayFilter !== "all"
+        <EmptyState
+          icon={CalendarDays}
+          title="No schedules found"
+          description={
+            typeFilter !== "all" || statusFilter !== "all" || dayFilter !== "all"
               ? "Try adjusting your filters"
               : canCreate
                 ? "Create your first schedule to get started"
-                : "No schedules have been created yet"}
-          </p>
-          {canCreate && (
-            <Button
-              onClick={openCreateForm}
-              variant="outline"
-              size="sm"
-              className="mt-4"
-            >
-              <Plus className="mr-1.5 h-4 w-4" />
-              Add Schedule
-            </Button>
-          )}
-        </div>
+                : "No schedules have been created yet"
+          }
+          action={canCreate ? { label: "Add Schedule", onClick: openCreateForm, variant: "outline" } : undefined}
+        />
       ) : viewMode === "grid" ? (
         /* ─── Grid View (Time Grid) ──────────────────────────────────────── */
         <ScheduleGrid
@@ -645,7 +628,7 @@ export default function SchedulesPage() {
           offices={offices}
           onApprove={handleApprove}
           onReject={handleReject}
-          onDelete={(schedule) => { setDeleteTarget(schedule); setDeleteOpen(true); }}
+          onDelete={handleDeleteSchedule}
           onCreateSchedule={handleGridCreate}
           onViewDetail={(schedule) => { setDetailSchedule(schedule); setDetailOpen(true); }}
         />
@@ -678,7 +661,7 @@ export default function SchedulesPage() {
                         onApprove={() => handleApprove(schedule)}
                         onReject={(s) => handleReject(s)}
                         onEdit={() => openEditForm(schedule)}
-                        onDelete={() => { setDeleteTarget(schedule); setDeleteOpen(true); }}
+                        onDelete={() => handleDeleteSchedule(schedule)}
                         onView={() => { setDetailSchedule(schedule); setDetailOpen(true); }}
                         compact
                       />
@@ -716,7 +699,7 @@ export default function SchedulesPage() {
                           onApprove={() => handleApprove(schedule)}
                           onReject={(s) => handleReject(s)}
                           onEdit={() => openEditForm(schedule)}
-                          onDelete={() => { setDeleteTarget(schedule); setDeleteOpen(true); }}
+                          onDelete={() => handleDeleteSchedule(schedule)}
                           onView={() => { setDetailSchedule(schedule); setDetailOpen(true); }}
                           compact
                         />
@@ -741,7 +724,7 @@ export default function SchedulesPage() {
               onApprove={() => handleApprove(schedule)}
               onReject={(s) => handleReject(s)}
               onEdit={() => openEditForm(schedule)}
-              onDelete={() => { setDeleteTarget(schedule); setDeleteOpen(true); }}
+              onDelete={() => handleDeleteSchedule(schedule)}
               onView={() => { setDetailSchedule(schedule); setDetailOpen(true); }}
             />
           ))}
@@ -1021,7 +1004,7 @@ export default function SchedulesPage() {
                   <Button
                     variant="destructive"
                     size="sm"
-                    onClick={() => { setDeleteTarget(detailSchedule); setDeleteOpen(true); setDetailOpen(false); }}
+                    onClick={async () => { if (!detailSchedule) return; await handleDeleteSchedule(detailSchedule, () => setDetailOpen(false)); }}
                   >
                     <Trash2 className="mr-1.5 h-4 w-4" />
                     Delete
@@ -1043,33 +1026,7 @@ export default function SchedulesPage() {
         </DialogContent>
       </Dialog>
 
-      {/* ─── Delete Confirmation ─────────────────────────────────────────── */}
-      <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Delete Schedule</AlertDialogTitle>
-            <AlertDialogDescription>
-              Are you sure you want to delete this schedule?
-              {deleteTarget && (
-                <span className="block mt-2 font-medium">
-                  {DAYS_OF_WEEK[deleteTarget.dayOfWeek]?.full} • {formatTime(deleteTarget.startTime)} - {formatTime(deleteTarget.endTime)} • {TYPE_CONFIG[deleteTarget.type]?.label}
-                </span>
-              )}
-              This action cannot be undone.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleDelete}
-              disabled={isDeleting}
-              className="bg-red-600 hover:bg-red-700"
-            >
-              {isDeleting ? "Deleting..." : "Delete"}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      {ConfirmDialog}
     </div>
   );
 }
