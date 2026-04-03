@@ -117,6 +117,9 @@ export async function PUT(request: NextRequest) {
 
     let settings = await db.systemSettings.findFirst();
 
+    // Track previous state for auto-generation trigger
+    const previousPaymentEnabled = settings?.paymentCollectionEnabled ?? false;
+
     if (!settings) {
       settings = await db.systemSettings.create({
         data: {
@@ -174,6 +177,69 @@ export async function PUT(request: NextRequest) {
           ...(rubricCharacter !== undefined && { rubricCharacter }),
         },
       });
+    }
+
+    // Auto-generate payments when payment collection is newly activated
+    if (paymentCollectionEnabled === true && !previousPaymentEnabled) {
+      try {
+        const now = new Date();
+        const currentMonth = now.getMonth() + 1; // 1-12
+        const currentYear = now.getFullYear();
+        const monthlyFee = monthlyPaymentFee ?? settings.monthlyPaymentFee ?? 20;
+
+        // Get all active SA profiles
+        const activeSAs = await db.sAProfile.findMany({
+          where: { status: "ACTIVE" },
+          select: { userId: true },
+        });
+
+        let created = 0;
+        let skipped = 0;
+
+        for (const sa of activeSAs) {
+          const existing = await db.payment.findUnique({
+            where: {
+              userId_month_year: {
+                userId: sa.userId,
+                month: currentMonth,
+                year: currentYear,
+              },
+            },
+          });
+
+          if (!existing) {
+            const refNum = `PAY-${currentYear}${String(currentMonth).padStart(2, "0")}-${Date.now().toString(36).toUpperCase()}`;
+            await db.payment.create({
+              data: {
+                userId: sa.userId,
+                month: currentMonth,
+                year: currentYear,
+                amount: monthlyFee,
+                referenceNumber: refNum,
+                status: "UNPAID",
+              },
+            });
+
+            const monthNames = ["", "January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+            await db.notification.create({
+              data: {
+                userId: sa.userId,
+                type: "PAYMENT_DUE",
+                title: "Payment Due",
+                message: `Organizational fee payment for ${monthNames[currentMonth]} ${currentYear} is now due. Please visit the Payments page to submit your payment.`,
+                link: "/dashboard/payments",
+              },
+            });
+            created++;
+          } else {
+            skipped++;
+          }
+        }
+
+        console.log(`Auto-generated ${created} payments (${skipped} already existed)`);
+      } catch (autoGenError) {
+        console.error("Error auto-generating payments:", autoGenError);
+      }
     }
 
     return NextResponse.json({

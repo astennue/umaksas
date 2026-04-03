@@ -173,15 +173,16 @@ export async function GET(request: NextRequest) {
     // Build where clause
     const where: Record<string, unknown> = {};
 
-    // STUDENT_ASSISTANT can only see their own records
-    if (user.role === UserRole.STUDENT_ASSISTANT) {
+    // STUDENT_ASSISTANT and OFFICER (with SAProfile) can only see their own records by default
+    const isClockUser = user.role === UserRole.STUDENT_ASSISTANT || user.role === UserRole.OFFICER;
+    if (isClockUser) {
       where["userId"] = user.id;
     } else if (userId) {
       where["userId"] = userId;
     }
 
-    // Search by SA name
-    if (search && user.role !== UserRole.STUDENT_ASSISTANT) {
+    // Search by SA name (admin-only)
+    if (search && !isClockUser) {
       where["user"] = {
         OR: [
           { firstName: { contains: search, mode: "insensitive" } },
@@ -192,7 +193,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Filter by office
-    if (officeFilter && officeFilter !== "all" && user.role !== UserRole.STUDENT_ASSISTANT) {
+    if (officeFilter && officeFilter !== "all" && !isClockUser) {
       const existingUserFilter = where["user"] as Record<string, unknown> | undefined;
       if (existingUserFilter && existingUserFilter.OR) {
         // Merge with existing search filter
@@ -350,14 +351,7 @@ export async function POST(request: NextRequest) {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    // Block clock-in on weekends (Saturday = 6, Sunday = 0)
-    const dayOfWeek = today.getDay();
-    if (dayOfWeek === 0 || dayOfWeek === 6) {
-      return NextResponse.json(
-        { error: "Clock-in is not allowed on weekends (Saturday and Sunday)" },
-        { status: 400 }
-      );
-    }
+    // Note: SAs can clock in/out on weekends (no weekend restriction)
 
     // Get or create today's attendance record
     let record = await db.attendanceRecord.findUnique({

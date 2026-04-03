@@ -132,13 +132,12 @@ export async function PUT(
       return NextResponse.json({ error: "Forbidden action" }, { status: 403 });
     }
 
-    // RBAC: Only SUPER_ADMIN and ADVISER can verify/reject payments
-    // OFFICERs can view and do generic updates (amount, etc.) but NOT verify/reject
-    const canVerify = userRole === "SUPER_ADMIN" || userRole === "ADVISER";
+    // RBAC: SUPER_ADMIN, ADVISER, and OFFICER (Treasurer/President) can verify/reject payments
+    const canVerify = userRole === "SUPER_ADMIN" || userRole === "ADVISER" || userRole === "OFFICER";
 
     if (action === "verify" || action === "approve") {
       if (!canVerify) {
-        return NextResponse.json({ error: "Forbidden: only SUPER_ADMIN or ADVISER can verify payments" }, { status: 403 });
+        return NextResponse.json({ error: "Forbidden: only SUPER_ADMIN, ADVISER, or OFFICER can verify payments" }, { status: 403 });
       }
 
       if (payment.status !== PaymentStatus.PENDING) {
@@ -194,7 +193,7 @@ export async function PUT(
 
     if (action === "reject") {
       if (!canVerify) {
-        return NextResponse.json({ error: "Forbidden: only SUPER_ADMIN or ADVISER can reject payments" }, { status: 403 });
+        return NextResponse.json({ error: "Forbidden: only SUPER_ADMIN, ADVISER, or OFFICER can reject payments" }, { status: 403 });
       }
       if (payment.status !== PaymentStatus.PENDING) {
         return NextResponse.json({ error: "Can only reject pending payments" }, { status: 400 });

@@ -128,8 +128,9 @@ export default function AttendancePage() {
   const userId = (session?.user as { id?: string })?.id;
   const isSA = userRole === "STUDENT_ASSISTANT";
   // Officer+SA combined: officers who also have an SAProfile can clock in/out
-  const isOfficerWithSA = userRole === "OFFICER"; // We'll check server-side, but show UI
+  const isOfficerWithSA = userRole === "OFFICER"; // Server-side checks SAProfile existence
   const canClockIn = isSA || isOfficerWithSA;
+  const canClockUser = isSA || isOfficerWithSA; // For stats: treat officer same as SA for own records
 
   // Data state
   const [records, setRecords] = useState<AttendanceRecord[]>([]);
@@ -200,7 +201,7 @@ export default function AttendancePage() {
   }, []);
 
   const fetchTodaySchedule = useCallback(async () => {
-    if (!isSA || !userId) return;
+    if (!canClockUser || !userId) return;
     try {
       const today = new Date();
       const dayOfWeek = today.getDay();
@@ -217,9 +218,10 @@ export default function AttendancePage() {
     } catch {
       // Ignore - schedule endpoint may not exist yet, we'll use notes from record
     }
-  }, [isSA, userId]);
+  }, [canClockUser, userId]);
 
   const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const pollingRef = useRef<NodeJS.Timeout | null>(null);
 
   // ============== REAL-TIME CLOCK ==============
   useEffect(() => {
@@ -231,6 +233,18 @@ export default function AttendancePage() {
     };
   }, []);
 
+  // ============== POLLING FOR STATUS ==============
+  useEffect(() => {
+    if (!canClockUser) return;
+    // Poll fetchStats every 15 seconds to keep duty status reactive
+    pollingRef.current = setInterval(() => {
+      fetchStats();
+    }, 15000);
+    return () => {
+      if (pollingRef.current) clearInterval(pollingRef.current);
+    };
+  }, [canClockUser, fetchStats]);
+
   // ============== FETCH DATA ==============
   const fetchRecords = useCallback(async () => {
     try {
@@ -239,7 +253,7 @@ export default function AttendancePage() {
         page: page.toString(),
         limit: limit.toString(),
       });
-      if (search && !isSA) params.set("search", search);
+      if (search && !canClockUser) params.set("search", search);
       if (statusFilter !== "all") params.set("status", statusFilter);
       if (officeFilter !== "all") params.set("office", officeFilter);
       if (startDate) params.set("startDate", startDate);
@@ -256,10 +270,10 @@ export default function AttendancePage() {
     } finally {
       setLoading(false);
     }
-  }, [page, search, statusFilter, officeFilter, startDate, endDate, isSA]);
+  }, [page, search, statusFilter, officeFilter, startDate, endDate, canClockUser]);
 
   const fetchCalendarRecords = useCallback(async (month: Date) => {
-    if (!isSA && !userId) return;
+    if (!canClockUser && !userId) return;
     try {
       const mStart = startOfMonth(month);
       const mEnd = endOfMonth(month);
@@ -268,9 +282,7 @@ export default function AttendancePage() {
         endDate: format(mEnd, "yyyy-MM-dd"),
         limit: "100",
       });
-      if (isSA) {
-        // For SA, we use their own records
-      }
+      // For SA/Officer, the API already filters by userId (server-side)
       const res = await fetch(`/api/attendance?${params.toString()}`);
       if (res.ok) {
         const data = await res.json();
@@ -279,13 +291,13 @@ export default function AttendancePage() {
     } catch {
       // Ignore
     }
-  }, [isSA, userId]);
+  }, [canClockUser, userId]);
 
   const fetchCorrections = useCallback(async () => {
     try {
       const params = new URLSearchParams({ limit: "50" });
-      if (isSA) {
-        // SA sees their own, handled server-side
+      if (canClockUser) {
+        // SA/Officer sees their own, handled server-side
       }
       const res = await fetch(`/api/attendance/corrections?${params.toString()}`);
       if (res.ok) {
@@ -295,7 +307,7 @@ export default function AttendancePage() {
     } catch {
       // Ignore
     }
-  }, [isSA]);
+  }, [canClockUser]);
 
   const fetchStats = useCallback(async () => {
     try {
@@ -317,12 +329,12 @@ export default function AttendancePage() {
         const onDuty = todayRecords.filter((r: AttendanceRecord) => r.timeIn && !r.timeOut).length;
         setStats(prev => ({
           ...prev,
-          presentToday: isSA ? (todayRecords.length > 0 ? 1 : 0) : present,
-          onDutyNow: isSA ? (todayRecords.some((r: AttendanceRecord) => r.timeIn && !r.timeOut) ? 1 : 0) : onDuty,
+          presentToday: canClockUser ? (todayRecords.length > 0 ? 1 : 0) : present,
+          onDutyNow: canClockUser ? (todayRecords.some((r: AttendanceRecord) => r.timeIn && !r.timeOut) ? 1 : 0) : onDuty,
         }));
 
-        // Find today's record for the current user
-        if (isSA) {
+        // Find today's record for the current user (SA or Officer with SA)
+        if (canClockUser) {
           const myRecord = todayRecords.find((r: AttendanceRecord) => r.userId === userId);
           setTodayRecord(myRecord || null);
           if (myRecord) {
@@ -353,14 +365,14 @@ export default function AttendancePage() {
         const monthData = await monthRes.json();
         const monthRecords = monthData.records || [];
         const totalHours = monthRecords
-          .filter((r: AttendanceRecord) => isSA ? r.userId === userId : true)
+          .filter((r: AttendanceRecord) => canClockUser ? r.userId === userId : true)
           .reduce((sum: number, r: AttendanceRecord) => sum + (r.totalHours || 0), 0);
         setStats(prev => ({ ...prev, totalHoursMonth: Math.round(totalHours * 10) / 10 }));
       }
     } catch {
       // Ignore
     }
-  }, [isSA, userId]);
+  }, [canClockUser, userId]);
 
   useEffect(() => {
     fetchRecords();
@@ -392,9 +404,51 @@ export default function AttendancePage() {
       }
 
       toast.success(data.message || "Action completed successfully");
-      fetchRecords();
-      fetchStats();
-      fetchCalendarRecords(calendarMonth);
+
+      // Optimistic update: immediately update duty status
+      if (action === "clock_in") {
+        setDutyStatus("on_duty");
+        setTodayRecord(prev => prev ? prev : {
+          id: data.record?.id || "",
+          userId: userId || "",
+          firstName: "",
+          lastName: "",
+          email: "",
+          college: null,
+          program: null,
+          officeName: null,
+          officeCode: null,
+          date: new Date().toISOString(),
+          timeIn: data.record?.timeIn || new Date().toISOString(),
+          timeOut: null,
+          breakStart: null,
+          breakEnd: null,
+          totalHours: 0,
+          status: data.record?.status || "PRESENT",
+          isCorrected: false,
+          notes: data.record?.notes || null,
+          location: data.record?.location || officeName,
+        });
+      } else if (action === "clock_out") {
+        setDutyStatus("off_duty");
+        setTodayRecord(prev => prev ? {
+          ...prev,
+          timeOut: data.record?.timeOut || new Date().toISOString(),
+          totalHours: data.record?.totalHours || 0,
+          status: data.record?.status || prev.status,
+        } : prev);
+      } else if (action === "break_start") {
+        setDutyStatus("on_break");
+      } else if (action === "break_end") {
+        setDutyStatus("on_duty");
+      }
+
+      // Then refetch from server to reconcile
+      await Promise.all([
+        fetchRecords(),
+        fetchStats(),
+        fetchCalendarRecords(calendarMonth),
+      ]);
     } catch {
       toast.error("Failed to process action");
     } finally {
@@ -498,7 +552,7 @@ export default function AttendancePage() {
   };
 
   // ============== ABSENT COUNT ==============
-  const absentToday = isSA
+  const absentToday = canClockUser
     ? (!todayRecord ? 1 : (todayRecord.status === "ABSENT" ? 1 : 0))
     : stats.absentToday;
 
