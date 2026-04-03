@@ -56,14 +56,14 @@ const navItems: NavItem[] = [
   // My Profile - visible to all authenticated users
   { label: "My Profile", href: "/dashboard/profile", icon: User, roles: [] },
 
-  // Applications - Super Admin, Adviser, Officer
-  { label: "Applications", href: "/dashboard/applications", icon: FileText, roles: ["SUPER_ADMIN", "ADVISER", "OFFICER"] },
+  // Applications - Super Admin, Adviser only
+  { label: "Applications", href: "/dashboard/applications", icon: FileText, roles: ["SUPER_ADMIN", "ADVISER"] },
 
-  // Interviews - Super Admin, Adviser, Officer
-  { label: "Interviews", href: "/dashboard/interviews", icon: Calendar, roles: ["SUPER_ADMIN", "ADVISER", "OFFICER"] },
+  // Interviews - Super Admin, Adviser only
+  { label: "Interviews", href: "/dashboard/interviews", icon: Calendar, roles: ["SUPER_ADMIN", "ADVISER"] },
 
-  // Student Assistants - Super Admin, Adviser, Officer (NOT HRMO, NOT Office Supervisor)
-  { label: "Student Assistants", href: "/dashboard/student-assistants", icon: Users, roles: ["SUPER_ADMIN", "ADVISER", "OFFICER"] },
+  // Student Assistants - Super Admin, Adviser, Officer, Office Supervisor (NOT HRMO, NOT SA)
+  { label: "Student Assistants", href: "/dashboard/student-assistants", icon: Users, roles: ["SUPER_ADMIN", "ADVISER", "OFFICER", "OFFICE_SUPERVISOR"] },
 
   // Schedules - Super Admin, Adviser, Officer, Office Supervisor, SA
   { label: "Schedules", href: "/dashboard/schedules", icon: Clock, roles: ["SUPER_ADMIN", "ADVISER", "OFFICER", "OFFICE_SUPERVISOR", "STUDENT_ASSISTANT"] },
@@ -71,7 +71,7 @@ const navItems: NavItem[] = [
   // Attendance - Super Admin, Adviser, Officer, SA (NOT HRMO)
   { label: "Attendance", href: "/dashboard/attendance", icon: CheckCircle, roles: ["SUPER_ADMIN", "ADVISER", "OFFICER", "STUDENT_ASSISTANT"] },
 
-  // Evaluations - Super Admin, Adviser, Officer, Office Supervisor
+  // Evaluations - Super Admin, Adviser, Officer, Office Supervisor (NOT SA)
   { label: "Evaluations", href: "/dashboard/evaluations", icon: ClipboardCheck, roles: ["SUPER_ADMIN", "ADVISER", "OFFICER", "OFFICE_SUPERVISOR"] },
 
   // Payments - Super Admin, Adviser, Officer, SA (NOT HRMO, NOT Office Supervisor)
@@ -80,8 +80,8 @@ const navItems: NavItem[] = [
   // Events - Super Admin, Adviser, Officer, Student Assistant
   { label: "Events", href: "/dashboard/events", icon: CalendarPlus, roles: ["SUPER_ADMIN", "ADVISER", "OFFICER", "STUDENT_ASSISTANT"] },
 
-  // Offices - Super Admin, Adviser, Officer
-  { label: "Offices", href: "/dashboard/offices", icon: Building2, roles: ["SUPER_ADMIN", "ADVISER", "OFFICER"] },
+  // Offices - Super Admin, Adviser, Officer, Office Supervisor
+  { label: "Offices", href: "/dashboard/offices", icon: Building2, roles: ["SUPER_ADMIN", "ADVISER", "OFFICER", "OFFICE_SUPERVISOR"] },
 
   // Certificates - Super Admin, Adviser
   { label: "Certificates", href: "/dashboard/certificates", icon: Award, roles: ["SUPER_ADMIN", "ADVISER"] },
@@ -101,8 +101,8 @@ const navItems: NavItem[] = [
   // SA Renewal Form - Student Assistant only
   { label: "My Renewal", href: "/dashboard/renewal", icon: RefreshCw, roles: ["STUDENT_ASSISTANT"] },
 
-  // Settings - Super Admin, Adviser
-  { label: "Settings", href: "/dashboard/settings", icon: Settings, roles: ["SUPER_ADMIN", "ADVISER"] },
+  // Settings - Super Admin, Adviser, and Officer (for payment settings)
+  { label: "Settings", href: "/dashboard/settings", icon: Settings, roles: ["SUPER_ADMIN", "ADVISER", "OFFICER"] },
 ];
 
 const roleLabels: Record<string, string> = {

@@ -14,11 +14,8 @@ import {
   User,
   Building2,
   GraduationCap,
-  Mail,
   Calendar,
   BookOpen,
-  Phone,
-  UserCircle,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
@@ -29,15 +26,6 @@ interface SADetailModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   isAuthenticated?: boolean;
-}
-
-function formatDateOfBirth(dateStr: string): string {
-  const date = new Date(dateStr);
-  return date.toLocaleDateString("en-US", {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  });
 }
 
 function getInitials(firstName: string, lastName: string): string {
@@ -124,14 +112,6 @@ export function SADetailModal({
                   </div>
                 )}
 
-                {/* Office email */}
-                {sa.officeEmail && (
-                  <div className="flex items-center justify-center gap-1.5 mt-1 text-blue-300/70 text-xs relative z-10 min-w-0 max-w-[280px]">
-                    <Mail className="w-3 h-3 shrink-0" />
-                    <span className="truncate">{sa.officeEmail}</span>
-                  </div>
-                )}
-
                 {/* Status badge */}
                 <div className="flex justify-center mt-3 relative z-10">
                   {sa.isOnDuty ? (
@@ -183,136 +163,6 @@ export function SADetailModal({
                             <p className="text-xs text-gray-400 dark:text-gray-500">AY / Semester</p>
                             <p className="text-sm font-medium text-gray-700 dark:text-gray-300 truncate">
                               {[sa.academicYear, sa.semester].filter(Boolean).join(" | ") || "N/A"}
-                            </p>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  </>
-                )}
-
-                {/* Personal Information section */}
-                {(sa.studentNumber || sa.sex || sa.dateOfBirth || sa.age) && (
-                  <>
-                    <Separator className="-mx-6 mt-5" />
-                    <div className="mt-5 space-y-3.5">
-                      <h3 className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">
-                        Personal Information
-                      </h3>
-
-                      {/* Student Number */}
-                      {sa.studentNumber && (
-                        <div className="flex items-center gap-3 text-sm">
-                          <div className="w-8 h-8 rounded-lg bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center flex-shrink-0 text-blue-600 dark:text-blue-400">
-                            <User className="w-4 h-4" />
-                          </div>
-                          <div className="min-w-0 flex-1">
-                            <p className="text-xs text-gray-400 dark:text-gray-500">Student Number</p>
-                            <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                              {sa.studentNumber}
-                            </p>
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Sex/Gender */}
-                      {sa.sex && (
-                        <div className="flex items-center gap-3 text-sm">
-                          <div className="w-8 h-8 rounded-lg bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center flex-shrink-0 text-blue-600 dark:text-blue-400">
-                            <UserCircle className="w-4 h-4" />
-                          </div>
-                          <div className="min-w-0 flex-1">
-                            <p className="text-xs text-gray-400 dark:text-gray-500">Sex / Gender</p>
-                            <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                              {sa.sex}
-                            </p>
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Date of Birth */}
-                      {sa.dateOfBirth && (
-                        <div className="flex items-center gap-3 text-sm">
-                          <div className="w-8 h-8 rounded-lg bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center flex-shrink-0 text-blue-600 dark:text-blue-400">
-                            <Calendar className="w-4 h-4" />
-                          </div>
-                          <div className="min-w-0 flex-1">
-                            <p className="text-xs text-gray-400 dark:text-gray-500">Date of Birth</p>
-                            <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                              {formatDateOfBirth(sa.dateOfBirth)}
-                            </p>
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Age */}
-                      {sa.age != null && (
-                        <div className="flex items-center gap-3 text-sm">
-                          <div className="w-8 h-8 rounded-lg bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center flex-shrink-0 text-blue-600 dark:text-blue-400">
-                            <Calendar className="w-4 h-4" />
-                          </div>
-                          <div className="min-w-0 flex-1">
-                            <p className="text-xs text-gray-400 dark:text-gray-500">Age</p>
-                            <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                              {sa.age} {sa.age === 1 ? "year" : "years"} old
-                            </p>
-                          </div>
-                        </div>
-                      )}
-
-                    </div>
-                  </>
-                )}
-
-                {/* Contact Information section */}
-                {(sa.contactNumber || sa.personalEmail || sa.umakEmail) && (
-                  <>
-                    <Separator className="-mx-6 mt-5" />
-                    <div className="mt-5 space-y-3.5">
-                      <h3 className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">
-                        Contact Information
-                      </h3>
-
-                      {/* Contact Number */}
-                      {sa.contactNumber && (
-                        <div className="flex items-center gap-3 text-sm">
-                          <div className="w-8 h-8 rounded-lg bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center flex-shrink-0 text-blue-600 dark:text-blue-400">
-                            <Phone className="w-4 h-4" />
-                          </div>
-                          <div className="min-w-0 flex-1">
-                            <p className="text-xs text-gray-400 dark:text-gray-500">Contact Number</p>
-                            <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                              {sa.contactNumber}
-                            </p>
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Personal Email */}
-                      {sa.personalEmail && (
-                        <div className="flex items-center gap-3 text-sm">
-                          <div className="w-8 h-8 rounded-lg bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center flex-shrink-0 text-blue-600 dark:text-blue-400">
-                            <Mail className="w-4 h-4" />
-                          </div>
-                          <div className="min-w-0 flex-1">
-                            <p className="text-xs text-gray-400 dark:text-gray-500">Personal Email</p>
-                            <p className="text-sm font-medium text-gray-700 dark:text-gray-300 truncate">
-                              {sa.personalEmail}
-                            </p>
-                          </div>
-                        </div>
-                      )}
-
-                      {/* UMak Email */}
-                      {sa.umakEmail && (
-                        <div className="flex items-center gap-3 text-sm">
-                          <div className="w-8 h-8 rounded-lg bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center flex-shrink-0 text-blue-600 dark:text-blue-400">
-                            <GraduationCap className="w-4 h-4" />
-                          </div>
-                          <div className="min-w-0 flex-1">
-                            <p className="text-xs text-gray-400 dark:text-gray-500">UMak Email</p>
-                            <p className="text-sm font-medium text-gray-700 dark:text-gray-300 truncate">
-                              {sa.umakEmail}
                             </p>
                           </div>
                         </div>

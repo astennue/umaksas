@@ -7,7 +7,6 @@ import { Button } from "@/components/ui/button";
 import {
   Building2,
   GraduationCap,
-  Mail,
   CalendarDays,
   BookOpen,
   User,
@@ -91,21 +90,10 @@ export function SACard({ sa, onClick, isAuthenticated }: SACardProps) {
             <OnDutyIndicator isOnDuty={sa.isOnDuty} />
           </div>
 
-          {/* Name + Sex indicator */}
-          <div className="flex items-center gap-1.5 min-w-0 max-w-[220px]">
-            <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100 group-hover:text-yellow-700 dark:group-hover:text-yellow-400 transition-colors duration-300 truncate">
-              {fullName}
-            </h3>
-            {sa.sex && (
-              <span
-                className={`flex-shrink-0 w-2 h-2 rounded-full mt-1 ${
-                  sa.sex.toLowerCase() === "female"
-                    ? "bg-pink-400 dark:bg-pink-500"
-                    : "bg-blue-400 dark:bg-blue-500"
-                }`}
-              />
-            )}
-          </div>
+          {/* Name */}
+          <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100 group-hover:text-yellow-700 dark:group-hover:text-yellow-400 transition-colors duration-300 truncate max-w-[220px]">
+            {fullName}
+          </h3>
 
           {/* College */}
           {sa.college && (
@@ -155,14 +143,6 @@ export function SACard({ sa, onClick, isAuthenticated }: SACardProps) {
             </Badge>
           )}
         </div>
-
-        {/* Office email */}
-        {sa.officeEmail && (
-          <div className="flex items-center gap-1.5 mt-3 text-xs text-gray-500 dark:text-gray-400 justify-center">
-            <Mail className="w-3 h-3 text-gray-400 dark:text-gray-500 flex-shrink-0" />
-            <span className="truncate">{sa.officeEmail}</span>
-          </div>
-        )}
 
         {/* On Duty badge */}
         {sa.isOnDuty && (
