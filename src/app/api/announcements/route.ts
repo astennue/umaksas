@@ -246,6 +246,10 @@ export async function POST(request: NextRequest) {
     const canPublishDirectly = user.role === "SUPER_ADMIN" || user.role === "ADVISER" || isPresidentOfficer;
     const effectiveIsPublished = canPublishDirectly ? (isPublished ?? false) : false;
 
+    // Only SUPER_ADMIN, ADVISER, and PRESIDENT can pin announcements
+    const canPin = user.role === "SUPER_ADMIN" || user.role === "ADVISER" || isPresidentOfficer;
+    const effectiveIsPinned = canPin ? (isPinned ?? false) : false;
+
     const announcement = await db.announcement.create({
       data: {
         title,
@@ -254,7 +258,7 @@ export async function POST(request: NextRequest) {
         priority: priority || "NORMAL",
         imageUrl: imageUrl || null,
         isPublished: effectiveIsPublished,
-        isPinned: isPinned ?? false,
+        isPinned: effectiveIsPinned,
         publishedAt: effectiveIsPublished ? new Date() : null,
         authorId: user.id,
       },

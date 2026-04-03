@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useSession } from "next-auth/react";
 import { motion, AnimatePresence } from "framer-motion";
 import { format } from "date-fns";
@@ -56,7 +56,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useRef, useCallback as useCb } from "react";
 import { CRUDToolbar } from "@/components/crud-toolbar";
 import { CRUDActions } from "@/components/crud-actions";
 import { RoleGuard } from "@/components/auth/role-guard";
@@ -189,7 +188,7 @@ export default function DashboardAnnouncementsPage() {
     });
 
   // Image upload handler
-  const handleImageUpload = useCb(async (file: File) => {
+  const handleImageUpload = useCallback(async (file: File) => {
     if (!file.type.startsWith("image/")) {
       toast.error("Please upload an image file");
       return;
@@ -218,14 +217,14 @@ export default function DashboardAnnouncementsPage() {
     }
   }, []);
 
-  const handleDrop = useCb((e: React.DragEvent) => {
+  const handleDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault();
     setIsDragging(false);
     const file = e.dataTransfer.files[0];
     if (file) handleImageUpload(file);
   }, [handleImageUpload]);
 
-  const removeImage = useCb(() => {
+  const removeImage = useCallback(() => {
     setFormData((prev) => ({ ...prev, imageUrl: "" }));
     setImagePreview("");
     if (fileInputRef.current) fileInputRef.current.value = "";

@@ -163,6 +163,8 @@ export async function GET(request: NextRequest) {
     const userId = searchParams.get("userId") || "";
     const date = searchParams.get("date") || "";
     const status = searchParams.get("status") || "";
+    const search = searchParams.get("search") || "";
+    const officeFilter = searchParams.get("office") || "";
     const startDate = searchParams.get("startDate") || "";
     const endDate = searchParams.get("endDate") || "";
     const page = parseInt(searchParams.get("page") || "1", 10);
@@ -176,6 +178,37 @@ export async function GET(request: NextRequest) {
       where["userId"] = user.id;
     } else if (userId) {
       where["userId"] = userId;
+    }
+
+    // Search by SA name
+    if (search && user.role !== UserRole.STUDENT_ASSISTANT) {
+      where["user"] = {
+        OR: [
+          { firstName: { contains: search, mode: "insensitive" } },
+          { lastName: { contains: search, mode: "insensitive" } },
+          { email: { contains: search, mode: "insensitive" } },
+        ],
+      };
+    }
+
+    // Filter by office
+    if (officeFilter && officeFilter !== "all" && user.role !== UserRole.STUDENT_ASSISTANT) {
+      const existingUserFilter = where["user"] as Record<string, unknown> | undefined;
+      if (existingUserFilter && existingUserFilter.OR) {
+        // Merge with existing search filter
+        where["user"] = {
+          ...existingUserFilter,
+          profile: {
+            officeId: officeFilter,
+          },
+        };
+      } else {
+        where["user"] = {
+          profile: {
+            officeId: officeFilter,
+          },
+        };
+      }
     }
 
     if (date) {

@@ -3,7 +3,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { format } from "date-fns";
-import Link from "next/link";
 import {
   Bell,
   AlertTriangle,
@@ -18,11 +17,18 @@ import {
   X,
   Calendar,
   Clock,
+  ArrowLeft,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import {
   Select,
   SelectContent,
@@ -37,6 +43,7 @@ interface Announcement {
   title: string;
   content: string;
   excerpt: string | null;
+  imageUrl: string | null;
   priority: "LOW" | "NORMAL" | "HIGH" | "URGENT";
   isPinned: boolean;
   publishedAt: string | null;
@@ -87,6 +94,11 @@ export default function AnnouncementsPage() {
   const [hasMore, setHasMore] = useState(false);
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const limit = 12;
+
+  // Detail dialog state
+  const [detailOpen, setDetailOpen] = useState(false);
+  const [selectedAnnouncement, setSelectedAnnouncement] = useState<Announcement | null>(null);
+  const [detailLoading, setDetailLoading] = useState(false);
 
   // Debounce search input
   useEffect(() => {
@@ -144,6 +156,24 @@ export default function AnnouncementsPage() {
     setTimeFilter("all");
     setStartDate("");
     setEndDate("");
+  };
+
+  const openDetail = async (announcement: Announcement) => {
+    setSelectedAnnouncement(announcement);
+    setDetailOpen(true);
+    // Fetch full detail from API
+    try {
+      setDetailLoading(true);
+      const res = await fetch(`/api/announcements/${announcement.id}`);
+      if (res.ok) {
+        const data = await res.json();
+        setSelectedAnnouncement(data);
+      }
+    } catch {
+      // Keep the list item data as fallback
+    } finally {
+      setDetailLoading(false);
+    }
   };
 
   const hasActiveFilters = searchQuery || timeFilter !== "all" || (timeFilter === "custom" && (startDate || endDate));
@@ -440,15 +470,16 @@ export default function AnnouncementsPage() {
                           </p>
 
                           {/* Read more */}
-                          <Link
-                            href={`/announcements?id=${announcement.id}`}
+                          <button
+                            type="button"
+                            onClick={() => openDetail(announcement)}
                             className="mt-3 inline-flex items-center text-sm font-medium text-yellow-600 hover:text-yellow-800 dark:text-yellow-400 dark:hover:text-yellow-300"
                           >
                             Read more
                             <svg className="ml-1 h-3 w-3 transition-transform group-hover:translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                             </svg>
-                          </Link>
+                          </button>
                         </div>
                       </div>
                     </motion.div>
@@ -480,6 +511,63 @@ export default function AnnouncementsPage() {
           </>
         )}
       </div>
+
+      {/* Announcement Detail Dialog */}
+      <Dialog open={detailOpen} onOpenChange={setDetailOpen}>
+        <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-2xl border-0 shadow-2xl">
+          {detailLoading ? (
+            <div className="flex items-center justify-center py-12">
+              <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
+            </div>
+          ) : selectedAnnouncement ? (
+            <>
+              {selectedAnnouncement.imageUrl && (
+                <div className="relative -mx-6 -mt-6 h-[240px] overflow-hidden sm:rounded-t-lg">
+                  <img
+                    src={selectedAnnouncement.imageUrl}
+                    alt={selectedAnnouncement.title}
+                    className="h-full w-full object-cover"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
+                </div>
+              )}
+
+              <DialogHeader>
+                <div className="flex flex-wrap items-center gap-2 mb-2">
+                  <Badge
+                    variant="secondary"
+                    className={`${(PRIORITY_CONFIG[selectedAnnouncement.priority] || PRIORITY_CONFIG.NORMAL).bg} ${(PRIORITY_CONFIG[selectedAnnouncement.priority] || PRIORITY_CONFIG.NORMAL).color} border-0 gap-1 text-xs font-medium`}
+                  >
+                    {(PRIORITY_CONFIG[selectedAnnouncement.priority] || PRIORITY_CONFIG.NORMAL).label}
+                  </Badge>
+                  {selectedAnnouncement.isPinned && (
+                    <Badge variant="secondary" className="bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400 border-0 gap-1 text-xs">
+                      <Pin className="h-3 w-3" />
+                      Pinned
+                    </Badge>
+                  )}
+                </div>
+                <DialogTitle className="text-xl font-bold leading-tight text-gray-900 dark:text-gray-100">
+                  {selectedAnnouncement.title}
+                </DialogTitle>
+                <div className="flex items-center gap-2 text-xs text-muted-foreground mt-1">
+                  <time dateTime={selectedAnnouncement.publishedAt || selectedAnnouncement.createdAt}>
+                    {format(new Date(selectedAnnouncement.publishedAt || selectedAnnouncement.createdAt), "MMMM d, yyyy 'at' h:mm a")}
+                  </time>
+                  <span>·</span>
+                  <span>{selectedAnnouncement.author}</span>
+                </div>
+              </DialogHeader>
+
+              <div className="prose prose-sm dark:prose-invert max-w-none mt-2">
+                <p className="whitespace-pre-wrap text-sm leading-relaxed text-gray-700 dark:text-gray-300">
+                  {selectedAnnouncement.content}
+                </p>
+              </div>
+            </>
+          ) : null}
+        </DialogContent>
+      </Dialog>
     </PublicLayout>
   );
 }
