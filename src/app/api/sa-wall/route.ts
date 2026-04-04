@@ -20,18 +20,18 @@ export async function GET(request: NextRequest) {
       status: SAStatus.ACTIVE,
     };
 
-    // Search filter (name, college, office) - case-insensitive for PostgreSQL
+    // Search filter (name, college, office) - case-insensitive by default on SQLite
     if (search) {
       const searchTerms = search.split(/\s+/).filter(Boolean);
       where["AND"] = searchTerms.map((term) => ({
         OR: [
-          { user: { firstName: { contains: term, mode: "insensitive" } } },
-          { user: { lastName: { contains: term, mode: "insensitive" } } },
-          { user: { middleName: { contains: term, mode: "insensitive" } } },
-          { college: { contains: term, mode: "insensitive" } },
-          { office: { name: { contains: term, mode: "insensitive" } } },
-          { program: { contains: term, mode: "insensitive" } },
-          { studentNumber: { contains: term, mode: "insensitive" } } as Record<string, unknown>,
+          { user: { firstName: { contains: term } } },
+          { user: { lastName: { contains: term } } },
+          { user: { middleName: { contains: term } } },
+          { college: { contains: term } },
+          { office: { name: { contains: term } } },
+          { program: { contains: term } },
+          { studentNumber: { contains: term } } as Record<string, unknown>,
         ],
       }));
     }

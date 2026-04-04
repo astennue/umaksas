@@ -207,13 +207,13 @@ export async function GET(request: NextRequest) {
       where["userId"] = userId;
     }
 
-    // Search by SA name (admin-only)
+    // Search by SA name (admin-only) - case-insensitive by default on SQLite
     if (search && !isClockUser) {
       where["user"] = {
         OR: [
-          { firstName: { contains: search, mode: "insensitive" } },
-          { lastName: { contains: search, mode: "insensitive" } },
-          { email: { contains: search, mode: "insensitive" } },
+          { firstName: { contains: search } },
+          { lastName: { contains: search } },
+          { email: { contains: search } },
         ],
       };
     }

@@ -14,7 +14,8 @@ export async function GET() {
       officeCount,
       collegeCount: collegeSet.length,
     });
-  } catch {
+  } catch (error) {
+    console.error("Error fetching public stats:", error);
     return NextResponse.json({ saCount: 0, officeCount: 0, collegeCount: 0 });
   }
 }

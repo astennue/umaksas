@@ -427,62 +427,66 @@ export async function PUT(
       }
     }
 
-    // Update user and profile
-    const updatedProfile = await db.sAProfile.update({
-      where: { userId: id },
-      data: {
-        college: college !== undefined ? college : undefined,
-        program: program !== undefined ? program : undefined,
-        yearLevel: yearLevel !== undefined ? yearLevel : undefined,
-        officeId: resolvedOfficeId,
-        status: status !== undefined ? (status as SAStatus) : undefined,
-      },
-      include: {
-        user: {
-          select: {
-            id: true,
-            firstName: true,
-            lastName: true,
-            email: true,
-            phone: true,
-            isActive: true,
-          },
-        },
-        office: {
-          select: {
-            id: true,
-            name: true,
-            code: true,
-          },
-        },
-      },
-    });
-
-    // Update user fields
-    if (firstName !== undefined || lastName !== undefined || phone !== undefined) {
-      await db.user.update({
-        where: { id },
+    // Update user and profile atomically in a transaction
+    const result = await db.$transaction(async (tx) => {
+      const updatedProfile = await tx.sAProfile.update({
+        where: { userId: id },
         data: {
-          ...(firstName !== undefined && { firstName }),
-          ...(lastName !== undefined && { lastName }),
-          ...(phone !== undefined && { phone }),
+          college: college !== undefined ? college : undefined,
+          program: program !== undefined ? program : undefined,
+          yearLevel: yearLevel !== undefined ? yearLevel : undefined,
+          officeId: resolvedOfficeId,
+          status: status !== undefined ? (status as SAStatus) : undefined,
+        },
+        include: {
+          user: {
+            select: {
+              id: true,
+              firstName: true,
+              lastName: true,
+              email: true,
+              phone: true,
+              isActive: true,
+            },
+          },
+          office: {
+            select: {
+              id: true,
+              name: true,
+              code: true,
+            },
+          },
         },
       });
-    }
+
+      // Update user fields atomically within the same transaction
+      if (firstName !== undefined || lastName !== undefined || phone !== undefined) {
+        await tx.user.update({
+          where: { id },
+          data: {
+            ...(firstName !== undefined && { firstName }),
+            ...(lastName !== undefined && { lastName }),
+            ...(phone !== undefined && { phone }),
+          },
+        });
+      }
+
+      return updatedProfile;
+    });
 
     return NextResponse.json({
-      id: updatedProfile.userId,
-      profileId: updatedProfile.id,
-      firstName: updatedProfile.user.firstName || "",
-      lastName: updatedProfile.user.lastName || "",
-      email: updatedProfile.user.email,
-      phone: updatedProfile.user.phone,
-      college: updatedProfile.college,
-      program: updatedProfile.program,
-      yearLevel: updatedProfile.yearLevel,
-      status: updatedProfile.status,
-      officeId: updatedProfile.officeId,
-      officeName: updatedProfile.office?.name || null,
+      id: result.userId,
+      profileId: result.id,
+      firstName: result.user.firstName || "",
+      lastName: result.user.lastName || "",
+      email: result.user.email,
+      phone: result.user.phone,
+      college: result.college,
+      program: result.program,
+      yearLevel: result.yearLevel,
+      status: result.status,
+      officeId: result.officeId,
+      officeName: result.office?.name || null,
     });
   } catch (error) {
     console.error("Error updating student assistant:", error);
