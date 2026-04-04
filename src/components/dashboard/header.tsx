@@ -19,7 +19,6 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
-  Menu,
   Sun,
   Moon,
   LogOut,
@@ -29,7 +28,6 @@ import {
   Shield,
 } from "lucide-react";
 import Link from "next/link";
-import { cn } from "@/lib/utils";
 
 const roleLabels: Record<string, string> = {
   SUPER_ADMIN: "Super Administrator",
@@ -56,6 +54,11 @@ const pageTitles: Record<string, string> = {
   "/dashboard/certificates": "Certificates",
   "/dashboard/announcements": "Announcements",
   "/dashboard/notifications": "Notifications",
+  "/dashboard/content": "CMS / Content",
+  "/dashboard/renewals": "Renewals",
+  "/dashboard/renewal": "My Renewal",
+  "/dashboard/settings": "Settings",
+  "/dashboard/profile": "My Profile",
 };
 
 export function DashboardHeader() {
@@ -90,15 +93,6 @@ export function DashboardHeader() {
         <div className="flex h-full items-center justify-between px-4 sm:px-6">
           {/* Left side */}
           <div className="flex items-center gap-3">
-            <Button
-              variant="ghost"
-              size="icon"
-              className="lg:hidden h-9 w-9 text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800"
-              onClick={() => {}}
-            >
-              <Menu className="h-5 w-5" />
-              <span className="sr-only">Toggle menu</span>
-            </Button>
 
             {/* Mobile logo */}
             <Link href="/dashboard" className="flex items-center gap-2 lg:hidden">
@@ -128,15 +122,8 @@ export function DashboardHeader() {
               </div>
             </div>
 
-            {/* Notification Bell with unread badge */}
-            <div className="relative">
-              <NotificationBell />
-              {unreadCount > 0 && (
-                <span className="pointer-events-none absolute -right-1 -top-1 flex h-5 min-w-[20px] items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold leading-none text-white animate-pulse ring-2 ring-white dark:ring-gray-900">
-                  {unreadCount > 99 ? "99+" : unreadCount}
-                </span>
-              )}
-            </div>
+            {/* Notification Bell */}
+            <NotificationBell />
 
             {/* Theme Toggle */}
             {resolvedTheme && (

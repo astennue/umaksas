@@ -164,9 +164,9 @@ const iconColorMap: Record<string, string> = {
   emerald:
     "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400",
   violet:
-    "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/40 dark:text-yellow-400",
+    "bg-violet-100 text-violet-700 dark:bg-violet-900/40 dark:text-violet-400",
   amber:
-    "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/40 dark:text-yellow-400",
+    "bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-400",
 };
 
 /* ═══════════════════════════════════════════════════════════════════════════
@@ -247,16 +247,16 @@ export default function HomePage() {
                 "mb-4 px-3 py-1 text-xs sm:mb-6 sm:px-4 sm:py-1.5 sm:text-sm",
                 applicationOpen === true
                   ? "border-yellow-400/30 bg-yellow-500/20 text-yellow-300 hover:bg-yellow-500/30"
-                  : applicationOpen === false
-                    ? "border-gray-400/30 bg-gray-500/20 text-gray-300 hover:bg-gray-500/30"
-                    : "border-yellow-400/30 bg-yellow-500/20 text-yellow-300 hover:bg-yellow-500/30"
+                  : "border-gray-400/30 bg-gray-500/20 text-gray-300 hover:bg-gray-500/30"
               )}>
-                {applicationOpen === false ? (
+                {applicationOpen === null ? (
+                  <span className="animate-pulse mr-1.5 inline-block h-3.5 w-3.5 rounded-full bg-gray-400" />
+                ) : applicationOpen === false ? (
                   <CalendarDays className="mr-1.5 h-3.5 w-3.5" />
                 ) : (
                   <Sparkles className="mr-1.5 h-3.5 w-3.5" />
                 )}
-                {applicationOpen === false ? "Applications are currently closed" : "Applications are now open!"}
+                {applicationOpen === null ? "Loading..." : applicationOpen === false ? "Applications are currently closed" : "Applications are now open!"}
               </Badge>
             </motion.div>
 
@@ -290,35 +290,20 @@ export default function HomePage() {
               transition={{ delay: 0.5, duration: 0.6 }}
               className="mt-8 flex flex-col items-center justify-center gap-3 sm:mt-10 sm:flex-row sm:gap-4"
             >
-              {applicationOpen === false ? (
-                <Button
-                  asChild
-                  size="lg"
-                  disabled
-                  className="bg-gray-500/50 px-5 py-5 text-sm font-bold text-white/70 cursor-not-allowed sm:px-6 sm:py-6 sm:text-base"
-                >
-                  <span>
-                    Applications Closed
-                  </span>
+              {applicationOpen === null ? (
+                <Button size="lg" disabled className="bg-gray-500/50 px-5 py-5 text-sm font-bold text-white/70 cursor-not-allowed sm:px-6 sm:py-6 sm:text-base">
+                  <span className="animate-pulse">Loading...</span>
+                </Button>
+              ) : applicationOpen === false ? (
+                <Button asChild size="lg" disabled className="bg-gray-500/50 px-5 py-5 text-sm font-bold text-white/70 cursor-not-allowed sm:px-6 sm:py-6 sm:text-base">
+                  <span>Applications Closed</span>
                 </Button>
               ) : (
-                <Button
-                  asChild
-                  size="lg"
-                  className="bg-yellow-500 px-5 py-5 text-sm font-bold text-white shadow-lg shadow-yellow-500/25 hover:bg-yellow-600 sm:px-6 sm:py-6 sm:text-base"
-                >
-                  <Link href="/apply">
-                    Apply Now
-                    <ArrowRight className="ml-2 h-4 w-4" />
-                  </Link>
+                <Button asChild size="lg" className="bg-yellow-500 px-5 py-5 text-sm font-bold text-white shadow-lg shadow-yellow-500/25 hover:bg-yellow-600 sm:px-6 sm:py-6 sm:text-base">
+                  <Link href="/apply">Apply Now <ArrowRight className="ml-2 h-4 w-4" /></Link>
                 </Button>
               )}
-              <Button
-                asChild
-                size="lg"
-                variant="outline"
-                className="border-white/30 bg-white/10 px-5 py-5 text-sm font-semibold text-white backdrop-blur-sm hover:bg-white/20 hover:text-white sm:px-6 sm:py-6 sm:text-base"
-              >
+              <Button asChild size="lg" variant="outline" className="border-white/30 bg-white/10 px-5 py-5 text-sm font-semibold text-white backdrop-blur-sm hover:bg-white/20 hover:text-white sm:px-6 sm:py-6 sm:text-base">
                 <Link href="/sa-wall">Meet Our SAs</Link>
               </Button>
             </motion.div>
@@ -624,27 +609,17 @@ export default function HomePage() {
           </SectionReveal>
           <SectionReveal delay={0.3}>
             <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:mt-10 sm:flex-row sm:gap-4">
-              {applicationOpen === false ? (
-                <Button
-                  asChild
-                  size="lg"
-                  disabled
-                  className="bg-gray-500/50 px-5 py-5 text-sm font-bold text-white/70 cursor-not-allowed sm:px-6 sm:py-6 sm:text-base"
-                >
-                  <span>
-                    Applications Closed
-                  </span>
+              {applicationOpen === null ? (
+                <Button asChild size="lg" disabled className="bg-gray-500/50 px-5 py-5 text-sm font-bold text-white/70 cursor-not-allowed sm:px-6 sm:py-6 sm:text-base">
+                  <span className="animate-pulse">Loading...</span>
+                </Button>
+              ) : applicationOpen === false ? (
+                <Button asChild size="lg" disabled className="bg-gray-500/50 px-5 py-5 text-sm font-bold text-white/70 cursor-not-allowed sm:px-6 sm:py-6 sm:text-base">
+                  <span>Applications Closed</span>
                 </Button>
               ) : (
-                <Button
-                  asChild
-                  size="lg"
-                  className="bg-yellow-500 px-5 py-5 text-sm font-bold text-white shadow-lg shadow-yellow-500/25 hover:bg-yellow-600 sm:px-6 sm:py-6 sm:text-base"
-                >
-                  <Link href="/apply">
-                    Apply Now
-                    <ArrowRight className="ml-2 h-4 w-4" />
-                  </Link>
+                <Button asChild size="lg" className="bg-yellow-500 px-5 py-5 text-sm font-bold text-white shadow-lg shadow-yellow-500/25 hover:bg-yellow-600 sm:px-6 sm:py-6 sm:text-base">
+                  <Link href="/apply">Apply Now <ArrowRight className="ml-2 h-4 w-4" /></Link>
                 </Button>
               )}
               <Button

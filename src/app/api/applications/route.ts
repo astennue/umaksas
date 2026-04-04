@@ -190,7 +190,7 @@ export async function PUT(request: NextRequest) {
         guardianName: rest.guardianName ?? existing.guardianName,
         guardianRelation: rest.guardianRelation ?? existing.guardianRelation,
         guardianContact: rest.guardianContact ?? existing.guardianContact,
-        siblingsCount: rest.siblingsCount ? parseInt(rest.siblingsCount) : existing.siblingsCount,
+        siblingsCount: rest.siblingsCount != null ? parseInt(rest.siblingsCount) : existing.siblingsCount,
         elementarySchool: rest.elementarySchool ?? existing.elementarySchool,
         elementaryYear: rest.elementaryYear ?? existing.elementaryYear,
         highSchool: rest.highSchool ?? existing.highSchool,

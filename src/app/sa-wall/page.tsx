@@ -35,6 +35,7 @@ export default function SAWallPage() {
   const [sas, setSas] = useState<SACardData[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [collegeFilter, setCollegeFilter] = useState<string>("all");
   const [officeFilter, setOfficeFilter] = useState<string>("all");
   const [genderFilter, setGenderFilter] = useState<string>("all");
@@ -50,11 +51,19 @@ export default function SAWallPage() {
     },
   });
 
+  // Debounce search query to avoid API calls on every keystroke
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(searchQuery);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
   // Fetch SA data
   const fetchSAs = useCallback(async () => {
     try {
       const params = new URLSearchParams();
-      if (searchQuery) params.set("search", searchQuery);
+      if (debouncedSearch) params.set("search", debouncedSearch);
       if (collegeFilter !== "all") params.set("college", collegeFilter);
       if (officeFilter !== "all") params.set("office", officeFilter);
       if (genderFilter !== "all") params.set("sex", genderFilter);
@@ -69,7 +78,7 @@ export default function SAWallPage() {
     } finally {
       setLoading(false);
     }
-  }, [searchQuery, collegeFilter, officeFilter, genderFilter, sortBy]);
+  }, [debouncedSearch, collegeFilter, officeFilter, genderFilter, sortBy]);
 
   useEffect(() => {
     fetchSAs();

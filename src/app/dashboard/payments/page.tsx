@@ -336,15 +336,6 @@ export default function PaymentsPage() {
       const data = await res.json();
       setPayments(data.payments || []);
       setTotal(data.total || 0);
-
-      setStats({
-        total: data.total || 0,
-        paid: 0,
-        pending: 0,
-        unpaid: 0,
-        rejected: 0,
-        totalAmount: 0,
-      });
     } catch (error) {
       console.error("Error fetching payments:", error);
       toast.error("Failed to load payments");
@@ -419,12 +410,8 @@ export default function PaymentsPage() {
         body: formData,
       });
 
-      if (!uploadRes.ok) {
-        const uploadData = await uploadRes.json();
-        throw new Error(uploadData.error || "Failed to upload file");
-      }
-
       const uploadData = await uploadRes.json();
+      if (!uploadRes.ok) throw new Error(uploadData.error || "Failed to upload file");
 
       const updateRes = await fetch(`/api/payments/${proofPayment.id}`, {
         method: "PUT",
@@ -435,12 +422,8 @@ export default function PaymentsPage() {
         }),
       });
 
-      if (!updateRes.ok) {
-        const updateData = await updateRes.json();
-        throw new Error(updateData.error || "Failed to update payment");
-      }
-
       const updateData = await updateRes.json();
+      if (!updateRes.ok) throw new Error(updateData.error || "Failed to update payment");
       const returnedTrackingNumber = updateData.trackingNumber || null;
 
       toast.success("Proof of payment uploaded successfully");
@@ -496,12 +479,8 @@ export default function PaymentsPage() {
         body: formData,
       });
 
-      if (!uploadRes.ok) {
-        const uploadData = await uploadRes.json();
-        throw new Error(uploadData.error || "Failed to upload receipt");
-      }
-
       const uploadData = await uploadRes.json();
+      if (!uploadRes.ok) throw new Error(uploadData.error || "Failed to upload receipt");
 
       // Submit payment proof with transaction details
       const updateRes = await fetch(`/api/payments/${payNowPayment.id}`, {
@@ -515,12 +494,8 @@ export default function PaymentsPage() {
         }),
       });
 
-      if (!updateRes.ok) {
-        const updateData = await updateRes.json();
-        throw new Error(updateData.error || "Failed to submit payment");
-      }
-
       const updateData = await updateRes.json();
+      if (!updateRes.ok) throw new Error(updateData.error || "Failed to submit payment");
       const returnedTrackingNumber = updateData.trackingNumber || null;
 
       toast.success("Payment submitted successfully! Please wait for verification.");
@@ -681,10 +656,10 @@ export default function PaymentsPage() {
 
   // Open Pay Now dialog
   const openPayNow = (payment: Payment) => {
+    resetPayNowForm();
     setPayNowPayment(payment);
     setPayAmount(systemSettings?.monthlyPaymentFee?.toString() || payment.amount.toString());
     setPayNowOpen(true);
-    resetPayNowForm();
   };
 
   // Loading skeleton

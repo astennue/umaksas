@@ -115,12 +115,13 @@ io.on("connection", (socket) => {
     for (const [userId, record] of onDutySAs.entries()) {
       if (record.socketId === socket.id) {
         onDutySAs.delete(userId);
-        console.log(`[Attendance] User ${userId} auto-clocked out (disconnected)`);
-        io.emit("clock_out", { userId });
+        console.log(`[Attendance] User ${userId} socket cleaned up (disconnected)`);
+        // Do NOT emit clock_out - only clean up in-memory state
+        // Network glitches should not cause phantom clock-outs
       }
     }
 
-    // Broadcast updated status
+    // Broadcast updated on-duty list so clients can refresh their status
     io.emit("status_update", { onDutySAs: getOnDutyList() });
   });
 

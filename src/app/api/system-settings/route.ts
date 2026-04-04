@@ -185,47 +185,49 @@ export async function PUT(request: NextRequest) {
           select: { userId: true },
         });
 
+        const monthNames = ["", "January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+
+        // Fetch all existing payments for the month in a single query
+        const existingPayments = await db.payment.findMany({
+          where: { month: currentMonth, year: currentYear },
+          select: { userId: true },
+        });
+        const existingUserIds = new Set(existingPayments.map(p => p.userId));
+        const newSAs = activeSAs.filter(sa => !existingUserIds.has(sa.userId));
+
         let created = 0;
-        let skipped = 0;
+        let skipped = activeSAs.length - newSAs.length;
 
-        for (const sa of activeSAs) {
-          const existing = await db.payment.findUnique({
-            where: {
-              userId_month_year: {
-                userId: sa.userId,
-                month: currentMonth,
-                year: currentYear,
-              },
-            },
-          });
-
-          if (!existing) {
-            const refNum = `PAY-${currentYear}${String(currentMonth).padStart(2, "0")}-${Date.now().toString(36).toUpperCase()}`;
-            await db.payment.create({
-              data: {
-                userId: sa.userId,
-                month: currentMonth,
-                year: currentYear,
-                amount: monthlyFee,
-                referenceNumber: refNum,
-                status: "UNPAID",
-              },
-            });
-
-            const monthNames = ["", "January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
-            await db.notification.create({
-              data: {
-                userId: sa.userId,
-                type: "PAYMENT_DUE",
-                title: "Payment Due",
-                message: `Organizational fee payment for ${monthNames[currentMonth]} ${currentYear} is now due. Please visit the Payments page to submit your payment.`,
-                link: "/dashboard/payments",
-              },
-            });
-            created++;
-          } else {
-            skipped++;
-          }
+        if (newSAs.length > 0) {
+          // Create payments in a single transaction
+          await db.$transaction([
+            // Batch create all payments
+            ...newSAs.map((sa, idx) =>
+              db.payment.create({
+                data: {
+                  userId: sa.userId,
+                  month: currentMonth,
+                  year: currentYear,
+                  amount: monthlyFee,
+                  referenceNumber: `PAY-${currentYear}${String(currentMonth).padStart(2, "0")}-${sa.userId.slice(-6).toUpperCase()}-${String(idx).padStart(3, "0")}`,
+                  status: "UNPAID",
+                },
+              })
+            ),
+            // Batch create all notifications
+            ...newSAs.map(sa =>
+              db.notification.create({
+                data: {
+                  userId: sa.userId,
+                  type: "PAYMENT_DUE",
+                  title: "Payment Due",
+                  message: `Organizational fee payment for ${monthNames[currentMonth]} ${currentYear} is now due. Please visit the Payments page to submit your payment.`,
+                  link: "/dashboard/payments",
+                },
+              })
+            ),
+          ]);
+          created = newSAs.length;
         }
 
         console.log(`Auto-generated ${created} payments (${skipped} already existed)`);

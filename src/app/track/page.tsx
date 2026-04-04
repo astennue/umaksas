@@ -98,15 +98,21 @@ function TrackPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [email, setEmail] = useState("");
+  const [searchByRef, setSearchByRef] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [application, setApplication] = useState<ApplicationData | null>(null);
   const [notFound, setNotFound] = useState(false);
   const [initialLoad, setInitialLoad] = useState(true);
 
-  // Check for email in URL params on mount
+  // Check for email or ref in URL params on mount
   useEffect(() => {
     const emailParam = searchParams.get("email");
-    if (emailParam) {
+    const refParam = searchParams.get("ref");
+    if (refParam) {
+      setEmail(refParam);
+      setSearchByRef(true);
+      fetchApplication(refParam);
+    } else if (emailParam) {
       setEmail(emailParam);
       fetchApplication(emailParam);
     }
@@ -115,7 +121,7 @@ function TrackPageContent() {
 
   const fetchApplication = useCallback(async (emailToFetch: string) => {
     if (!emailToFetch.trim()) {
-      toast.error("Please enter your email address");
+      toast.error(searchByRef ? "Please enter your reference number" : "Please enter your email address");
       return;
     }
 
@@ -177,7 +183,9 @@ function TrackPageContent() {
             Track Your Application
           </h1>
           <p className="mt-2 text-muted-foreground">
-            Enter the email you used in your application to check its status.
+            {searchByRef
+              ? "Enter your reference number to check your application status."
+              : "Enter the email you used in your application to check its status."}
           </p>
         </motion.div>
 
@@ -192,14 +200,14 @@ function TrackPageContent() {
               <form onSubmit={handleSubmit} className="flex flex-col gap-3 sm:flex-row">
                 <div className="flex-1">
                   <Label htmlFor="email" className="sr-only">
-                    Email Address
+                    {searchByRef ? "Reference Number" : "Email Address"}
                   </Label>
                   <div className="relative">
                     <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                     <Input
                       id="email"
                       type="email"
-                      placeholder="Enter your email address"
+                      placeholder={searchByRef ? "Enter your reference number" : "Enter your email address"}
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       className="pl-10"
@@ -244,8 +252,8 @@ function TrackPageContent() {
                 </div>
                 <h3 className="mb-2 text-lg font-semibold">Application Not Found</h3>
                 <p className="mb-4 text-sm text-muted-foreground">
-                  No application was found with this email address. Please make sure you&apos;re using
-                  the same email you submitted your application with.
+                  No application was found with this {searchByRef ? "reference number" : "email address"}. Please make sure you&apos;re using
+                  the correct {searchByRef ? "reference" : "email"}.
                 </p>
                 <div className="flex flex-col items-center gap-2 sm:flex-row sm:justify-center">
                   <Button
@@ -256,7 +264,7 @@ function TrackPageContent() {
                     <ArrowRight className="h-4 w-4" />
                   </Button>
                   <Button variant="outline" onClick={() => { setNotFound(false); setApplication(null); }}>
-                    Try Different Email
+                    Try Different {searchByRef ? "Reference" : "Email"}
                   </Button>
                 </div>
               </CardContent>
@@ -447,7 +455,9 @@ function TrackPageContent() {
             </div>
             <h3 className="mb-2 text-lg font-semibold">Check Your Application Status</h3>
             <p className="text-sm text-muted-foreground">
-              Enter your email address above to see the current status of your SA application.
+              {searchByRef
+                ? "Enter your reference number above to see the current status of your SA application."
+                : "Enter your email address above to see the current status of your SA application."}
             </p>
           </motion.div>
         )}

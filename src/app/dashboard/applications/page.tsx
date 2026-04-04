@@ -341,7 +341,7 @@ export default function ApplicationsPage() {
                       </td>
                       <td className="py-3 pr-4">
                         <div className="flex flex-col gap-0.5">
-                          <span className="text-xs">{app.interviewStatus.replace(/_/g, " ")}</span>
+                          <span className="text-xs">{(app.interviewStatus || "PENDING").replace(/_/g, " ")}</span>
                           {app.interviewScore !== null && (
                             <span className="text-xs font-medium text-amber-600">{app.interviewScore}/100</span>
                           )}
@@ -402,7 +402,7 @@ export default function ApplicationsPage() {
 
                     <div className="mt-3 flex items-center gap-3 text-xs text-muted-foreground">
                       {app.interviewStatus && (
-                        <span>Interview: {app.interviewStatus.replace(/_/g, " ")}</span>
+                        <span>Interview: {(app.interviewStatus || "PENDING").replace(/_/g, " ")}</span>
                       )}
                       {app.interviewScore !== null && (
                         <span className="font-medium text-amber-600">Score: {app.interviewScore}/100</span>
@@ -567,7 +567,7 @@ export default function ApplicationsPage() {
                     <div>
                       <p className="text-xs text-muted-foreground">Interview</p>
                       <span>
-                        {selectedApp.interviewStatus.replace(/_/g, " ")}
+                        {(selectedApp.interviewStatus || "PENDING").replace(/_/g, " ")}
                         {selectedApp.interviewDate && ` — ${format(new Date(selectedApp.interviewDate), "MMM d, yyyy 'at' h:mm a")}`}
                       </span>
                     </div>

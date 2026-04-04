@@ -313,3 +313,38 @@ export async function PUT(
     );
   }
 }
+
+// DELETE /api/renewals/[id] - Delete renewal
+export async function DELETE(
+  _request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const user = session.user as { id: string; role: string };
+    const { id } = await params;
+
+    if (user.role !== "SUPER_ADMIN" && user.role !== "ADVISER") {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+
+    const existing = await db.renewal.findUnique({ where: { id } });
+    if (!existing) {
+      return NextResponse.json({ error: "Renewal not found" }, { status: 404 });
+    }
+
+    await db.renewal.delete({ where: { id } });
+
+    return NextResponse.json({ message: "Renewal deleted successfully" });
+  } catch (error) {
+    console.error("Error deleting renewal:", error);
+    return NextResponse.json(
+      { error: "Failed to delete renewal" },
+      { status: 500 }
+    );
+  }
+}

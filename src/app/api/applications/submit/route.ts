@@ -46,7 +46,7 @@ export async function POST(request: NextRequest) {
       "gender", "civilStatus", "citizenship", "email", "phone",
       "elementarySchool", "highSchool", "seniorHigh",
       "studentNumber", "college", "program", "yearLevel", "gwa",
-      "residenceAddress", "residenceCity", "residenceZip",
+      "residenceAddress", "residenceCity",
       "essayWhyApply", "essayGoals", "essaySkills", "essayChallenges",
     ];
 
@@ -82,7 +82,7 @@ export async function POST(request: NextRequest) {
       data: {
         status: "SUBMITTED",
         submittedAt: new Date(),
-        currentStep: 10,
+        currentStep: 11,
       },
     });
 

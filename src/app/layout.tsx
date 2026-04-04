@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Geist } from "next/font/google";
 import { Geist_Mono } from "next/font/google";
 import "./globals.css";
-import { Toaster } from "@/components/ui/toaster";
+import { Toaster } from "@/components/ui/sonner";
 import { SessionProvider } from "@/components/providers/session-provider";
 
 const geist = Geist({
@@ -49,7 +49,7 @@ export default function RootLayout({
       >
         <SessionProvider>
           {children}
-          <Toaster />
+          <Toaster richColors position="top-right" closeButton />
         </SessionProvider>
       </body>
     </html>

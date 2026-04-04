@@ -110,8 +110,8 @@ export async function PUT(
       // Recalculate total hours
       const tIn = correction.requestedTimeIn || attendance.timeIn;
       const tOut = correction.requestedTimeOut || attendance.timeOut;
-      const bStart = correction.requestedBreakStart || attendance.breakStart;
-      const bEnd = correction.requestedBreakEnd || attendance.breakEnd;
+      const bStart = correction.requestedBreakStart ?? attendance.breakStart;
+      const bEnd = correction.requestedBreakEnd ?? attendance.breakEnd;
       updatedData.totalHours = Math.round(calculateTotalHours(tIn, tOut, bStart, bEnd) * 100) / 100;
 
       await db.attendanceRecord.update({
