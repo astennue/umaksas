@@ -6,9 +6,8 @@ generator client {
 }
 
 datasource db {
-  provider  = "postgresql"
+  provider  = "sqlite"
   url       = env("DATABASE_URL")
-  directUrl = env("DIRECT_DATABASE_URL")
 }
 
 // ============================================
@@ -48,16 +47,16 @@ enum OfficerPosition {
 
 model User {
   id                String   @id @default(cuid())
-  email             String   @unique @db.VarChar(255)
+  email             String   @unique
   password          String
   role              UserRole @default(PUBLIC_VISITOR)
 
   // Profile Information
-  firstName         String?  @db.VarChar(255)
-  middleName        String?  @db.VarChar(255)
-  lastName          String?  @db.VarChar(255)
-  suffix            String?  @db.VarChar(255)
-  phone             String?  @db.VarChar(50)
+  firstName         String? 
+  middleName        String? 
+  lastName          String? 
+  suffix            String? 
+  phone             String? 
   photoUrl          String?
 
   // Status
@@ -110,9 +109,9 @@ model SAProfile {
   studentNumber     String?  @unique
   college           String?
   program           String?
-  yearLevel         String?  @db.VarChar(100)
-  academicYear      String?  @db.VarChar(100)
-  semester          String?  @db.VarChar(100)
+  yearLevel         String? 
+  academicYear      String? 
+  semester          String? 
 
   // Personal Information
   dateOfBirth       DateTime?
@@ -121,14 +120,14 @@ model SAProfile {
   courtesyTitle     String?
 
   // Contact Information
-  contactNumber     String?  @db.VarChar(50)
-  personalEmail     String?  @db.VarChar(50)
+  contactNumber     String? 
+  personalEmail     String? 
 
   // Employment Details
   employeeId        String?  @unique
   dateHired         DateTime?
   status            SAStatus @default(ACTIVE)
-  archiveReason     String?  @db.Text
+  archiveReason     String? 
   archiveDate       DateTime?
 
   // Work Hours
@@ -165,7 +164,7 @@ model OfficerProfile {
 
   // Contact
   email             String?
-  phone             String?          @db.VarChar(50)
+  phone             String?         
 
   // Timestamps
   createdAt         DateTime         @default(now())
@@ -183,9 +182,9 @@ model Office {
   name              String
   code              String?  @unique
   email             String?
-  phone             String?  @db.VarChar(50)
+  phone             String? 
   location          String?
-  description       String?  @db.Text
+  description       String? 
 
   // Leadership
   headName          String?
@@ -222,15 +221,15 @@ model SARequest {
 
   // Request Details
   requestedCount    Int
-  reason            String?  @db.Text
-  requirements      String?  @db.Text
-  preferredSkills   String?  @db.Text
+  reason            String? 
+  requirements      String? 
+  preferredSkills   String? 
 
   // Status
   status            RequestStatus @default(PENDING)
   reviewedBy        String?
   reviewedAt        DateTime?
-  reviewNotes       String?  @db.Text
+  reviewNotes       String? 
 
   // Timestamps
   createdAt         DateTime @default(now())
@@ -278,28 +277,28 @@ model Application {
   lastName          String?
   suffix            String?
   dateOfBirth       DateTime?
-  placeOfBirth      String?  @db.VarChar(255)
-  gender            String?  @db.VarChar(100)
-  civilStatus       String?  @db.VarChar(100)
-  religion          String?  @db.VarChar(100)
-  citizenship       String?  @db.VarChar(100)
+  placeOfBirth      String? 
+  gender            String? 
+  civilStatus       String? 
+  religion          String? 
+  citizenship       String? 
 
   // Contact Information
   email             String?
-  phone             String?   @db.VarChar(50)
-  alternatePhone    String?   @db.VarChar(50)
+  phone             String?  
+  alternatePhone    String?  
 
   // Family Background
-  fatherName        String?   @db.VarChar(255)
-  fatherOccupation  String?   @db.VarChar(255)
-  fatherContact     String?   @db.VarChar(50)
-  motherName        String?   @db.VarChar(255)
-  motherMaidenName  String?   @db.VarChar(255)
-  motherOccupation  String?   @db.VarChar(255)
-  motherContact     String?   @db.VarChar(50)
-  guardianName      String?   @db.VarChar(255)
-  guardianRelation  String?   @db.VarChar(100)
-  guardianContact   String?   @db.VarChar(50)
+  fatherName        String?  
+  fatherOccupation  String?  
+  fatherContact     String?  
+  motherName        String?  
+  motherMaidenName  String?  
+  motherOccupation  String?  
+  motherContact     String?  
+  guardianName      String?  
+  guardianRelation  String?  
+  guardianContact   String?  
   siblingsCount     Int?
 
   // Educational Background
@@ -315,35 +314,35 @@ model Application {
   studentNumber     String?
   college           String?
   program           String?
-  yearLevel         String?  @db.VarChar(100)
-  section           String?  @db.VarChar(100)
-  gwa               String?  @db.VarChar(100)
+  yearLevel         String? 
+  section           String? 
+  gwa               String? 
 
   // Employment Record
-  employmentJson    String?   @db.Text
+  employmentJson    String?  
 
   // Weekly Availability
-  availabilityJson  String?   @db.Text
+  availabilityJson  String?  
 
   // Trainings and Seminars
-  trainingsJson     String?   @db.Text
+  trainingsJson     String?  
 
   // Character References
-  referencesJson    String?   @db.Text
+  referencesJson    String?  
 
   // Essay Questions
-  essayWhyApply     String?   @db.Text
-  essayGoals        String?   @db.Text
-  essaySkills       String?   @db.Text
-  essayChallenges   String?   @db.Text
+  essayWhyApply     String?  
+  essayGoals        String?  
+  essaySkills       String?  
+  essayChallenges   String?  
 
   // Residence Information
-  residenceAddress  String?   @db.VarChar(255)
-  residenceCity     String?   @db.VarChar(255)
-  residenceZip      String?   @db.VarChar(255)
+  residenceAddress  String?  
+  residenceCity     String?  
+  residenceZip      String?  
   residenceLatitude Float?
   residenceLongitude Float?
-  residenceMapUrl   String?   @db.VarChar(255)
+  residenceMapUrl   String?  
 
   // Uploads
   photoUrl          String?
@@ -441,11 +440,11 @@ model InterviewSlot {
   status            InterviewStatus @default(SCHEDULED)
 
   // Reschedule Request
-  rescheduleReason  String?  @db.Text
+  rescheduleReason  String? 
   requestedDate     DateTime?
 
   // Notes
-  notes             String?  @db.Text
+  notes             String? 
   score             Float?
 
   // Timestamps
@@ -475,8 +474,8 @@ model Schedule {
   user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   // Schedule Details
-  semester          String?  @db.VarChar(100)
-  academicYear      String?  @db.VarChar(100)
+  semester          String? 
+  academicYear      String? 
 
   // Schedule Type
   type              ScheduleType @default(WORK)
@@ -503,7 +502,7 @@ model Schedule {
   supervisorSignedAt DateTime?
 
   // Notes
-  notes             String?  @db.Text
+  notes             String? 
 
   // Timestamps
   createdAt         DateTime @default(now())
@@ -554,11 +553,11 @@ model AttendanceRecord {
   // Corrections
   isCorrected       Boolean  @default(false)
   correctedBy       String?
-  correctionReason  String?  @db.Text
+  correctionReason  String? 
   correctedAt       DateTime?
 
   // Notes
-  notes             String?   @db.Text
+  notes             String?  
 
   // Location
   location          String?
@@ -601,7 +600,7 @@ model AttendanceCorrection {
   requestedTimeOut  DateTime?
   requestedBreakStart DateTime?
   requestedBreakEnd DateTime?
-  reason            String   @db.Text
+  reason            String  
 
   // Status
   status            CorrectionStatus @default(PENDING)
@@ -609,7 +608,7 @@ model AttendanceCorrection {
   // Review
   reviewedBy        String?
   reviewedAt        DateTime?
-  reviewNotes       String?  @db.Text
+  reviewNotes       String? 
 
   // Timestamps
   createdAt         DateTime @default(now())
@@ -646,8 +645,8 @@ model Evaluation {
   // Period
   month             Int
   year              Int
-  semester          String?  @db.VarChar(100)
-  academicYear      String?  @db.VarChar(100)
+  semester          String? 
+  academicYear      String? 
 
   // Scoring Categories (weighted)
   punctuality       Float    @default(0)
@@ -662,9 +661,9 @@ model Evaluation {
   rating            EvaluationRating?
 
   // Comments
-  strengths         String?   @db.Text
-  improvements      String?   @db.Text
-  supervisorComments String?   @db.Text
+  strengths         String?  
+  improvements      String?  
+  supervisorComments String?  
 
   // Status
   status            EvaluationStatus @default(DRAFT)
@@ -710,22 +709,22 @@ model HROnboarding {
 
   // Employee Information
   employeeId        String?  @unique
-  employeeType      String   @default("Student Assistant") @db.VarChar(100)
+  employeeType      String   @default("Student Assistant")
 
   // Personal Details (verified)
   firstName         String?
   lastName          String?
   middleName        String?
   dateOfBirth       DateTime?
-  gender            String?  @db.VarChar(100)
-  civilStatus       String?  @db.VarChar(100)
-  citizenship       String?  @db.VarChar(100)
-  religion          String?  @db.VarChar(100)
+  gender            String? 
+  civilStatus       String? 
+  citizenship       String? 
+  religion          String? 
 
   // Contact Details
   email             String?
-  phone             String?  @db.VarChar(50)
-  address           String?  @db.VarChar(255)
+  phone             String? 
+  address           String? 
 
   // Emergency Contact
   emergencyName     String?
@@ -735,7 +734,7 @@ model HROnboarding {
   // Employment Details
   dateHired         DateTime?
   officeId          String?
-  position          String?  @db.VarChar(100)
+  position          String? 
 
   // Status
   isVerified        Boolean  @default(false)
@@ -758,8 +757,8 @@ model Agreement {
   user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   // Agreement Details
-  academicYear      String   @db.VarChar(100)
-  semester          String   @db.VarChar(100)
+  academicYear      String  
+  semester          String  
 
   // Terms
   agreedToTerms     Boolean  @default(false)
@@ -792,7 +791,7 @@ model DigitalSignature {
   user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   // Signature Data
-  signatureData     String   @db.Text
+  signatureData     String  
 
   // Timestamps
   createdAt         DateTime @default(now())
@@ -834,7 +833,7 @@ model Payment {
   // Verification
   verifiedBy        String?
   verifiedAt        DateTime?
-  verificationNotes String?  @db.Text
+  verificationNotes String? 
 
   // Receipt
   receiptUrl        String?
@@ -891,7 +890,7 @@ model Certificate {
   status            CertificateStatus @default(ACTIVE)
   revokedAt         DateTime?
   revokedBy         String?
-  revokeReason      String?  @db.Text
+  revokeReason      String? 
 
   // QR Verification
   qrCode            String?
@@ -936,7 +935,7 @@ model Event {
 
   // Event Details
   name              String
-  description       String?  @db.Text
+  description       String? 
   location          String?
 
   // Schedule
@@ -1017,8 +1016,8 @@ model Message {
   sender            User     @relation("MessageSender", fields: [senderId], references: [id])
 
   // Content
-  subject           String?  @db.Text
-  content           String   @db.Text
+  subject           String? 
+  content           String  
 
   // Type
   type              MessageType @default(DIRECT)
@@ -1081,7 +1080,7 @@ model Notification {
   // Content
   type              NotificationType
   title             String
-  message           String   @db.Text
+  message           String  
 
   // Link
   link              String?
@@ -1171,8 +1170,8 @@ model Document {
   mimeType          String?
 
   // Metadata
-  academicYear      String?  @db.VarChar(100)
-  semester          String?  @db.VarChar(100)
+  academicYear      String? 
+  semester          String? 
   month             Int?
   year              Int?
 
@@ -1201,11 +1200,11 @@ enum DocumentType {
 model CMSContent {
   id                String   @id @default(cuid())
   page              String
-  section           String?  @db.VarChar(100)
+  section           String? 
 
   // Content
   title             String?
-  content           String?  @db.Text
+  content           String? 
 
   // Media
   imageUrl          String?
@@ -1231,13 +1230,20 @@ enum AnnouncementPriority {
   URGENT
 }
 
+enum AnnouncementVisibility {
+  all
+  sas_only
+  officers_only
+  supervisors_only
+}
+
 model Announcement {
   id                String   @id @default(cuid())
 
   // Content
   title             String
-  content           String   @db.Text
-  excerpt           String?  @db.Text
+  content           String  
+  excerpt           String? 
 
   // Media
   imageUrl          String?
@@ -1246,6 +1252,7 @@ model Announcement {
   isPublished       Boolean  @default(false)
   isPinned          Boolean  @default(false)
   priority          AnnouncementPriority @default(NORMAL)
+  visibility        AnnouncementVisibility @default(all)
 
   // Author
   authorId          String?
@@ -1271,8 +1278,8 @@ model SystemSettings {
 
   // Contact
   contactEmail      String?
-  contactPhone      String?  @db.VarChar(50)
-  contactAddress    String?  @db.VarChar(255)
+  contactPhone      String? 
+  contactAddress    String? 
 
   // Social
   facebookUrl       String?
@@ -1281,7 +1288,7 @@ model SystemSettings {
   linkedinUrl       String?
 
   // Settings
-  academicYear      String?  @db.VarChar(100)
+  academicYear      String? 
   currentSemester   String?
   applicationOpen   Boolean  @default(false)
   renewalOpen       Boolean  @default(false)
@@ -1292,7 +1299,7 @@ model SystemSettings {
   paymentCollectionEnabled Boolean @default(false)
   gcashQrUrl       String?
   gcashNumber       String?
-  paymentInstructions String? @db.Text
+  paymentInstructions String?
 
   // Attendance
   lateGraceMinutes  Int      @default(15)
@@ -1354,9 +1361,9 @@ model ActivityLog {
   entityId          String?
 
   // Details
-  details           String?  @db.Text
+  details           String? 
   ipAddress         String?
-  userAgent         String?  @db.Text
+  userAgent         String? 
 
   // Timestamp
   createdAt         DateTime @default(now())
@@ -1383,17 +1390,17 @@ model Renewal {
   user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   // Statement of Intent
-  statementOfIntent String?  @db.Text
+  statementOfIntent String? 
 
   // Availability Schedule (JSON: { monday: ["07:00","08:00"], ... })
-  availabilityJson  String?  @db.Text
+  availabilityJson  String? 
 
   // Whether adviser requires weekly availability submission
   availabilityRequired Boolean @default(false)
 
   // Office Transfer
   requestTransfer   Boolean  @default(false)
-  transferReason    String?  @db.Text
+  transferReason    String? 
   newOfficeId       String?
   newOffice         Office?  @relation("RenewalOffice", fields: [newOfficeId], references: [id])
 
@@ -1404,13 +1411,13 @@ model Renewal {
 
   // Status
   status            RenewalStatus @default(PENDING_REVIEW)
-  reviewNotes       String?  @db.Text
+  reviewNotes       String? 
   reviewedBy        String?
   reviewedAt        DateTime?
 
   // Academic Period
-  academicYear      String?  @db.VarChar(100)
-  semester          String?  @db.VarChar(100)
+  academicYear      String? 
+  semester          String? 
 
   // Timestamps
   submittedAt       DateTime?
@@ -1455,7 +1462,7 @@ model FormField {
   context           FormContext
 
   // Configuration (JSON: options, placeholder, validation rules, etc.)
-  configJson        String?  @db.Text
+  configJson        String? 
 
   // Validation
   isRequired        Boolean  @default(false)
@@ -1464,7 +1471,7 @@ model FormField {
   orderIndex        Int      @default(0)
 
   // Group/Section
-  section           String?  @db.VarChar(100)
+  section           String? 
   step              Int?
 
   // Status
@@ -1520,7 +1527,7 @@ model FormTemplate {
   type              String
 
   // Content
-  templateData      String   @db.Text
+  templateData      String  
   fileUrl           String?
 
   // Status

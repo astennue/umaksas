@@ -65,29 +65,21 @@ export async function PUT(request: NextRequest) {
 
     const body = await request.json();
 
-    // ADVISER cannot modify payment collection settings
+    // ADVISER cannot modify payment collection settings — silently ignore them
     if (userRole === "ADVISER") {
       const paymentFields = ["paymentCollectionEnabled", "gcashQrUrl", "gcashNumber", "paymentInstructions"];
-      const attemptedPaymentField = paymentFields.find(field => body[field] !== undefined);
-      if (attemptedPaymentField) {
-        return NextResponse.json(
-          { error: "Forbidden. Advisers cannot modify payment settings." },
-          { status: 403 }
-        );
-      }
+      paymentFields.forEach(field => { delete body[field]; });
     }
 
-    // OFFICER can only modify payment and season fields, NOT academic/rubric fields
+    // OFFICER can only modify payment and season fields — silently ignore the rest
     if (userRole === "OFFICER") {
       const allowedFields = ["paymentCollectionEnabled", "gcashQrUrl", "gcashNumber", "paymentInstructions", "applicationOpen", "renewalOpen"];
       const allBodyFields = Object.keys(body);
-      const disallowedField = allBodyFields.find(field => !allowedFields.includes(field));
-      if (disallowedField) {
-        return NextResponse.json(
-          { error: "Forbidden. Officers can only modify payment and season settings." },
-          { status: 403 }
-        );
-      }
+      allBodyFields.forEach(field => {
+        if (!allowedFields.includes(field)) {
+          delete body[field];
+        }
+      });
     }
     const {
       siteName,

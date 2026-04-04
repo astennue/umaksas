@@ -227,6 +227,17 @@ export default function SettingsPage() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed to save settings");
 
+      // Verify the response reflects the changes
+      console.log("[Settings] Save response:", data);
+      if (canModifyPaymentSettings) {
+        console.log("[Settings] Payment fields in response:", {
+          paymentCollectionEnabled: data.paymentCollectionEnabled,
+          gcashQrUrl: data.gcashQrUrl,
+          gcashNumber: data.gcashNumber,
+          paymentInstructions: data.paymentInstructions,
+        });
+      }
+
       toast.success("Settings saved successfully");
       setSettings(data);
       setLastSaved(new Date());

@@ -63,6 +63,7 @@ export async function GET(
       createdAt: announcement.createdAt,
       updatedAt: announcement.updatedAt,
       author: authorName,
+      visibility: announcement.visibility,
     });
   } catch (error) {
     console.error("Error fetching announcement:", error);
@@ -88,7 +89,7 @@ export async function PUT(
 
     const { id } = await params;
     const body = await request.json();
-    const { title, content, excerpt, priority, imageUrl, isPublished, isPinned } = body;
+    const { title, content, excerpt, priority, imageUrl, isPublished, isPinned, visibility } = body;
 
     const existing = await db.announcement.findUnique({ where: { id } });
     if (!existing) {
@@ -116,6 +117,7 @@ export async function PUT(
         ...(imageUrl !== undefined && { imageUrl: imageUrl || null }),
         ...(isPublished !== undefined && { isPublished, publishedAt }),
         ...(isPinned !== undefined && { isPinned }),
+        ...(visibility !== undefined && { visibility }),
       },
     });
 
@@ -134,6 +136,7 @@ export async function PUT(
       createdAt: announcement.createdAt,
       updatedAt: announcement.updatedAt,
       author: authorName,
+      visibility: announcement.visibility,
     });
   } catch (error) {
     console.error("Error updating announcement:", error);

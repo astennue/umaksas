@@ -4,6 +4,25 @@ import { authOptions } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { AttendanceStatus, UserRole } from "@prisma/client";
 
+// Helper: get current date in Philippines timezone (UTC+8)
+function getPHNow(): Date {
+  const now = new Date();
+  const utc = now.getTime() + now.getTimezoneOffset() * 60000;
+  return new Date(utc + 8 * 3600000); // UTC+8
+}
+
+// Helper: get today's date (midnight) in Philippines timezone
+function getTodayPHT(): Date {
+  const phNow = getPHNow();
+  return new Date(phNow.getFullYear(), phNow.getMonth(), phNow.getDate());
+}
+
+// Helper: convert a YYYY-MM-DD string to a Date at midnight (no timezone shift)
+function parseDateStr(dateStr: string): Date {
+  const [year, month, day] = dateStr.split('-').map(Number);
+  return new Date(year, month - 1, day);
+}
+
 // Helper to calculate total hours (excluding break time)
 function calculateTotalHours(
   timeIn: Date | null,
@@ -35,10 +54,10 @@ function parseTimeStr(timeStr: string): { hours: number; minutes: number } {
 async function determineClockInStatus(
   userId: string,
   clockInTime: Date
-): Promise<{ status: AttendanceStatus; scheduledStartTime: string | null; scheduledEndTime: string | null }> {
+): Promise<{ status: AttendanceStatus; scheduledStartTime: string | null; scheduledEndTime: string | null; scheduleOfficeName: string | null }> {
   const dayOfWeek = getDayOfWeek(clockInTime);
 
-  // Fetch the SA's approved WORK schedule for today's day of week
+  // Fetch the SA's approved WORK schedule for today's day of week (include office)
   const schedule = await db.schedule.findFirst({
     where: {
       userId,
@@ -47,6 +66,11 @@ async function determineClockInStatus(
       dayOfWeek,
     },
     orderBy: { startTime: "asc" },
+    include: {
+      office: {
+        select: { id: true, name: true },
+      },
+    },
   });
 
   // Fetch system settings for grace period
@@ -58,7 +82,7 @@ async function determineClockInStatus(
 
   if (!schedule) {
     // No schedule found - default to PRESENT (no schedule to compare against)
-    return { status: AttendanceStatus.PRESENT, scheduledStartTime: null, scheduledEndTime: null };
+    return { status: AttendanceStatus.PRESENT, scheduledStartTime: null, scheduledEndTime: null, scheduleOfficeName: null };
   }
 
   const scheduleStart = parseTimeStr(schedule.startTime);
@@ -76,6 +100,7 @@ async function determineClockInStatus(
       status: AttendanceStatus.LATE,
       scheduledStartTime: schedule.startTime,
       scheduledEndTime: schedule.endTime,
+      scheduleOfficeName: schedule.office?.name || null,
     };
   }
 
@@ -83,6 +108,7 @@ async function determineClockInStatus(
     status: AttendanceStatus.PRESENT,
     scheduledStartTime: schedule.startTime,
     scheduledEndTime: schedule.endTime,
+    scheduleOfficeName: schedule.office?.name || null,
   };
 }
 
@@ -213,18 +239,19 @@ export async function GET(request: NextRequest) {
     }
 
     if (date) {
-      where["date"] = new Date(date);
+      // Use PHT midnight to match POST handler's date storage
+      where["date"] = parseDateStr(date);
     }
 
     if (startDate && endDate) {
       where["date"] = {
-        gte: new Date(startDate),
-        lte: new Date(endDate),
+        gte: parseDateStr(startDate),
+        lte: parseDateStr(endDate),
       };
     } else if (startDate) {
-      where["date"] = { gte: new Date(startDate) };
+      where["date"] = { gte: parseDateStr(startDate) };
     } else if (endDate) {
-      where["date"] = { lte: new Date(endDate) };
+      where["date"] = { lte: parseDateStr(endDate) };
     }
 
     if (status) {
@@ -348,8 +375,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    const todayPH = getTodayPHT();
+    const todayStr = `${todayPH.getFullYear()}-${String(todayPH.getMonth() + 1).padStart(2, '0')}-${String(todayPH.getDate()).padStart(2, '0')}`;
 
     // Note: SAs can clock in/out on weekends (no weekend restriction)
 
@@ -358,7 +385,7 @@ export async function POST(request: NextRequest) {
       where: {
         userId_date: {
           userId: user.id,
-          date: today,
+          date: todayPH,
         },
       },
     });
@@ -382,7 +409,7 @@ export async function POST(request: NextRequest) {
       const now = new Date();
 
       // Determine status based on the SA's approved WORK schedule
-      const { status, scheduledStartTime, scheduledEndTime } = await determineClockInStatus(user.id, now);
+      const { status, scheduledStartTime, scheduledEndTime, scheduleOfficeName } = await determineClockInStatus(user.id, now);
 
       // Build notes with schedule info
       let notes = "";
@@ -390,14 +417,17 @@ export async function POST(request: NextRequest) {
         notes = `Shift: ${scheduledStartTime} - ${scheduledEndTime}`;
       }
 
+      // Use schedule office as location if available, otherwise fallback to profile office or provided location
+      const dutyLocation = scheduleOfficeName || location || officeName;
+
       record = await db.attendanceRecord.create({
         data: {
           userId: user.id,
-          date: today,
+          date: todayPH,
           timeIn: now,
           status,
           notes: notes || null,
-          location: location || officeName,
+          location: dutyLocation,
         },
         include: {
           user: {
@@ -425,10 +455,14 @@ export async function POST(request: NextRequest) {
         },
       });
 
+      // Format clock-in time in PHT for the response message
+      const phTimeIn = getPHNow();
+      const timeStr = phTimeIn.toLocaleTimeString('en-PH', { hour: '2-digit', minute: '2-digit', hour12: true });
+
       return NextResponse.json({
         message: status === AttendanceStatus.LATE
-          ? "Clocked in successfully (Late)"
-          : "Clocked in successfully",
+          ? `Clocked in at ${timeStr} (Late)`
+          : `Clocked in at ${timeStr}`,
         record: {
           id: record.id,
           timeIn: record.timeIn?.toISOString(),
@@ -520,8 +554,12 @@ export async function POST(request: NextRequest) {
         },
       });
 
+      // Format clock-out time in PHT for the response message
+      const phTimeOut = getPHNow();
+      const timeOutStr = phTimeOut.toLocaleTimeString('en-PH', { hour: '2-digit', minute: '2-digit', hour12: true });
+
       return NextResponse.json({
-        message: "Clocked out successfully",
+        message: `Clocked out at ${timeOutStr}`,
         record: {
           id: updated.id,
           timeIn: updated.timeIn?.toISOString(),
@@ -575,8 +613,12 @@ export async function POST(request: NextRequest) {
         },
       });
 
+      // Format break time in PHT for the response message
+      const phBreakStart = getPHNow();
+      const breakTimeStr = phBreakStart.toLocaleTimeString('en-PH', { hour: '2-digit', minute: '2-digit', hour12: true });
+
       return NextResponse.json({
-        message: "Break started",
+        message: `Break started at ${breakTimeStr}`,
         record: {
           id: updated.id,
           breakStart: updated.breakStart?.toISOString(),
@@ -620,7 +662,7 @@ export async function POST(request: NextRequest) {
       });
 
       return NextResponse.json({
-        message: "Break ended",
+        message: "Break ended. Back on duty.",
         record: {
           id: updated.id,
           breakStart: updated.breakStart?.toISOString(),

@@ -7,8 +7,6 @@ import { format } from "date-fns";
 import { toast } from "sonner";
 import {
   Plus,
-  Search,
-  Bell,
   Pin,
   PinOff,
   Eye,
@@ -19,10 +17,14 @@ import {
   Megaphone,
   FileText,
   Archive,
-  ImagePlus,
   X,
   CheckCircle2,
   Upload,
+  AlertCircle,
+  Globe,
+  Users,
+  Shield,
+  Briefcase,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -46,7 +48,6 @@ import {
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { CRUDToolbar } from "@/components/crud-toolbar";
-import { CRUDActions } from "@/components/crud-actions";
 import { RoleGuard } from "@/components/auth/role-guard";
 import { EmptyState } from "@/components/ui/empty-state";
 import { useConfirm } from "@/hooks/use-confirm";
@@ -67,6 +68,7 @@ interface Announcement {
   author: string;
   authorRole?: string;
   status?: string;
+  visibility?: string;
 }
 
 const PRIORITY_CONFIG: Record<string, { color: string; bg: string; label: string; bar: string }> = {
@@ -75,6 +77,13 @@ const PRIORITY_CONFIG: Record<string, { color: string; bg: string; label: string
   NORMAL: { color: "text-blue-700 dark:text-blue-400", bg: "bg-blue-100 dark:bg-blue-900/30", label: "Normal", bar: "bg-blue-500" },
   LOW: { color: "text-gray-600 dark:text-gray-400", bg: "bg-gray-100 dark:bg-gray-800/30", label: "Low", bar: "bg-gray-400 dark:bg-gray-600" },
 };
+
+const VISIBILITY_OPTIONS = [
+  { value: "all", label: "Public (Everyone)", icon: Globe },
+  { value: "sas_only", label: "Student Assistants Only", icon: Users },
+  { value: "officers_only", label: "Officers & Admins Only", icon: Shield },
+  { value: "supervisors_only", label: "Office Supervisors Only", icon: Briefcase },
+];
 
 const FILTER_TABS = [
   { key: "ALL", label: "All", icon: <FileText className="h-3.5 w-3.5" /> },
@@ -91,6 +100,7 @@ interface FormData {
   imageUrl: string;
   isPublished: boolean;
   isPinned: boolean;
+  visibility: string;
 }
 
 const emptyForm: FormData = {
@@ -101,7 +111,10 @@ const emptyForm: FormData = {
   imageUrl: "",
   isPublished: false,
   isPinned: false,
+  visibility: "all",
 };
+
+type UploadState = "idle" | "previewing" | "uploading" | "success" | "error";
 
 export default function DashboardAnnouncementsPage() {
   const { data: session } = useSession();
@@ -122,6 +135,9 @@ export default function DashboardAnnouncementsPage() {
   const [formLoading, setFormLoading] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
 
+  // Preview state
+  const [previewOpen, setPreviewOpen] = useState(false);
+
   // Confirmation dialog
   const { confirm, ConfirmDialog } = useConfirm();
 
@@ -129,7 +145,7 @@ export default function DashboardAnnouncementsPage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [imagePreview, setImagePreview] = useState<string>("");
-  const [isUploading, setIsUploading] = useState(false);
+  const [uploadState, setUploadState] = useState<UploadState>("idle");
 
   // Stats
   const [stats, setStats] = useState({ total: 0, published: 0, draft: 0, pinned: 0 });
@@ -177,7 +193,7 @@ export default function DashboardAnnouncementsPage() {
       );
     });
 
-  // Image upload handler
+  // Image upload handler with states
   const handleImageUpload = useCallback(async (file: File) => {
     if (!file.type.startsWith("image/")) {
       toast.error("Please upload an image file");
@@ -187,7 +203,14 @@ export default function DashboardAnnouncementsPage() {
       toast.error("Image must be less than 5MB");
       return;
     }
-    setIsUploading(true);
+
+    // Show local preview first
+    const localPreviewUrl = URL.createObjectURL(file);
+    setImagePreview(localPreviewUrl);
+    setUploadState("previewing");
+
+    // Then upload
+    setUploadState("uploading");
     try {
       const fd = new FormData();
       fd.append("file", file);
@@ -199,11 +222,15 @@ export default function DashboardAnnouncementsPage() {
       const data = await res.json();
       setFormData((prev) => ({ ...prev, imageUrl: data.url }));
       setImagePreview(data.url);
+      setUploadState("success");
       toast.success("Image uploaded");
+      // Reset to idle after showing success
+      setTimeout(() => setUploadState("idle"), 2000);
     } catch (err) {
+      setUploadState("error");
       toast.error(err instanceof Error ? err.message : "Failed to upload image");
-    } finally {
-      setIsUploading(false);
+      // Reset to idle after showing error
+      setTimeout(() => setUploadState("idle"), 3000);
     }
   }, []);
 
@@ -217,6 +244,7 @@ export default function DashboardAnnouncementsPage() {
   const removeImage = useCallback(() => {
     setFormData((prev) => ({ ...prev, imageUrl: "" }));
     setImagePreview("");
+    setUploadState("idle");
     if (fileInputRef.current) fileInputRef.current.value = "";
   }, []);
 
@@ -242,6 +270,7 @@ export default function DashboardAnnouncementsPage() {
     setFormData(emptyForm);
     setEditingId(null);
     setImagePreview("");
+    setUploadState("idle");
     setFormOpen(true);
   };
 
@@ -256,8 +285,10 @@ export default function DashboardAnnouncementsPage() {
       imageUrl: announcement.imageUrl || "",
       isPublished: announcement.isPublished,
       isPinned: announcement.isPinned,
+      visibility: announcement.visibility || "all",
     });
     setImagePreview(announcement.imageUrl || "");
+    setUploadState("idle");
     setEditingId(announcement.id);
     setFormOpen(true);
   };
@@ -279,6 +310,7 @@ export default function DashboardAnnouncementsPage() {
         imageUrl: formData.imageUrl.trim() || undefined,
         isPublished: formData.isPublished,
         isPinned: formData.isPinned,
+        visibility: formData.visibility,
       };
 
       let res: Response;
@@ -303,12 +335,18 @@ export default function DashboardAnnouncementsPage() {
 
       toast.success(formMode === "create" ? "Announcement created" : "Announcement updated");
       setFormOpen(false);
+      setPreviewOpen(false);
       fetchAnnouncements();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to save announcement");
     } finally {
       setFormLoading(false);
     }
+  };
+
+  // Open preview
+  const openPreview = () => {
+    setPreviewOpen(true);
   };
 
   // Toggle publish
@@ -355,6 +393,12 @@ export default function DashboardAnnouncementsPage() {
   useKeyboardShortcuts({
     n: () => { if (isAdmin) openCreate(); },
   });
+
+  // Get visibility label
+  const getVisibilityLabel = (vis: string) => {
+    const opt = VISIBILITY_OPTIONS.find(o => o.value === vis);
+    return opt ? opt.label : "Public (Everyone)";
+  };
 
   return (
     <RoleGuard allowedRoles={["SUPER_ADMIN", "ADVISER", "OFFICER"]}>
@@ -411,7 +455,6 @@ export default function DashboardAnnouncementsPage() {
               </Button>
             ))}
           </div>
-          {/* Search moved to CRUDToolbar */}
         </div>
       </div>
 
@@ -506,6 +549,12 @@ export default function DashboardAnnouncementsPage() {
                             <Badge variant="secondary" className="bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 border-0 gap-1 text-xs">
                               <Pin className="h-3 w-3" />
                               Pinned
+                            </Badge>
+                          )}
+                          {announcement.visibility && announcement.visibility !== "all" && (
+                            <Badge variant="secondary" className="bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-300 border-0 gap-1 text-xs">
+                              <Shield className="h-3 w-3" />
+                              {getVisibilityLabel(announcement.visibility)}
                             </Badge>
                           )}
                         </div>
@@ -612,7 +661,7 @@ export default function DashboardAnnouncementsPage() {
       )}
 
       {/* Create/Edit Dialog */}
-      <Dialog open={formOpen} onOpenChange={setFormOpen}>
+      <Dialog open={formOpen} onOpenChange={(open) => { if (!open) setPreviewOpen(false); setFormOpen(open); }}>
         <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg border-0 shadow-2xl">
           <DialogHeader>
             <DialogTitle className="text-lg font-semibold">
@@ -659,23 +708,49 @@ export default function DashboardAnnouncementsPage() {
               />
             </div>
 
-            {/* Priority */}
-            <div className="space-y-2">
-              <Label>Priority</Label>
-              <Select
-                value={formData.priority}
-                onValueChange={(v) => setFormData({ ...formData, priority: v as FormData["priority"] })}
-              >
-                <SelectTrigger className="bg-gray-50 border-gray-200 dark:bg-gray-700 dark:border-gray-600">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="LOW">Low</SelectItem>
-                  <SelectItem value="NORMAL">Normal</SelectItem>
-                  <SelectItem value="HIGH">High</SelectItem>
-                  <SelectItem value="URGENT">Urgent</SelectItem>
-                </SelectContent>
-              </Select>
+            {/* Priority & Visibility row */}
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              {/* Priority */}
+              <div className="space-y-2">
+                <Label>Priority</Label>
+                <Select
+                  value={formData.priority}
+                  onValueChange={(v) => setFormData({ ...formData, priority: v as FormData["priority"] })}
+                >
+                  <SelectTrigger className="bg-gray-50 border-gray-200 dark:bg-gray-700 dark:border-gray-600">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="LOW">Low</SelectItem>
+                    <SelectItem value="NORMAL">Normal</SelectItem>
+                    <SelectItem value="HIGH">High</SelectItem>
+                    <SelectItem value="URGENT">Urgent</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Visibility */}
+              <div className="space-y-2">
+                <Label>Visibility</Label>
+                <Select
+                  value={formData.visibility}
+                  onValueChange={(v) => setFormData({ ...formData, visibility: v })}
+                >
+                  <SelectTrigger className="bg-gray-50 border-gray-200 dark:bg-gray-700 dark:border-gray-600">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {VISIBILITY_OPTIONS.map((opt) => (
+                      <SelectItem key={opt.value} value={opt.value}>
+                        <span className="flex items-center gap-2">
+                          <opt.icon className="h-3.5 w-3.5" />
+                          {opt.label}
+                        </span>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
 
             {/* Cover Image Upload */}
@@ -688,6 +763,27 @@ export default function DashboardAnnouncementsPage() {
                     alt="Cover preview"
                     className="w-full h-[200px] object-cover rounded-lg"
                   />
+                  {/* Upload state overlay */}
+                  {uploadState === "uploading" && (
+                    <div className="absolute inset-0 flex items-center justify-center bg-black/40">
+                      <div className="flex flex-col items-center gap-2">
+                        <Loader2 className="h-8 w-8 animate-spin text-white" />
+                        <span className="text-xs font-medium text-white">Uploading...</span>
+                      </div>
+                    </div>
+                  )}
+                  {uploadState === "success" && (
+                    <div className="absolute top-2 left-2 flex items-center gap-1.5 rounded-full bg-emerald-500 px-3 py-1.5 shadow-lg">
+                      <CheckCircle2 className="h-4 w-4 text-white" />
+                      <span className="text-xs font-medium text-white">Uploaded</span>
+                    </div>
+                  )}
+                  {uploadState === "error" && (
+                    <div className="absolute top-2 left-2 flex items-center gap-1.5 rounded-full bg-red-500 px-3 py-1.5 shadow-lg">
+                      <AlertCircle className="h-4 w-4 text-white" />
+                      <span className="text-xs font-medium text-white">Upload failed</span>
+                    </div>
+                  )}
                   <button
                     type="button"
                     onClick={removeImage}
@@ -708,8 +804,11 @@ export default function DashboardAnnouncementsPage() {
                   onDragLeave={() => setIsDragging(false)}
                   onDrop={handleDrop}
                 >
-                  {isUploading ? (
-                    <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
+                  {uploadState === "uploading" ? (
+                    <div className="flex flex-col items-center gap-2">
+                      <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
+                      <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Uploading...</p>
+                    </div>
                   ) : (
                     <>
                       <div className="mb-2 flex h-10 w-10 items-center justify-center rounded-full bg-blue-100 dark:bg-blue-900/30">
@@ -780,6 +879,15 @@ export default function DashboardAnnouncementsPage() {
               Cancel
             </Button>
             <Button
+              variant="outline"
+              onClick={openPreview}
+              disabled={!formData.title.trim() || !formData.content.trim()}
+              className="border-gray-200 dark:border-gray-700 gap-1.5"
+            >
+              <Eye className="h-4 w-4" />
+              Preview
+            </Button>
+            <Button
               onClick={handleSubmit}
               disabled={formLoading || !formData.title.trim() || !formData.content.trim()}
               className="bg-blue-700 hover:bg-blue-800 text-white shadow-md"
@@ -793,6 +901,133 @@ export default function DashboardAnnouncementsPage() {
                 "Create Announcement"
               ) : (
                 "Save Changes"
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Preview Dialog */}
+      <Dialog open={previewOpen} onOpenChange={setPreviewOpen}>
+        <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl border-0 shadow-2xl">
+          <DialogHeader>
+            <DialogTitle className="text-lg font-semibold">
+              Announcement Preview
+            </DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            {/* Priority bar */}
+            <div className={`h-1 rounded-full ${PRIORITY_CONFIG[formData.priority]?.bar || "bg-blue-500"}`} />
+
+            {/* Cover Image */}
+            {imagePreview && (
+              <div className="relative w-full overflow-hidden rounded-lg">
+                <img
+                  src={imagePreview}
+                  alt="Cover preview"
+                  className="w-full h-[220px] object-cover rounded-lg"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent" />
+              </div>
+            )}
+
+            {/* Badges */}
+            <div className="flex flex-wrap items-center gap-2">
+              <Badge variant="secondary" className={`${PRIORITY_CONFIG[formData.priority]?.bg || ""} ${PRIORITY_CONFIG[formData.priority]?.color || ""} border-0 text-xs font-medium`}>
+                {PRIORITY_CONFIG[formData.priority]?.label || "Normal"}
+              </Badge>
+              {formData.isPublished ? (
+                <Badge variant="secondary" className="bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 border-0 text-xs">
+                  Published
+                </Badge>
+              ) : (
+                <Badge variant="secondary" className="bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400 border-0 text-xs">
+                  Draft
+                </Badge>
+              )}
+              {formData.isPinned && (
+                <Badge variant="secondary" className="bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 border-0 gap-1 text-xs">
+                  <Pin className="h-3 w-3" />
+                  Pinned
+                </Badge>
+              )}
+              <Badge variant="secondary" className="bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-300 border-0 gap-1 text-xs">
+                {(() => {
+                  const visOpt = VISIBILITY_OPTIONS.find(o => o.value === formData.visibility);
+                  const VisIcon = visOpt?.icon || Globe;
+                  return <><VisIcon className="h-3 w-3" />{visOpt?.label || "Public (Everyone)"}</>;
+                })()}
+              </Badge>
+            </div>
+
+            {/* Title */}
+            <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100">
+              {formData.title || "Untitled Announcement"}
+            </h2>
+
+            {/* Author info */}
+            <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
+              <div className="flex h-6 w-6 items-center justify-center rounded-full bg-blue-100 dark:bg-blue-900/30">
+                <span className="text-xs font-medium text-blue-700 dark:text-blue-400">
+                  {(session?.user as { firstName?: string })?.firstName?.[0] || "U"}
+                </span>
+              </div>
+              <span className="font-medium text-gray-700 dark:text-gray-300">
+                {(session?.user as { firstName?: string })?.firstName || "User"} {(session?.user as { lastName?: string })?.lastName || ""}
+              </span>
+              <span>·</span>
+              <span>{format(new Date(), "MMM d, yyyy 'at' h:mm a")}</span>
+            </div>
+
+            {/* Divider */}
+            <div className="border-t border-gray-100 dark:border-gray-700" />
+
+            {/* Content */}
+            <div className="prose prose-sm dark:prose-invert max-w-none">
+              <p className="whitespace-pre-wrap text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
+                {formData.content || "No content"}
+              </p>
+            </div>
+
+            {/* Excerpt */}
+            {formData.excerpt && (
+              <div className="rounded-lg bg-gray-50 dark:bg-gray-700/50 p-3">
+                <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Excerpt</p>
+                <p className="text-sm text-gray-700 dark:text-gray-300 italic">
+                  {formData.excerpt}
+                </p>
+              </div>
+            )}
+          </div>
+
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button
+              variant="outline"
+              onClick={() => setPreviewOpen(false)}
+              className="border-gray-200 dark:border-gray-700 gap-1.5"
+            >
+              <Pencil className="h-4 w-4" />
+              Back to Edit
+            </Button>
+            <Button
+              onClick={() => {
+                setPreviewOpen(false);
+                handleSubmit();
+              }}
+              disabled={formLoading || !formData.title.trim() || !formData.content.trim()}
+              className="bg-blue-700 hover:bg-blue-800 text-white shadow-md"
+            >
+              {formLoading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Publishing...
+                </>
+              ) : (
+                <>
+                  <CheckCircle2 className="mr-1.5 h-4 w-4" />
+                  {formMode === "create" ? "Publish Now" : "Confirm Changes"}
+                </>
               )}
             </Button>
           </DialogFooter>

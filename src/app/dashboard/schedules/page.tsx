@@ -241,20 +241,17 @@ export default function SchedulesPage() {
 
   const fetchOffices = useCallback(async () => {
     try {
-      const res = await fetch("/api/sa-wall");
+      const res = await fetch("/api/offices?limit=200");
       if (!res.ok) return;
       const data = await res.json();
-      const officeMap = new Map<string, OfficeOption>();
-      data.forEach((sa: { officeName?: string | null; officeEmail?: string | null }) => {
-        if (sa.officeName) {
-          officeMap.set(sa.officeName, {
-            id: sa.officeName,
-            name: sa.officeName,
-            code: null,
-          });
-        }
-      });
-      setOffices(Array.from(officeMap.values()));
+      const officeList: OfficeOption[] = (data.offices || []).map(
+        (office: { id: string; name: string; code: string | null }) => ({
+          id: office.id,
+          name: office.name,
+          code: office.code,
+        })
+      );
+      setOffices(officeList);
     } catch {
       // Ignore
     }

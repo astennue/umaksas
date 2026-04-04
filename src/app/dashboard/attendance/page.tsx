@@ -403,14 +403,23 @@ export default function AttendancePage() {
         body: JSON.stringify({ action }),
       });
 
-      const data = await res.json();
-
-      if (!res.ok) {
-        toast.error(data.error || "Failed to process action");
+      // Parse response safely — handle non-JSON responses
+      let data: Record<string, unknown>;
+      try {
+        data = await res.json();
+      } catch {
+        toast.error(`Server returned an invalid response (${res.status}). Please try again.`);
+        console.error("[Attendance] Non-JSON response:", res.status, res.statusText);
         return;
       }
 
-      toast.success(data.message || "Action completed successfully");
+      if (!res.ok) {
+        toast.error((data.error as string) || "Failed to process action");
+        console.error("[Attendance] API error:", data);
+        return;
+      }
+
+      toast.success((data.message as string) || "Action completed successfully");
 
       // Optimistic update: immediately update duty status
       if (action === "clock_in") {
@@ -446,8 +455,16 @@ export default function AttendancePage() {
         } : prev);
       } else if (action === "break_start") {
         setDutyStatus("on_break");
+        setTodayRecord(prev => prev ? {
+          ...prev,
+          breakStart: data.record?.breakStart || new Date().toISOString(),
+        } : prev);
       } else if (action === "break_end") {
         setDutyStatus("on_duty");
+        setTodayRecord(prev => prev ? {
+          ...prev,
+          breakEnd: data.record?.breakEnd || new Date().toISOString(),
+        } : prev);
       }
 
       // Then refetch from server to reconcile
@@ -456,8 +473,9 @@ export default function AttendancePage() {
         fetchStats(),
         fetchCalendarRecords(calendarMonth),
       ]);
-    } catch {
-      toast.error("Failed to process action");
+    } catch (err) {
+      console.error("[Attendance] Clock action error:", err);
+      toast.error(err instanceof Error ? err.message : "Failed to process action. Please try again.");
     } finally {
       setLoadingAction(false);
     }

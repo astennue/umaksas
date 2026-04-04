@@ -1161,24 +1161,56 @@ async function main() {
   // ============================================
   // 8. CREATE SA USERS (skip 7 officers)
   // ============================================
-  console.log(`\n  Creating Student Assistants (skipping ${officerEmails.size} officers who already exist)...`);
+  console.log(`\n  Creating Student Assistants (creating SA profiles for ${officerEmails.size} officers too)...`);
   let saCounter = 0;
 
   for (const sa of saData) {
-    // Skip officers who already have accounts
-    if (officerEmails.has(sa.umakEmail)) {
-      console.log(`  Skipped (officer): ${sa.name} (${sa.umakEmail})`);
-      continue;
-    }
-
     const parsed = parseName(sa.name);
     const surname = parsed.lastName;
-    const password = `UMAKSA@${surname}_2026`;
-    const email = getUniqueEmail(sa.umakEmail);
     const courtesyTitle = sa.sex === 'Male' ? 'Mr.' : 'Ms.';
+    const officeId = officeIdByCode.get(sa.officeCode) || null;
+    const isOfficer = officerEmails.has(sa.umakEmail);
 
     try {
-      const officeId = officeIdByCode.get(sa.officeCode) || null;
+      if (isOfficer) {
+        // Officer already has a User account — just create an SA profile for them
+        const existingUser = await db.user.findUnique({
+          where: { email: sa.umakEmail },
+        });
+        if (existingUser) {
+          // Check if SA profile already exists
+          const existingProfile = await db.sAProfile.findUnique({
+            where: { userId: existingUser.id },
+          });
+          if (!existingProfile) {
+            await db.sAProfile.create({
+              data: {
+                userId: existingUser.id,
+                studentNumber: sa.studentNumber || null,
+                college: sa.college || null,
+                program: sa.program || null,
+                status: 'ACTIVE',
+                officeId,
+                dateOfBirth: null,
+                age: null,
+                sex: sa.sex || null,
+                courtesyTitle,
+                contactNumber: sa.contactNumber || null,
+                personalEmail: sa.personalEmail || null,
+              },
+            });
+            stats.saProfiles++;
+            saCounter++;
+            console.log(`  Created SA profile for officer: ${sa.name} (${sa.umakEmail})`);
+          } else {
+            console.log(`  Officer already has SA profile: ${sa.name} (${sa.umakEmail})`);
+          }
+        }
+        continue;
+      }
+
+      const password = `UMAKSA@${surname}_2026`;
+      const email = getUniqueEmail(sa.umakEmail);
 
       const user = await db.user.create({
         data: {
@@ -1211,14 +1243,14 @@ async function main() {
       stats.saProfiles++;
       saCounter++;
 
-      if (saCounter % 10 === 0 || saCounter === 51) {
+      if (saCounter % 10 === 0) {
         console.log(`  Progress: ${saCounter} SAs created`);
       }
     } catch (error: any) {
-      console.log(`  Error creating SA "${sa.name}" (${email}): ${error.message}`);
+      console.log(`  Error creating SA "${sa.name}" (${sa.umakEmail}): ${error.message}`);
     }
   }
-  console.log(`  Created ${saCounter} Student Assistants`);
+  console.log(`  Created ${saCounter} Student Assistants (including officer SA profiles)`);
 
   // ============================================
   // 9. ORG CHART

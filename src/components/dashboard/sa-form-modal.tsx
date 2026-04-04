@@ -10,14 +10,16 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { SelectItem } from "@/components/ui/select";
+import { BetterSelect } from "@/components/ui/better-select";
+import { Separator } from "@/components/ui/separator";
+import { COLLEGES } from "@/lib/colleges";
 import { toast } from "sonner";
+import {
+  User,
+  GraduationCap,
+  Building2,
+} from "lucide-react";
 
 interface SAFormModalProps {
   sa?: {
@@ -52,9 +54,11 @@ export function SAFormModal({
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [college, setCollege] = useState("");
+  const [customCollege, setCustomCollege] = useState("");
   const [program, setProgram] = useState("");
   const [yearLevel, setYearLevel] = useState("");
   const [officeId, setOfficeId] = useState("");
+  const [customOffice, setCustomOffice] = useState("");
   const [status, setStatus] = useState("ACTIVE");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -64,10 +68,28 @@ export function SAFormModal({
       setLastName(sa.lastName || "");
       setEmail(sa.email || "");
       setPhone(sa.phone || "");
-      setCollege(sa.college || "");
+      // Check if the college is in our known list
+      if (sa.college && COLLEGES.find(c => c.name === sa.college || c.acronym === sa.college)) {
+        setCollege(sa.college);
+        setCustomCollege("");
+      } else if (sa.college) {
+        // It's a custom/unknown college — map to "Others" and set custom
+        setCollege("Others");
+        setCustomCollege(sa.college);
+      } else {
+        setCollege("");
+        setCustomCollege("");
+      }
       setProgram(sa.program || "");
       setYearLevel(sa.yearLevel || "");
-      setOfficeId(sa.officeId || "");
+      // Check if office is in known list
+      if (sa.officeId && offices.find(o => o.id === sa.officeId)) {
+        setOfficeId(sa.officeId);
+        setCustomOffice("");
+      } else {
+        setOfficeId("");
+        setCustomOffice("");
+      }
       setStatus(sa.status || "ACTIVE");
     } else if (!sa && open) {
       // Reset form for add mode
@@ -76,12 +98,14 @@ export function SAFormModal({
       setEmail("");
       setPhone("");
       setCollege("");
+      setCustomCollege("");
       setProgram("");
       setYearLevel("");
       setOfficeId("");
+      setCustomOffice("");
       setStatus("ACTIVE");
     }
-  }, [sa, open]);
+  }, [sa, open, offices]);
 
   const handleSubmit = async () => {
     if (!firstName.trim() || !lastName.trim()) {
@@ -99,6 +123,11 @@ export function SAFormModal({
       const url = mode === "add" ? "/api/student-assistants" : `/api/student-assistants/${sa?.id}`;
       const method = mode === "add" ? "POST" : "PUT";
 
+      // Resolve the final college value
+      const finalCollege = college === "Others"
+        ? customCollege.trim() || undefined
+        : college.trim() || undefined;
+
       const body: Record<string, unknown> = {
         firstName: firstName.trim(),
         lastName: lastName.trim(),
@@ -107,13 +136,13 @@ export function SAFormModal({
       if (mode === "add") {
         body.email = email.trim().toLowerCase();
         body.phone = phone.trim() || undefined;
-        body.college = college.trim() || undefined;
+        body.college = finalCollege;
         body.program = program.trim() || undefined;
         body.yearLevel = yearLevel || undefined;
         body.officeId = officeId || undefined;
       } else {
         body.phone = phone.trim() || undefined;
-        body.college = college.trim() || undefined;
+        body.college = finalCollege;
         body.program = program.trim() || undefined;
         body.yearLevel = yearLevel || undefined;
         body.officeId = officeId || undefined;
@@ -147,21 +176,6 @@ export function SAFormModal({
     }
   };
 
-  const collegeOptions = [
-    "College of Accountancy, Business, Economics and International Hospitality Management",
-    "College of Allied Health Studies",
-    "College of Arts and Sciences",
-    "College of Computer Studies",
-    "College of Criminal Justice Education",
-    "College of Education",
-    "College of Engineering and Architecture",
-    "College of Law and Jurisprudence",
-    "College of Maritime Education",
-    "College of Medicine",
-    "College of Nursing",
-    "College of Tourism and Hospitality Management",
-  ];
-
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
@@ -171,133 +185,201 @@ export function SAFormModal({
           </DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor="firstName">First Name *</Label>
-              <Input
-                id="firstName"
-                value={firstName}
-                onChange={(e) => setFirstName(e.target.value)}
-                placeholder="Juan"
-              />
+        <div className="space-y-5">
+          {/* ── Section: Personal Information ────────────────────────────── */}
+          <div className="space-y-4">
+            <div className="flex items-center gap-2">
+              <User className="h-4 w-4 text-[#1e3a8a]" />
+              <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+                Personal Information
+              </h3>
             </div>
-            <div>
-              <Label htmlFor="lastName">Last Name *</Label>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                <Label htmlFor="firstName">First Name *</Label>
+                <Input
+                  id="firstName"
+                  value={firstName}
+                  onChange={(e) => setFirstName(e.target.value)}
+                  placeholder="Juan"
+                  className="rounded-lg"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="lastName">Last Name *</Label>
+                <Input
+                  id="lastName"
+                  value={lastName}
+                  onChange={(e) => setLastName(e.target.value)}
+                  placeholder="Dela Cruz"
+                  className="rounded-lg"
+                />
+              </div>
+            </div>
+
+            {mode === "add" && (
+              <div className="space-y-1.5">
+                <Label htmlFor="saEmail">Email *</Label>
+                <Input
+                  id="saEmail"
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="juan.delacruz@umak.edu.ph"
+                  className="rounded-lg"
+                />
+              </div>
+            )}
+
+            <div className="space-y-1.5">
+              <Label htmlFor="saPhone">Phone</Label>
               <Input
-                id="lastName"
-                value={lastName}
-                onChange={(e) => setLastName(e.target.value)}
-                placeholder="Dela Cruz"
+                id="saPhone"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                placeholder="+63 9XX XXX XXXX"
+                className="rounded-lg"
               />
             </div>
           </div>
 
-          {mode === "add" && (
-            <div>
-              <Label htmlFor="saEmail">Email *</Label>
-              <Input
-                id="saEmail"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="juan.delacruz@umak.edu.ph"
-              />
+          <Separator />
+
+          {/* ── Section: Academic Information ─────────────────────────────── */}
+          <div className="space-y-4">
+            <div className="flex items-center gap-2">
+              <GraduationCap className="h-4 w-4 text-[#1e3a8a]" />
+              <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+                Academic Information
+              </h3>
             </div>
-          )}
 
-          <div>
-            <Label htmlFor="saPhone">Phone</Label>
-            <Input
-              id="saPhone"
-              value={phone}
-              onChange={(e) => setPhone(e.target.value)}
-              placeholder="+63 9XX XXX XXXX"
-            />
-          </div>
-
-          <div>
-            <Label>College</Label>
-            <Select value={college} onValueChange={setCollege}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select college" />
-              </SelectTrigger>
-              <SelectContent>
-                {collegeOptions.map((c) => (
-                  <SelectItem key={c} value={c}>
-                    {c}
+            <div className="space-y-1.5">
+              <Label>College</Label>
+              <BetterSelect
+                value={college}
+                onValueChange={(v) => {
+                  setCollege(v);
+                  if (v !== "Others") setCustomCollege("");
+                }}
+                placeholder="Select college"
+              >
+                {COLLEGES.map((c) => (
+                  <SelectItem key={c.acronym} value={c.acronym}>
+                    {c.name} ({c.acronym})
                   </SelectItem>
                 ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor="saProgram">Program</Label>
-              <Input
-                id="saProgram"
-                value={program}
-                onChange={(e) => setProgram(e.target.value)}
-                placeholder="BS Information Technology"
-              />
+                <SelectItem value="Others">Others</SelectItem>
+              </BetterSelect>
             </div>
-            <div>
-              <Label>Year Level</Label>
-              <Select value={yearLevel} onValueChange={setYearLevel}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select" />
-                </SelectTrigger>
-                <SelectContent>
+
+            {college === "Others" && (
+              <div className="space-y-1.5">
+                <Label htmlFor="customCollege">Custom College Name</Label>
+                <Input
+                  id="customCollege"
+                  value={customCollege}
+                  onChange={(e) => setCustomCollege(e.target.value)}
+                  placeholder="Enter college or institute name"
+                  className="rounded-lg"
+                />
+              </div>
+            )}
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                <Label htmlFor="saProgram">Program</Label>
+                <Input
+                  id="saProgram"
+                  value={program}
+                  onChange={(e) => setProgram(e.target.value)}
+                  placeholder="BS Information Technology"
+                  className="rounded-lg"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label>Year Level</Label>
+                <BetterSelect
+                  value={yearLevel}
+                  onValueChange={setYearLevel}
+                  placeholder="Select"
+                >
                   <SelectItem value="1">1st Year</SelectItem>
                   <SelectItem value="2">2nd Year</SelectItem>
                   <SelectItem value="3">3rd Year</SelectItem>
                   <SelectItem value="4">4th Year</SelectItem>
                   <SelectItem value="5">5th Year</SelectItem>
-                </SelectContent>
-              </Select>
+                </BetterSelect>
+              </div>
             </div>
           </div>
 
-          <div>
-            <Label>Office Assignment</Label>
-            <Select value={officeId} onValueChange={setOfficeId}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select office" />
-              </SelectTrigger>
-              <SelectContent>
+          <Separator />
+
+          {/* ── Section: Assignment ──────────────────────────────────────── */}
+          <div className="space-y-4">
+            <div className="flex items-center gap-2">
+              <Building2 className="h-4 w-4 text-[#1e3a8a]" />
+              <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+                Assignment
+              </h3>
+            </div>
+
+            <div className="space-y-1.5">
+              <Label>Office Assignment</Label>
+              <BetterSelect
+                value={officeId}
+                onValueChange={(v) => {
+                  setOfficeId(v);
+                  if (v !== "Others") setCustomOffice("");
+                }}
+                placeholder="Select office"
+              >
                 {offices.map((office) => (
                   <SelectItem key={office.id} value={office.id}>
                     {office.name}
                   </SelectItem>
                 ))}
-              </SelectContent>
-            </Select>
-          </div>
+                <SelectItem value="Others">Others</SelectItem>
+              </BetterSelect>
+            </div>
 
-          {mode === "edit" && (
-            <div>
-              <Label>Status</Label>
-              <Select value={status} onValueChange={setStatus}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
+            {officeId === "Others" && (
+              <div className="space-y-1.5">
+                <Label htmlFor="customOffice">Custom Office Name</Label>
+                <Input
+                  id="customOffice"
+                  value={customOffice}
+                  onChange={(e) => setCustomOffice(e.target.value)}
+                  placeholder="Enter office name"
+                  className="rounded-lg"
+                />
+              </div>
+            )}
+
+            {mode === "edit" && (
+              <div className="space-y-1.5">
+                <Label>Status</Label>
+                <BetterSelect value={status} onValueChange={setStatus}>
                   <SelectItem value="ACTIVE">Active</SelectItem>
                   <SelectItem value="COMPLETED">Completed</SelectItem>
                   <SelectItem value="RESIGNED">Resigned</SelectItem>
                   <SelectItem value="DISMISSED">Dismissed</SelectItem>
                   <SelectItem value="ARCHIVED">Archived</SelectItem>
                   <SelectItem value="OTHER">Other</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          )}
+                </BetterSelect>
+              </div>
+            )}
+          </div>
 
-          <div className="flex gap-2 border-t pt-4">
+          <Separator />
+
+          {/* ── Actions ─────────────────────────────────────────────────── */}
+          <div className="flex gap-2 pt-1">
             <Button
               variant="outline"
-              className="flex-1"
+              className="flex-1 rounded-lg"
               onClick={() => onOpenChange(false)}
             >
               Cancel
@@ -305,7 +387,7 @@ export function SAFormModal({
             <Button
               onClick={handleSubmit}
               disabled={isSubmitting}
-              className="flex-1 bg-[#1e3a8a] hover:bg-[#1e3a8a]/90"
+              className="flex-1 rounded-lg bg-[#1e3a8a] hover:bg-[#1e3a8a]/90"
             >
               {isSubmitting
                 ? mode === "add" ? "Creating..." : "Saving..."

@@ -20,6 +20,7 @@ import {
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import type { SACardData } from "./sa-card";
+import { getCollegeDisplay } from "@/lib/colleges";
 
 interface SADetailModalProps {
   sa: SACardData | null;
@@ -108,7 +109,7 @@ export function SADetailModal({
                 {sa.college && (
                   <div className="flex items-center justify-center gap-1.5 mt-1 text-blue-300/80 text-sm relative z-10 min-w-0 max-w-[280px]">
                     <GraduationCap className="w-3.5 h-3.5 shrink-0" />
-                    <span className="truncate">{sa.college}</span>
+                    <span className="truncate">{getCollegeDisplay(sa.college, 'both')}</span>
                   </div>
                 )}
 

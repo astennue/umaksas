@@ -6,6 +6,7 @@ export async function GET() {
     const announcements = await db.announcement.findMany({
       where: {
         isPublished: true,
+        visibility: "all",
       },
       orderBy: [
         { isPinned: "desc" },
@@ -43,6 +44,7 @@ export async function GET() {
         createdAt: a.createdAt,
         updatedAt: a.updatedAt,
         author: a.authorId ? (authorMap.get(a.authorId) || "Unknown") : "Unknown",
+        visibility: a.visibility,
       })),
     });
   } catch (error) {

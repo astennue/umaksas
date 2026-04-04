@@ -82,7 +82,8 @@ export async function GET(request: NextRequest) {
 
     // Check if the request is from an authenticated admin
     const session = await getServerSession(authOptions);
-    const isAdmin = session && ADMIN_ROLES.includes((session.user as { role: string }).role);
+    const userRole = session ? (session.user as { role: string }).role : null;
+    const isAdmin = session && ADMIN_ROLES.includes(userRole);
 
     // Build where clause
     const where: Record<string, unknown> = {
@@ -129,9 +130,24 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    // Only published for non-admins
+    // Only published for non-admins, with role-based visibility filtering
     if (!isAdmin) {
       (where.AND as Prisma.AnnouncementWhereInput[]).push({ isPublished: true });
+      // Role-based visibility:
+      // - STUDENT_ASSISTANT: sees "all" and "sas_only"
+      // - OFFICE_SUPERVISOR: sees "all" and "supervisors_only"
+      // - Unauthenticated/other: sees only "all"
+      if (userRole === "STUDENT_ASSISTANT") {
+        (where.AND as Prisma.AnnouncementWhereInput[]).push({
+          visibility: { in: ["all", "sas_only"] },
+        });
+      } else if (userRole === "OFFICE_SUPERVISOR") {
+        (where.AND as Prisma.AnnouncementWhereInput[]).push({
+          visibility: { in: ["all", "supervisors_only"] },
+        });
+      } else {
+        (where.AND as Prisma.AnnouncementWhereInput[]).push({ visibility: "all" });
+      }
     }
 
     // Build orderBy based on sort parameter
@@ -170,37 +186,59 @@ export async function GET(request: NextRequest) {
       db.announcement.count({ where: cleanWhere }),
     ]);
 
-    // Fetch author names
+    // Fetch author names and roles for pending_approval computation
     const authorIds = [...new Set(announcements.map((a) => a.authorId).filter(Boolean) as string[])];
-    const authorMap = new Map<string, string>();
+    const authorMap = new Map<string, { name: string; role: string; isPresident: boolean }>();
     if (authorIds.length > 0) {
       const authors = await db.user.findMany({
         where: { id: { in: authorIds } },
-        select: { id: true, firstName: true, lastName: true },
+        select: { id: true, firstName: true, lastName: true, role: true },
       });
       for (const author of authors) {
-        authorMap.set(
-          author.id,
-          `${author.firstName || ""} ${author.lastName || ""}`.trim() || "Unknown"
-        );
+        authorMap.set(author.id, {
+          name: `${author.firstName || ""} ${author.lastName || ""}`.trim() || "Unknown",
+          role: author.role,
+          isPresident: false,
+        });
+      }
+      // Check president status for officer authors
+      const officerIds = authors.filter(a => a.role === "OFFICER").map(a => a.id);
+      if (officerIds.length > 0) {
+        const officerProfiles = await db.officerProfile.findMany({
+          where: { userId: { in: officerIds } },
+          select: { userId: true, position: true },
+        });
+        for (const profile of officerProfiles) {
+          const entry = authorMap.get(profile.userId);
+          if (entry && profile.position === OfficerPosition.PRESIDENT) {
+            entry.isPresident = true;
+          }
+        }
       }
     }
 
     return NextResponse.json({
-      announcements: announcements.map((a) => ({
-        id: a.id,
-        title: a.title,
-        content: a.content,
-        excerpt: a.excerpt,
-        imageUrl: a.imageUrl,
-        priority: a.priority,
-        isPublished: a.isPublished,
-        isPinned: a.isPinned,
-        publishedAt: a.publishedAt,
-        createdAt: a.createdAt,
-        updatedAt: a.updatedAt,
-        author: a.authorId ? (authorMap.get(a.authorId) || "Unknown") : "Unknown",
-      })),
+      announcements: announcements.map((a) => {
+        const authorInfo = a.authorId ? authorMap.get(a.authorId) : null;
+        // An announcement is pending approval if: not published AND author is a non-president OFFICER
+        const pendingApproval = !a.isPublished && authorInfo?.role === "OFFICER" && !authorInfo.isPresident;
+        return {
+          id: a.id,
+          title: a.title,
+          content: a.content,
+          excerpt: a.excerpt,
+          imageUrl: a.imageUrl,
+          priority: a.priority,
+          isPublished: a.isPublished,
+          isPinned: a.isPinned,
+          publishedAt: a.publishedAt,
+          createdAt: a.createdAt,
+          updatedAt: a.updatedAt,
+          author: authorInfo?.name || "Unknown",
+          visibility: a.visibility,
+          ...(pendingApproval ? { status: "pending_approval" } : {}),
+        };
+      }),
       total,
       limit,
       offset,
@@ -224,7 +262,7 @@ export async function POST(request: NextRequest) {
     const { user } = authResult;
 
     const body = await request.json();
-    const { title, content, excerpt, priority, imageUrl, isPublished, isPinned } = body;
+    const { title, content, excerpt, priority, imageUrl, isPublished, isPinned, visibility } = body;
 
     if (!title || !content) {
       return NextResponse.json(
@@ -261,6 +299,7 @@ export async function POST(request: NextRequest) {
         isPinned: effectiveIsPinned,
         publishedAt: effectiveIsPublished ? new Date() : null,
         authorId: user.id,
+        visibility: visibility || "all",
       },
     });
 
@@ -281,6 +320,7 @@ export async function POST(request: NextRequest) {
         updatedAt: announcement.updatedAt,
         author: authorName,
         authorRole: user.role,
+        visibility: announcement.visibility,
         ...(user.role === "OFFICER" && !isPresidentOfficer ? { status: "pending_approval" } : {}),
       },
       { status: 201 }

@@ -12,6 +12,7 @@ import {
   User,
 } from "lucide-react";
 import { OnDutyIndicator } from "./on-duty-indicator";
+import { getCollegeDisplay } from "@/lib/colleges";
 
 export interface SACardData {
   id: string;
@@ -99,7 +100,7 @@ export function SACard({ sa, onClick, isAuthenticated }: SACardProps) {
           {sa.college && (
             <div className="flex items-center gap-1.5 mt-1.5 text-sm text-gray-700 dark:text-gray-300">
               <GraduationCap className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400 flex-shrink-0" />
-              <span className="truncate max-w-[200px]">{sa.college}</span>
+              <span className="truncate max-w-[200px]">{getCollegeDisplay(sa.college, 'acronym')}</span>
             </div>
           )}
 
