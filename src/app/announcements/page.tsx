@@ -50,6 +50,7 @@ interface Announcement {
   createdAt: string;
   updatedAt: string;
   author: string;
+  authorRole?: string | null;
 }
 
 type SortOption = "newest" | "oldest" | "recent_update" | "az" | "za";
@@ -80,6 +81,23 @@ const TIME_FILTER_OPTIONS: { value: TimeFilterOption; label: string; icon?: Reac
   { value: "year", label: "This Year" },
   { value: "custom", label: "Custom Range" },
 ];
+
+// Role badge configuration
+const ROLE_CONFIG: Record<string, { label: string; bg: string; color: string }> = {
+  SUPER_ADMIN: { label: "Super Admin", bg: "bg-red-100 dark:bg-red-900/30", color: "text-red-700 dark:text-red-400" },
+  ADVISER: { label: "Adviser", bg: "bg-purple-100 dark:bg-purple-900/30", color: "text-purple-700 dark:text-purple-400" },
+  OFFICER: { label: "Officer", bg: "bg-amber-100 dark:bg-amber-900/30", color: "text-amber-700 dark:text-amber-400" },
+  STUDENT_ASSISTANT: { label: "Student Assistant", bg: "bg-emerald-100 dark:bg-emerald-900/30", color: "text-emerald-700 dark:text-emerald-400" },
+  OFFICE_SUPERVISOR: { label: "Office Supervisor", bg: "bg-sky-100 dark:bg-sky-900/30", color: "text-sky-700 dark:text-sky-400" },
+};
+
+function getRoleBadge(role: string | null | undefined) {
+  if (!role || !ROLE_CONFIG[role]) return null;
+  const config = ROLE_CONFIG[role];
+  return (
+    <Badge variant="secondary" className={`${config.bg} ${config.color} border-0 text-[10px] font-medium px-1.5 py-0`}>{config.label}</Badge>
+  );
+}
 
 export default function AnnouncementsPage() {
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
@@ -455,13 +473,14 @@ export default function AnnouncementsPage() {
                             {announcement.title}
                           </h3>
 
-                          {/* Date & Author */}
-                          <div className="mb-3 flex items-center gap-2 text-xs text-muted-foreground">
+                          {/* Date, Author & Role */}
+                          <div className="mb-3 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
                             <time dateTime={displayDate}>
                               {format(new Date(displayDate), "MMM d, yyyy")}
                             </time>
-                            <span>·</span>
-                            <span>{announcement.author}</span>
+                            <span className="text-gray-300 dark:text-gray-600">•</span>
+                            <span className="font-medium text-gray-700 dark:text-gray-300">{announcement.author}</span>
+                            {getRoleBadge(announcement.authorRole)}
                           </div>
 
                           {/* Content */}
@@ -554,8 +573,9 @@ export default function AnnouncementsPage() {
                   <time dateTime={selectedAnnouncement.publishedAt || selectedAnnouncement.createdAt}>
                     {format(new Date(selectedAnnouncement.publishedAt || selectedAnnouncement.createdAt), "MMMM d, yyyy 'at' h:mm a")}
                   </time>
-                  <span>·</span>
-                  <span>{selectedAnnouncement.author}</span>
+                  <span className="text-gray-300 dark:text-gray-600">•</span>
+                  <span className="font-medium text-gray-700 dark:text-gray-300">{selectedAnnouncement.author}</span>
+                  {getRoleBadge(selectedAnnouncement.authorRole)}
                 </div>
               </DialogHeader>
 

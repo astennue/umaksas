@@ -184,6 +184,8 @@ export default function HomePage() {
     isPinned: boolean;
     priority: string;
     createdAt: string;
+    author?: string;
+    authorRole?: string | null;
   }>>([]);
 
   useEffect(() => {

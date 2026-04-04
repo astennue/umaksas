@@ -153,23 +153,23 @@ export async function GET(request: NextRequest) {
     }
 
     // Build orderBy based on sort parameter
-    let orderBy: Prisma.AnnouncementOrderByWithRelationInput;
+    let orderBy: Prisma.AnnouncementOrderByWithRelationInput[];
     switch (sort) {
       case "oldest":
-        orderBy = { isPinned: "desc", createdAt: "asc" };
+        orderBy = [{ isPinned: "desc" }, { createdAt: "asc" }];
         break;
       case "recent_update":
-        orderBy = { isPinned: "desc", updatedAt: "desc" };
+        orderBy = [{ isPinned: "desc" }, { updatedAt: "desc" }];
         break;
       case "az":
-        orderBy = { isPinned: "desc", title: "asc" };
+        orderBy = [{ isPinned: "desc" }, { title: "asc" }];
         break;
       case "za":
-        orderBy = { isPinned: "desc", title: "desc" };
+        orderBy = [{ isPinned: "desc" }, { title: "desc" }];
         break;
       case "newest":
       default:
-        orderBy = { isPinned: "desc", createdAt: "desc" };
+        orderBy = [{ isPinned: "desc" }, { createdAt: "desc" }];
         break;
     }
 
@@ -237,6 +237,7 @@ export async function GET(request: NextRequest) {
           createdAt: a.createdAt,
           updatedAt: a.updatedAt,
           author: authorInfo?.name || "Unknown",
+          authorRole: authorInfo?.role || null,
           visibility: a.visibility,
           ...(pendingApproval ? { status: "pending_approval" } : {}),
         };

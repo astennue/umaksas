@@ -15,18 +15,21 @@ export async function GET() {
       take: 5,
     });
 
-    // Fetch author names
+    // Fetch author names and roles
     const authorIds = [...new Set(announcements.map((a) => a.authorId).filter(Boolean) as string[])];
-    const authorMap = new Map<string, string>();
+    const authorMap = new Map<string, { name: string; role: string }>();
     if (authorIds.length > 0) {
       const authors = await db.user.findMany({
         where: { id: { in: authorIds } },
-        select: { id: true, firstName: true, lastName: true },
+        select: { id: true, firstName: true, lastName: true, role: true },
       });
       for (const author of authors) {
         authorMap.set(
           author.id,
-          `${author.firstName || ""} ${author.lastName || ""}`.trim() || "Unknown"
+          {
+            name: `${author.firstName || ""} ${author.lastName || ""}`.trim() || "Unknown",
+            role: author.role,
+          }
         );
       }
     }
@@ -43,7 +46,8 @@ export async function GET() {
         publishedAt: a.publishedAt,
         createdAt: a.createdAt,
         updatedAt: a.updatedAt,
-        author: a.authorId ? (authorMap.get(a.authorId) || "Unknown") : "Unknown",
+        author: a.authorId ? (authorMap.get(a.authorId)?.name || "Unknown") : "Unknown",
+        authorRole: a.authorId ? (authorMap.get(a.authorId)?.role || null) : null,
         visibility: a.visibility,
       })),
     });

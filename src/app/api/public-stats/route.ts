@@ -4,7 +4,7 @@ import { db } from "@/lib/db";
 export async function GET() {
   try {
     const [saCount, officeCount, collegeSet] = await Promise.all([
-      db.user.count({ where: { role: "STUDENT_ASSISTANT", isActive: true } }),
+      db.user.count({ where: { role: { in: ["STUDENT_ASSISTANT", "OFFICER"] }, isActive: true } }),
       db.office.count({ where: { isActive: true } }),
       db.sAProfile.groupBy({ by: ["college"], where: { status: "ACTIVE" } }),
     ]);

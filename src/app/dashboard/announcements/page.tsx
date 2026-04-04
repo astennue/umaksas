@@ -92,6 +92,23 @@ const FILTER_TABS = [
   { key: "PINNED", label: "Pinned", icon: <Pin className="h-3.5 w-3.5" /> },
 ];
 
+// Role badge configuration
+const ROLE_CONFIG: Record<string, { label: string; bg: string; color: string }> = {
+  SUPER_ADMIN: { label: "Super Admin", bg: "bg-red-100 dark:bg-red-900/30", color: "text-red-700 dark:text-red-400" },
+  ADVISER: { label: "Adviser", bg: "bg-purple-100 dark:bg-purple-900/30", color: "text-purple-700 dark:text-purple-400" },
+  OFFICER: { label: "Officer", bg: "bg-amber-100 dark:bg-amber-900/30", color: "text-amber-700 dark:text-amber-400" },
+  STUDENT_ASSISTANT: { label: "Student Assistant", bg: "bg-emerald-100 dark:bg-emerald-900/30", color: "text-emerald-700 dark:text-emerald-400" },
+  OFFICE_SUPERVISOR: { label: "Office Supervisor", bg: "bg-sky-100 dark:bg-sky-900/30", color: "text-sky-700 dark:text-sky-400" },
+};
+
+function getRoleBadge(role: string | null | undefined) {
+  if (!role || !ROLE_CONFIG[role]) return null;
+  const config = ROLE_CONFIG[role];
+  return (
+    <Badge variant="secondary" className={`${config.bg} ${config.color} border-0 text-[10px] font-medium px-1.5 py-0`}>{config.label}</Badge>
+  );
+}
+
 interface FormData {
   title: string;
   content: string;
@@ -565,9 +582,10 @@ export default function DashboardAnnouncementsPage() {
                         </h3>
 
                         {/* Meta */}
-                        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-gray-500 dark:text-gray-400 min-w-0">
-                          <span className="line-clamp-1 max-w-[300px]">{announcement.author}</span>
-                          <span>·</span>
+                        <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-gray-500 dark:text-gray-400 min-w-0">
+                          <span className="font-medium text-gray-700 dark:text-gray-300 line-clamp-1 max-w-[300px]">{announcement.author}</span>
+                          {getRoleBadge(announcement.authorRole)}
+                          <span className="text-gray-300 dark:text-gray-600">•</span>
                           <time dateTime={displayDate}>
                             {format(new Date(displayDate), "MMM d, yyyy 'at' h:mm a")}
                           </time>

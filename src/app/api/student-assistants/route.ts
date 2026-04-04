@@ -23,7 +23,7 @@ export async function GET(request: NextRequest) {
     // Build where clause
     const where: Record<string, unknown> = {
       user: {
-        role: UserRole.STUDENT_ASSISTANT,
+        role: { in: [UserRole.STUDENT_ASSISTANT, UserRole.OFFICER, UserRole.ADVISER] },
       },
     };
 
