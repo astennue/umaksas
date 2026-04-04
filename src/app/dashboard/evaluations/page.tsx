@@ -66,8 +66,8 @@ import { RoleGuard } from "@/components/auth/role-guard";
 import { format } from "date-fns";
 import { useConfirm } from "@/hooks/use-confirm";
 import { useKeyboardShortcuts } from "@/hooks/use-keyboard-shortcuts";
-import EmptyState from "@/components/ui/empty-state";
-import SavingIndicator from "@/components/ui/saving-indicator";
+import { EmptyState } from "@/components/ui/empty-state";
+import { SavingIndicator } from "@/components/ui/saving-indicator";
 
 // ========== Types ==========
 interface Evaluation {

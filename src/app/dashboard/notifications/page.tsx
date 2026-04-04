@@ -15,7 +15,7 @@ import { NotificationPreferences } from "@/components/notifications/notification
 import { useSession } from "next-auth/react";
 import { useNotifications } from "@/hooks/use-notifications";
 import { useConfirm } from "@/hooks/use-confirm";
-import EmptyState from "@/components/ui/empty-state";
+import { EmptyState } from "@/components/ui/empty-state";
 import Link from "next/link";
 
 export default function NotificationsPage() {

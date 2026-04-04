@@ -43,7 +43,7 @@ import { EventFormDialog } from "@/components/events/event-form-dialog";
 import { CRUDToolbar } from "@/components/crud-toolbar";
 import { CRUDActions } from "@/components/crud-actions";
 import { toast } from "sonner";
-import EmptyState from "@/components/ui/empty-state";
+import { EmptyState } from "@/components/ui/empty-state";
 import { useKeyboardShortcuts } from "@/hooks/use-keyboard-shortcuts";
 
 interface Office {

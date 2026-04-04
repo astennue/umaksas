@@ -59,7 +59,7 @@ import { SARequestFormDialog } from "@/components/offices/sa-request-form-dialog
 import { CRUDToolbar } from "@/components/crud-toolbar";
 import { CRUDActions } from "@/components/crud-actions";
 import { RoleGuard } from "@/components/auth/role-guard";
-import EmptyState from "@/components/ui/empty-state";
+import { EmptyState } from "@/components/ui/empty-state";
 import { useKeyboardShortcuts } from "@/hooks/use-keyboard-shortcuts";
 
 // =============================================

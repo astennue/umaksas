@@ -75,8 +75,8 @@ import { cn } from "@/lib/utils";
 import { CRUDToolbar } from "@/components/crud-toolbar";
 import { CRUDActions } from "@/components/crud-actions";
 import { RoleGuard } from "@/components/auth/role-guard";
-import EmptyState from "@/components/ui/empty-state";
-import SavingIndicator from "@/components/ui/saving-indicator";
+import { EmptyState } from "@/components/ui/empty-state";
+import { SavingIndicator } from "@/components/ui/saving-indicator";
 import { useKeyboardShortcuts } from "@/hooks/use-keyboard-shortcuts";
 
 interface Renewal {

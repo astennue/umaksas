@@ -19,7 +19,7 @@ import {
   Search,
   Filter,
 } from "lucide-react";
-import EmptyState from "@/components/ui/empty-state";
+import { EmptyState } from "@/components/ui/empty-state";
 import { useKeyboardShortcuts } from "@/hooks/use-keyboard-shortcuts";
 import { InterviewCard, type InterviewData } from "@/components/interviews/interview-card";
 import { InterviewCalendar } from "@/components/interviews/interview-calendar";

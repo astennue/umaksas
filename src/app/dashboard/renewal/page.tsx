@@ -46,7 +46,7 @@ import {
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { cn } from "@/lib/utils";
 import { useConfirm } from "@/hooks/use-confirm";
-import SavingIndicator from "@/components/ui/saving-indicator";
+import { SavingIndicator } from "@/components/ui/saving-indicator";
 import { AvailabilityGrid } from "@/components/apply/availability-grid";
 import { TOTAL_SLOTS } from "@/lib/validations/application";
 

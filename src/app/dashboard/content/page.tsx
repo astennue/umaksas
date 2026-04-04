@@ -79,9 +79,9 @@ import {
   Search,
 } from "lucide-react";
 import { toast } from "sonner";
-import EmptyState from "@/components/ui/empty-state";
+import { EmptyState } from "@/components/ui/empty-state";
 import { useKeyboardShortcuts } from "@/hooks/use-keyboard-shortcuts";
-import SavingIndicator from "@/components/ui/saving-indicator";
+import { SavingIndicator } from "@/components/ui/saving-indicator";
 
 // ============================================
 // Types

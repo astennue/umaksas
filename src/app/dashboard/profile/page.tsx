@@ -54,7 +54,7 @@ import { toast } from "sonner";
 import { format } from "date-fns";
 import Link from "next/link";
 import { useConfirm } from "@/hooks/use-confirm";
-import SavingIndicator from "@/components/ui/saving-indicator";
+import { SavingIndicator } from "@/components/ui/saving-indicator";
 
 // Types
 interface SAProfileData {
