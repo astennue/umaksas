@@ -90,7 +90,7 @@ interface Renewal {
   newOfficeId: string | null;
   intentLetterUrl: string | null;
   reportOfGradeUrl: string | null;
-  certOfRegUrl: string | null;
+  corUrl: string | null;
   reviewNotes: string | null;
   reviewedBy: string | null;
   reviewedAt: string | null;
@@ -686,7 +686,7 @@ export default function RenewalsManagementPage() {
                       <span>Report of Grades</span>
                     </div>
                   )}
-                  {selectedRenewal.certOfRegUrl && (
+                  {selectedRenewal.corUrl && (
                     <div className="flex items-center gap-2 text-xs">
                       <Badge variant="default" className="text-[10px] w-20 justify-center">
                         Uploaded

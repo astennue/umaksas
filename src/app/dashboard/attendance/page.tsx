@@ -322,10 +322,13 @@ export default function AttendancePage() {
         const todayRecords = todayData.records || [];
         const present = todayRecords.filter((r: AttendanceRecord) => r.status === "PRESENT" || r.status === "LATE" || r.status === "HALF_DAY").length;
         const onDuty = todayRecords.filter((r: AttendanceRecord) => r.timeIn && !r.timeOut).length;
+        const totalSAs = todayData.total || todayRecords.length;
+        const absent = canClockUser ? 0 : Math.max(0, totalSAs - present);
         setStats(prev => ({
           ...prev,
           presentToday: canClockUser ? (todayRecords.length > 0 ? 1 : 0) : present,
           onDutyNow: canClockUser ? (todayRecords.some((r: AttendanceRecord) => r.timeIn && !r.timeOut) ? 1 : 0) : onDuty,
+          absentToday: absent,
         }));
 
         // Find today's record for the current user (SA or Officer with SA)

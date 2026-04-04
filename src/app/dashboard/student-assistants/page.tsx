@@ -244,7 +244,7 @@ export default function StudentAssistantsPage() {
   }
 
   return (
-    <RoleGuard allowedRoles={["SUPER_ADMIN", "ADVISER", "OFFICER"]}>
+    <RoleGuard allowedRoles={["SUPER_ADMIN", "ADVISER", "OFFICER", "OFFICE_SUPERVISOR"]}>
     <div className="space-y-6">
       {/* Page Header */}
       <CRUDToolbar

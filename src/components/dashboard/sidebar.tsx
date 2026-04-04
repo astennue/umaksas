@@ -68,8 +68,8 @@ const navItems: NavItem[] = [
   // Schedules - Super Admin, Adviser, Officer, Office Supervisor, SA
   { label: "Schedules", href: "/dashboard/schedules", icon: Clock, roles: ["SUPER_ADMIN", "ADVISER", "OFFICER", "OFFICE_SUPERVISOR", "STUDENT_ASSISTANT"] },
 
-  // Attendance - Super Admin, Adviser, Officer, SA (NOT HRMO)
-  { label: "Attendance", href: "/dashboard/attendance", icon: CheckCircle, roles: ["SUPER_ADMIN", "ADVISER", "OFFICER", "STUDENT_ASSISTANT"] },
+  // Attendance - Super Admin, Adviser, Officer, Office Supervisor, SA (NOT HRMO)
+  { label: "Attendance", href: "/dashboard/attendance", icon: CheckCircle, roles: ["SUPER_ADMIN", "ADVISER", "OFFICER", "OFFICE_SUPERVISOR", "STUDENT_ASSISTANT"] },
 
   // Evaluations - Super Admin, Adviser, Officer, Office Supervisor (NOT SA)
   { label: "Evaluations", href: "/dashboard/evaluations", icon: ClipboardCheck, roles: ["SUPER_ADMIN", "ADVISER", "OFFICER", "OFFICE_SUPERVISOR"] },

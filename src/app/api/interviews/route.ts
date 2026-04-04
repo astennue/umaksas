@@ -11,6 +11,12 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    const userRole = (session.user as { role?: string })?.role;
+    const allowedRoles = ["SUPER_ADMIN", "ADVISER", "OFFICER"];
+    if (!allowedRoles.includes(userRole || "")) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+
     const { searchParams } = new URL(request.url);
     const status = searchParams.get("status") || "";
     const startDate = searchParams.get("startDate") || "";

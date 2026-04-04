@@ -103,6 +103,7 @@ export default function SettingsPage() {
   const isOfficer = userRole === "OFFICER";
   const canModifyPaymentSettings = isSuperAdmin || isOfficer;
   const canViewPaymentSettings = isSuperAdmin || isAdviser || isOfficer;
+  const canModifyAcademicSettings = isSuperAdmin || isAdviser;
 
   // Auth check
   useEffect(() => {
@@ -584,6 +585,8 @@ export default function SettingsPage() {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
+            {canModifyAcademicSettings && (
+              <>
             <div className="space-y-2">
               <Label htmlFor="academicYear">Academic Year</Label>
               <Input
@@ -604,8 +607,11 @@ export default function SettingsPage() {
             </div>
 
             <Separator />
+              </>
+            )}
 
-            <div className="space-y-2">
+            {canModifyAcademicSettings && (
+              <div className="space-y-2">
               <Label htmlFor="maxWorkHours" className="flex items-center gap-2">
                 <Clock className="h-4 w-4 text-muted-foreground" />
                 Max Work Hours Per Day
@@ -622,6 +628,7 @@ export default function SettingsPage() {
                 Maximum hours a Student Assistant can work per day (recommended: 4)
               </p>
             </div>
+            )}
 
             <div className="space-y-2">
               <Label htmlFor="monthlyPayment" className="flex items-center gap-2">
