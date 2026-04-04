@@ -19,6 +19,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
 } from "@/components/ui/dialog";
 import {
   Users,
@@ -36,6 +37,11 @@ import {
   Mail,
   Phone,
   Calendar,
+  Upload,
+  AlertTriangle,
+  CheckCircle2,
+  XCircle,
+  Loader2,
 } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "sonner";
@@ -72,6 +78,15 @@ interface StudentAssistant {
   dateHired: string | null;
 }
 
+interface ImportResult {
+  success: boolean;
+  total: number;
+  created: number;
+  skipped: number;
+  errors: { row: number; error: string }[];
+  message: string;
+}
+
 const statusConfig: Record<string, { label: string; color: string }> = {
   ACTIVE: { label: "Active", color: "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400" },
   ARCHIVED: { label: "Archived", color: "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-400" },
@@ -104,10 +119,16 @@ export default function StudentAssistantsPage() {
   const { confirm, ConfirmDialog } = useConfirm();
   const [isDeleting, setIsDeleting] = useState(false);
 
+  // Import modal state
+  const [importOpen, setImportOpen] = useState(false);
+  const [isImporting, setIsImporting] = useState(false);
+  const [importResult, setImportResult] = useState<ImportResult | null>(null);
+
   const userRole = (session?.user as { role?: string })?.role;
   const canManage = ["SUPER_ADMIN", "ADVISER", "OFFICER"].includes(userRole || "");
   const canCreate = ["SUPER_ADMIN", "ADVISER"].includes(userRole || "");
   const canDelete = userRole === "SUPER_ADMIN";
+  const canImport = ["SUPER_ADMIN", "ADVISER"].includes(userRole || "");
 
   const fetchStudents = useCallback(async () => {
     try {
@@ -148,7 +169,7 @@ export default function StudentAssistantsPage() {
 
   const fetchOffices = useCallback(async () => {
     try {
-      const res = await fetch("/api/offices");
+      const res = await fetch("/api/offices?limit=1000");
       if (!res.ok) return;
       const data = await res.json();
       setOffices((data.offices || []).map((o: { id: string; name: string; code: string | null }) => ({
@@ -179,6 +200,36 @@ export default function StudentAssistantsPage() {
     new Set(students.map((s) => s.college).filter(Boolean) as string[])
   ).sort();
 
+  // Import handler
+  const handleImport = async () => {
+    setIsImporting(true);
+    setImportResult(null);
+    try {
+      const res = await fetch("/api/student-assistants/import", { method: "POST" });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || "Import failed");
+      }
+      setImportResult(data);
+      toast.success(data.message);
+      // Refresh the SA list
+      fetchStudents();
+      fetchOffices();
+    } catch (error: unknown) {
+      toast.error(error instanceof Error ? error.message : "Import failed");
+      setImportResult({
+        success: false,
+        total: 0,
+        created: 0,
+        skipped: 0,
+        errors: [],
+        message: error instanceof Error ? error.message : "Import failed",
+      });
+    } finally {
+      setIsImporting(false);
+    }
+  };
+
   if (loading && students.length === 0) {
     return (
       <div className="space-y-4">
@@ -201,8 +252,19 @@ export default function StudentAssistantsPage() {
         entityLabel="Student Assistants"
         onAdd={canCreate ? () => { setEditSA(null); setFormOpen(true); } : undefined}
         onSearch={(value) => { setSearch(value); setPage(1); }}
-        showAdd={!!canCreate}
-      />
+      >
+        {canImport && (
+          <Button
+            variant="outline"
+            size="sm"
+            className="gap-1.5 shrink-0"
+            onClick={() => { setImportResult(null); setImportOpen(true); }}
+          >
+            <Upload className="w-4 h-4" />
+            <span className="hidden sm:inline">Import from Excel</span>
+          </Button>
+        )}
+      </CRUDToolbar>
 
       {/* Stats */}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
@@ -487,6 +549,136 @@ export default function StudentAssistantsPage() {
                   </Button>
                 </div>
               )}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Import Confirmation Dialog */}
+      <Dialog open={importOpen} onOpenChange={(open) => { if (!isImporting) setImportOpen(open); }}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Upload className="h-5 w-5" />
+              Import from Excel
+            </DialogTitle>
+            <DialogDescription>
+              Import student assistant data from the Excel file
+            </DialogDescription>
+          </DialogHeader>
+
+          {!importResult && !isImporting && (
+            <div className="space-y-4">
+              <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 dark:border-amber-800 dark:bg-amber-950/50">
+                <div className="flex gap-3">
+                  <AlertTriangle className="h-5 w-5 text-amber-600 shrink-0 mt-0.5" />
+                  <div className="text-sm text-amber-800 dark:text-amber-200">
+                    <p className="font-semibold mb-1">Before importing</p>
+                    <ul className="list-disc list-inside space-y-1 text-amber-700 dark:text-amber-300">
+                      <li>Existing records (by email) will be <strong>skipped</strong> — no duplicates will be created.</li>
+                      <li>New offices will be created automatically based on office codes.</li>
+                      <li>New user accounts will be created with the STUDENT_ASSISTANT role.</li>
+                      <li>The source file: <code className="text-xs bg-amber-100 dark:bg-amber-900 px-1 rounded">Student Assistant – Data Collection Form (Responses).xlsx</code></li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex gap-2 pt-2">
+                <Button
+                  variant="outline"
+                  className="flex-1 rounded-lg"
+                  onClick={() => setImportOpen(false)}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  onClick={handleImport}
+                  className="flex-1 rounded-lg bg-[#1e3a8a] hover:bg-[#1e3a8a]/90"
+                >
+                  <Upload className="mr-2 h-4 w-4" />
+                  Import
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {isImporting && (
+            <div className="flex flex-col items-center justify-center py-8 space-y-4">
+              <Loader2 className="h-8 w-8 text-[#1e3a8a] animate-spin" />
+              <div className="text-center">
+                <p className="font-medium">Importing data...</p>
+                <p className="text-sm text-muted-foreground mt-1">
+                  This may take a moment depending on the file size
+                </p>
+              </div>
+            </div>
+          )}
+
+          {importResult && (
+            <div className="space-y-4">
+              {importResult.success ? (
+                <div className="rounded-lg border border-green-200 bg-green-50 p-4 dark:border-green-800 dark:bg-green-950/50">
+                  <div className="flex gap-3">
+                    <CheckCircle2 className="h-5 w-5 text-green-600 shrink-0 mt-0.5" />
+                    <div className="text-sm text-green-800 dark:text-green-200">
+                      <p className="font-semibold mb-1">Import completed!</p>
+                      <p>{importResult.message}</p>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="rounded-lg border border-red-200 bg-red-50 p-4 dark:border-red-800 dark:bg-red-950/50">
+                  <div className="flex gap-3">
+                    <XCircle className="h-5 w-5 text-red-600 shrink-0 mt-0.5" />
+                    <div className="text-sm text-red-800 dark:text-red-200">
+                      <p className="font-semibold mb-1">Import failed</p>
+                      <p>{importResult.message}</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Summary stats */}
+              <div className="grid grid-cols-3 gap-3">
+                <div className="rounded-lg border bg-white p-3 text-center dark:bg-slate-800">
+                  <p className="text-xs text-muted-foreground">Total Rows</p>
+                  <p className="text-xl font-bold text-slate-900 dark:text-white">{importResult.total}</p>
+                </div>
+                <div className="rounded-lg border bg-white p-3 text-center dark:bg-slate-800">
+                  <p className="text-xs text-muted-foreground">Created</p>
+                  <p className="text-xl font-bold text-green-600">{importResult.created}</p>
+                </div>
+                <div className="rounded-lg border bg-white p-3 text-center dark:bg-slate-800">
+                  <p className="text-xs text-muted-foreground">Skipped</p>
+                  <p className="text-xl font-bold text-amber-600">{importResult.skipped}</p>
+                </div>
+              </div>
+
+              {/* Error details (if any) */}
+              {importResult.errors.length > 0 && (
+                <div className="max-h-40 overflow-y-auto rounded-lg border bg-slate-50 p-3 dark:bg-slate-900">
+                  <p className="text-xs font-semibold text-muted-foreground mb-2">
+                    Errors ({importResult.errors.length}{importResult.errors.length >= 50 ? "+, showing first 50" : ""})
+                  </p>
+                  <div className="space-y-1">
+                    {importResult.errors.map((err, idx) => (
+                      <p key={idx} className="text-xs text-red-600 dark:text-red-400">
+                        Row {err.row}: {err.error}
+                      </p>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              <div className="flex gap-2 pt-2">
+                <Button
+                  className="flex-1 rounded-lg bg-[#1e3a8a] hover:bg-[#1e3a8a]/90"
+                  onClick={() => setImportOpen(false)}
+                >
+                  Done
+                </Button>
+              </div>
             </div>
           )}
         </DialogContent>

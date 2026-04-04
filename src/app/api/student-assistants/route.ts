@@ -153,6 +153,7 @@ export async function POST(request: NextRequest) {
       program,
       yearLevel,
       officeId,
+      customOffice,
     } = body;
 
     if (!firstName || !lastName || !email) {
@@ -174,8 +175,36 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Check office exists
-    if (officeId) {
+    // Resolve officeId: customOffice takes precedence over officeId
+    let resolvedOfficeId = officeId || null;
+    if (customOffice && typeof customOffice === "string" && customOffice.trim()) {
+      const trimmedName = customOffice.trim();
+      // Generate code from first letters of each word
+      const code = trimmedName
+        .split(/\s+/)
+        .filter(Boolean)
+        .map((word: string) => word.charAt(0).toUpperCase())
+        .join("");
+
+      // Check if an office with this name already exists
+      const existingOffice = await db.office.findFirst({
+        where: { name: trimmedName },
+      });
+
+      if (existingOffice) {
+        resolvedOfficeId = existingOffice.id;
+      } else {
+        // Create a new office
+        const newOffice = await db.office.create({
+          data: {
+            name: trimmedName,
+            code,
+          },
+        });
+        resolvedOfficeId = newOffice.id;
+      }
+    } else if (officeId) {
+      // Check office exists
       const office = await db.office.findUnique({ where: { id: officeId } });
       if (!office) {
         return NextResponse.json(
@@ -200,7 +229,7 @@ export async function POST(request: NextRequest) {
             college: college || null,
             program: program || null,
             yearLevel: yearLevel || null,
-            officeId: officeId || null,
+            officeId: resolvedOfficeId,
             status: SAStatus.ACTIVE,
           },
         },

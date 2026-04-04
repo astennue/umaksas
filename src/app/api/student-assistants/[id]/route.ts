@@ -382,6 +382,7 @@ export async function PUT(
       yearLevel,
       officeId,
       status,
+      customOffice,
     } = body;
 
     // Check SA exists
@@ -396,6 +397,36 @@ export async function PUT(
       );
     }
 
+    // Resolve officeId: customOffice takes precedence over officeId
+    let resolvedOfficeId = officeId !== undefined ? officeId : existingProfile.officeId;
+    if (customOffice && typeof customOffice === "string" && customOffice.trim()) {
+      const trimmedName = customOffice.trim();
+      // Generate code from first letters of each word
+      const code = trimmedName
+        .split(/\s+/)
+        .filter(Boolean)
+        .map((word: string) => word.charAt(0).toUpperCase())
+        .join("");
+
+      // Check if an office with this name already exists
+      const existingOffice = await db.office.findFirst({
+        where: { name: trimmedName },
+      });
+
+      if (existingOffice) {
+        resolvedOfficeId = existingOffice.id;
+      } else {
+        // Create a new office
+        const newOffice = await db.office.create({
+          data: {
+            name: trimmedName,
+            code,
+          },
+        });
+        resolvedOfficeId = newOffice.id;
+      }
+    }
+
     // Update user and profile
     const updatedProfile = await db.sAProfile.update({
       where: { userId: id },
@@ -403,7 +434,7 @@ export async function PUT(
         college: college !== undefined ? college : undefined,
         program: program !== undefined ? program : undefined,
         yearLevel: yearLevel !== undefined ? yearLevel : undefined,
-        officeId: officeId !== undefined ? officeId : undefined,
+        officeId: resolvedOfficeId,
         status: status !== undefined ? (status as SAStatus) : undefined,
       },
       include: {

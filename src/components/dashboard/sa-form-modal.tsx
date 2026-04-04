@@ -133,19 +133,30 @@ export function SAFormModal({
         lastName: lastName.trim(),
       };
 
+      // Resolve the final office value
+      if (officeId === "Others") {
+        if (customOffice.trim()) {
+          body.customOffice = customOffice.trim();
+        } else {
+          toast.error("Please enter a custom office name");
+          setIsSubmitting(false);
+          return;
+        }
+      } else if (officeId) {
+        body.officeId = officeId;
+      }
+
       if (mode === "add") {
         body.email = email.trim().toLowerCase();
         body.phone = phone.trim() || undefined;
         body.college = finalCollege;
         body.program = program.trim() || undefined;
         body.yearLevel = yearLevel || undefined;
-        body.officeId = officeId || undefined;
       } else {
         body.phone = phone.trim() || undefined;
         body.college = finalCollege;
         body.program = program.trim() || undefined;
         body.yearLevel = yearLevel || undefined;
-        body.officeId = officeId || undefined;
         body.status = status;
       }
 
