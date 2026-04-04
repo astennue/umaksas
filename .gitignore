@@ -19,3 +19,4 @@ worklog.md
 .accesslog
 .stats
 tailwind.config.ts.bak
+attendance-service.log
