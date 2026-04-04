@@ -630,7 +630,7 @@ export default function ProfilePage() {
               </h3>
               <p className="text-xs text-muted-foreground">Update your personal details</p>
             </div>
-            <SavingIndicator isSaving={isSavingProfile} isDirty={
+            <SavingIndicator saving={isSavingProfile} dirty={
               firstName !== (profile.firstName || "") ||
               middleName !== (profile.middleName || "") ||
               lastName !== (profile.lastName || "") ||
@@ -763,7 +763,7 @@ export default function ProfilePage() {
               </h3>
               <p className="text-xs text-muted-foreground">Update your account password</p>
             </div>
-            <SavingIndicator isSaving={isChangingPassword} lastSaved={lastSavedPassword} />
+            <SavingIndicator saving={isChangingPassword} lastSaved={lastSavedPassword} />
           </div>
           <Separator className="mt-4" />
           <CardContent className="p-4 sm:p-6">

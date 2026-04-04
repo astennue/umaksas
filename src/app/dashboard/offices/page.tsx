@@ -450,8 +450,7 @@ export default function OfficesPage() {
               description={search || statusFilter !== "all"
                 ? "Try adjusting your search or filters"
                 : "Create your first office to get started"}
-              action={canCreate ? "Create Office" : undefined}
-              actionOnClick={canCreate ? () => { setEditOffice(null); setFormOpen(true); } : undefined}
+              action={canCreate ? { label: "Create Office", onClick: () => { setEditOffice(null); setFormOpen(true); } } : undefined}
             />
           ) : (
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
@@ -704,11 +703,7 @@ export default function OfficesPage() {
               description={requestStatusFilter !== "all"
                 ? "Try a different status filter"
                 : "Create your first SA request"}
-              action={canRequestSA ? "New Request" : undefined}
-              actionOnClick={canRequestSA ? () => {
-                setSaRequestOfficeId(null);
-                setSaRequestOpen(true);
-              } : undefined}
+              action={canRequestSA ? { label: "New Request", onClick: () => { setSaRequestOfficeId(null); setSaRequestOpen(true); } } : undefined}
             />
           ) : (
             <div className="space-y-2 max-h-[600px] overflow-y-auto">

@@ -546,7 +546,7 @@ export function OrgChart() {
     )
   }
 
-  if (!orgChartData && !loading) {
+  if (!orgChartData) {
     return (
       <div className="text-center py-12">
         <Building2 className="h-12 w-12 text-gray-300 mx-auto mb-4" />

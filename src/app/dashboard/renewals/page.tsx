@@ -339,34 +339,32 @@ export default function RenewalsManagementPage() {
         title="Renewal Management"
         entityLabel="Renewals"
         onSearch={(value) => { setSearch(value); setPage(1); }}
-        showAdd={false}
-        extra={
-          <div className="flex items-center gap-2">
-            {isSuperAdmin && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setSeasonToggleOpen(true)}
-                className={cn(
-                  "gap-2",
-                  renewalSeasonOpen && "border-green-300 bg-green-50 dark:border-green-800 dark:bg-green-950/30 text-green-700 dark:text-green-400"
-                )}
-              >
-                {renewalSeasonOpen ? (
-                  <ToggleRight className="h-4 w-4" />
-                ) : (
-                  <ToggleLeft className="h-4 w-4" />
-                )}
-                Season {renewalSeasonOpen ? "Open" : "Closed"}
-              </Button>
-            )}
-            <Button variant="outline" onClick={fetchRenewals} size="sm">
-              <RefreshCw className="mr-2 h-4 w-4" />
-              Refresh
+      >
+        <div className="flex items-center gap-2">
+          {isSuperAdmin && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setSeasonToggleOpen(true)}
+              className={cn(
+                "gap-2",
+                renewalSeasonOpen && "border-green-300 bg-green-50 dark:border-green-800 dark:bg-green-950/30 text-green-700 dark:text-green-400"
+              )}
+            >
+              {renewalSeasonOpen ? (
+                <ToggleRight className="h-4 w-4" />
+              ) : (
+                <ToggleLeft className="h-4 w-4" />
+              )}
+              Season {renewalSeasonOpen ? "Open" : "Closed"}
             </Button>
-          </div>
-        }
-      />
+          )}
+          <Button variant="outline" onClick={fetchRenewals} size="sm">
+            <RefreshCw className="mr-2 h-4 w-4" />
+            Refresh
+          </Button>
+        </div>
+      </CRUDToolbar>
 
       {/* Season Banner */}
       {!renewalSeasonOpen && (
@@ -827,7 +825,7 @@ export default function RenewalsManagementPage() {
           </div>
 
           <DialogFooter className="flex-col sm:flex-row gap-3 sm:justify-between">
-            <SavingIndicator isSaving={reviewing} />
+            <SavingIndicator saving={reviewing} />
             <div className="flex gap-2">
               <Button variant="outline" onClick={() => setReviewOpen(false)}>
                 Cancel

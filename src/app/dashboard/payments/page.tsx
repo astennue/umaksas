@@ -1428,7 +1428,7 @@ export default function PaymentsPage() {
                       size="sm"
                       className="shrink-0"
                       onClick={() => {
-                        navigator.clipboard.writeText(systemSettings.gcashNumber.replace(/\s/g, ""));
+                        navigator.clipboard.writeText((systemSettings.gcashNumber || "").replace(/\s/g, ""));
                         toast.success("GCash number copied!");
                       }}
                     >

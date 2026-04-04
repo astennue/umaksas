@@ -5,7 +5,6 @@ import {
   useCallback,
   useRef,
   createElement,
-  type FC,
 } from "react";
 import {
   AlertDialog,
@@ -73,7 +72,7 @@ export function useConfirm() {
     setState((prev) => ({ ...prev, open: false }));
   }, []);
 
-  const ConfirmDialog: FC = () => {
+  function ConfirmDialog() {
     if (!state.open) return null;
 
     return createElement(

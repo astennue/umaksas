@@ -524,7 +524,7 @@ export default function RenewalPage() {
           </p>
         </div>
         <div className="flex items-center gap-3 w-fit">
-          <SavingIndicator isSaving={submitting} isDirty={isFormDirty} lastSaved={lastSaved} />
+          <SavingIndicator saving={submitting} dirty={isFormDirty} lastSaved={lastSaved} />
           <Badge variant="outline">
             Step {currentStep} of {STEPS.length}
           </Badge>

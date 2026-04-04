@@ -323,7 +323,7 @@ export default function SAProfilePage() {
   const initials = `${data.firstName?.charAt(0) || ""}${data.lastName?.charAt(0) || ""}`;
   const statusConf = statusConfig[data.status] || statusConfig.OTHER;
 
-  const userRole = session?.user?.role;
+  const userRole = (session?.user as { role?: string })?.role;
   const canManage = userRole === "SUPER_ADMIN" || userRole === "ADVISER" || userRole === "OFFICER";
 
   return (

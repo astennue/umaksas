@@ -786,7 +786,7 @@ export default function ApplicationsPage() {
       </AlertDialog>
 
       {/* Schedule Interview Dialog */}
-      {ConfirmDialog}
+      <ConfirmDialog />
       {scheduleApp && (
         <ScheduleInterviewDialog
           applicationId={scheduleApp.id}

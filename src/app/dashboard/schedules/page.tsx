@@ -1022,7 +1022,7 @@ export default function SchedulesPage() {
         </DialogContent>
       </Dialog>
 
-      {ConfirmDialog}
+      <ConfirmDialog />
     </div>
   );
 }
