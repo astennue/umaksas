@@ -458,8 +458,7 @@ function PageContentTab() {
           icon={FileText}
           title="No content found"
           description={search || pageFilter !== "all" ? "Try adjusting your filters" : "Add your first content block to get started"}
-          action={canManage ? "Add Content" : undefined}
-          actionOnClick={canManage ? openCreate : undefined}
+          action={canManage ? { label: "Add Content", onClick: openCreate, variant: "outline" } : undefined}
         />
       ) : (
         <div className="space-y-6">
@@ -674,7 +673,7 @@ function PageContentTab() {
           </div>
           <DialogFooter>
             <div className="flex items-center gap-3 mr-auto">
-              <SavingIndicator isSaving={saving} />
+              <SavingIndicator saving={saving} />
             </div>
             <Button variant="outline" onClick={() => { setDialogOpen(false); resetForm(); }}>
               Cancel
@@ -1005,8 +1004,7 @@ function FormBuilderTab() {
           icon={LayoutGrid}
           title="No form fields"
           description={`Add fields to build your ${contextTab === "APPLICATION" ? "application" : "renewal"} form`}
-          action={canManage ? "Add Field" : undefined}
-          actionOnClick={canManage ? openCreate : undefined}
+          action={canManage ? { label: "Add Field", onClick: openCreate, variant: "outline" } : undefined}
         />
       ) : (
         <div className="space-y-6">
@@ -1209,7 +1207,7 @@ function FormBuilderTab() {
           </div>
           <DialogFooter>
             <div className="flex items-center gap-3 mr-auto">
-              <SavingIndicator isSaving={saving} />
+              <SavingIndicator saving={saving} />
             </div>
             <Button variant="outline" onClick={() => { setDialogOpen(false); resetForm(); }}>
               Cancel

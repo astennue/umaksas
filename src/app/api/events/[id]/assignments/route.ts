@@ -51,9 +51,6 @@ export async function GET(
             },
           },
         },
-        assignedByUser: {
-          select: { id: true, firstName: true, lastName: true },
-        },
       },
       orderBy: { assignedAt: "desc" },
     });
@@ -160,7 +157,7 @@ export async function POST(
         if (r.success && "assignment" in r) {
           return db.notification.create({
             data: {
-              userId: r.assignment.userId,
+              userId: r.assignment!.userId,
               type: "EVENT_ASSIGNED",
               title: "New Event Assignment",
               message: `You have been assigned to the event "${event.name}". Please confirm or decline.`,
@@ -175,7 +172,7 @@ export async function POST(
     return NextResponse.json({
       assigned: succeeded.length,
       failed: failed.length,
-      results: succeeded.map((r) => (r.success && "assignment" in r ? r.assignment : null)).filter(Boolean),
+      results: succeeded.map((r) => (r.success && "assignment" in r ? r.assignment! : null)).filter(Boolean),
     });
   } catch (error) {
     console.error("Error assigning SAs:", error);

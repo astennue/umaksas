@@ -517,7 +517,6 @@ export default function SchedulesPage() {
         title="Schedules"
         entityLabel="Schedules"
         onAdd={canCreate ? openCreateForm : undefined}
-        showAdd={!!canCreate}
       />
 
       {/* SA Approval Banner */}
@@ -655,10 +654,10 @@ export default function SchedulesPage() {
                         schedule={schedule}
                         canApprove={canApprove}
                         canDelete={canDelete || (isSA && schedule.status === "PENDING")}
-                        onApprove={() => handleApprove(schedule)}
-                        onReject={(s) => handleReject(s)}
-                        onEdit={() => openEditForm(schedule)}
-                        onDelete={() => handleDeleteSchedule(schedule)}
+                        onApprove={() => { handleApprove(schedule); }}
+                        onReject={() => { handleReject(schedule); }}
+                        onEdit={() => { openEditForm(schedule); }}
+                        onDelete={() => { handleDeleteSchedule(schedule); }}
                         onView={() => { setDetailSchedule(schedule); setDetailOpen(true); }}
                         compact
                       />
@@ -693,10 +692,10 @@ export default function SchedulesPage() {
                           schedule={schedule}
                           canApprove={canApprove}
                           canDelete={canDelete || (isSA && schedule.status === "PENDING")}
-                          onApprove={() => handleApprove(schedule)}
-                          onReject={(s) => handleReject(s)}
-                          onEdit={() => openEditForm(schedule)}
-                          onDelete={() => handleDeleteSchedule(schedule)}
+                          onApprove={() => { handleApprove(schedule); }}
+                          onReject={() => { handleReject(schedule); }}
+                          onEdit={() => { openEditForm(schedule); }}
+                          onDelete={() => { handleDeleteSchedule(schedule); }}
                           onView={() => { setDetailSchedule(schedule); setDetailOpen(true); }}
                           compact
                         />
@@ -718,10 +717,10 @@ export default function SchedulesPage() {
               canApprove={canApprove}
               canDelete={canDelete || (isSA && schedule.status === "PENDING")}
               canEdit={!isSA || schedule.status === "PENDING"}
-              onApprove={() => handleApprove(schedule)}
-              onReject={(s) => handleReject(s)}
-              onEdit={() => openEditForm(schedule)}
-              onDelete={() => handleDeleteSchedule(schedule)}
+              onApprove={() => { handleApprove(schedule); }}
+              onReject={() => { handleReject(schedule); }}
+              onEdit={() => { openEditForm(schedule); }}
+              onDelete={() => { handleDeleteSchedule(schedule); }}
               onView={() => { setDetailSchedule(schedule); setDetailOpen(true); }}
             />
           ))}

@@ -1804,7 +1804,7 @@ function Step10Documents({
               variant="ghost"
               size="sm"
               className="mt-2 gap-1.5 text-xs text-muted-foreground"
-              onClick={handlePhotoSelect}
+              onClick={() => document.getElementById("photo-upload")?.click()}
             >
               Change Photo
             </Button>
@@ -1910,7 +1910,7 @@ function Step11Review({
             <Checkbox
               id="confirmAccurate"
               checked={!!formData.confirmAccurate}
-              onCheckedChange={(v) => updateField("confirmAccurate", v === true)}
+              onCheckedChange={(v) => updateField("confirmAccurate", (v === true) as true)}
               className="h-5 w-5"
             />
           </div>
@@ -1929,7 +1929,7 @@ function Step11Review({
             <Checkbox
               id="agreeTerms"
               checked={!!formData.agreeTerms}
-              onCheckedChange={(v) => updateField("agreeTerms", v === true)}
+              onCheckedChange={(v) => updateField("agreeTerms", (v === true) as true)}
               className="h-5 w-5"
             />
           </div>

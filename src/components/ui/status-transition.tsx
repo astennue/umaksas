@@ -3,12 +3,13 @@
 import * as React from "react"
 import { AnimatePresence, motion } from "framer-motion"
 import { cn } from "@/lib/utils"
-import { Badge, type BadgeProps } from "@/components/ui/badge"
+import { Badge } from "@/components/ui/badge"
+import type { VariantProps } from "class-variance-authority"
 
 export interface StatusConfig {
   label: string
   color: string
-  variant?: BadgeProps["variant"]
+  variant?: VariantProps<typeof Badge>["variant"]
 }
 
 export interface StatusTransitionProps {
@@ -67,6 +68,4 @@ function StatusTransition({
 
 export {
   StatusTransition,
-  type StatusTransitionProps,
-  type StatusConfig,
 }

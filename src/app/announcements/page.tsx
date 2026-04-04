@@ -176,7 +176,7 @@ export default function AnnouncementsPage() {
     }
   };
 
-  const hasActiveFilters = searchQuery || timeFilter !== "all" || (timeFilter === "custom" && (startDate || endDate));
+  const hasActiveFilters = searchQuery || timeFilter !== "all" || ((timeFilter as string) === "custom" && (startDate || endDate));
 
   return (
     <PublicLayout>

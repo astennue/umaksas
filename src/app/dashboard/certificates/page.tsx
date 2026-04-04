@@ -630,7 +630,6 @@ export default function CertificatesPage() {
           entityLabel="Certificates"
           onAdd={canCreate ? () => setIssueOpen(true) : undefined}
           onSearch={(value) => { setSearch(value); setPage(1); }}
-          showAdd={!!canCreate}
         />
 
         {/* Stats Bar */}
@@ -706,8 +705,7 @@ export default function CertificatesPage() {
                 : canCreate
                   ? "Issue your first certificate to get started"
                   : "No certificates have been issued yet"}
-              action={canCreate ? "Issue Certificate" : undefined}
-              actionOnClick={canCreate ? () => setIssueOpen(true) : undefined}
+              action={canCreate ? { label: "Issue Certificate", onClick: () => setIssueOpen(true), variant: "outline" } : undefined}
             />
           ) : (
             <Table>
@@ -1124,7 +1122,7 @@ export default function CertificatesPage() {
 
             <DialogFooter>
               <div className="flex items-center gap-3 mr-auto">
-                <SavingIndicator isSaving={isSubmitting} />
+                <SavingIndicator saving={isSubmitting} />
               </div>
               <Button variant="outline" onClick={() => { setIssueOpen(false); resetForm(); }}>
                 Cancel

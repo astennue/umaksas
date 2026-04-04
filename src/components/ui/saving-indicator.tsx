@@ -75,4 +75,4 @@ function SavingIndicator({
   )
 }
 
-export { SavingIndicator, type SavingIndicatorProps }
+export { SavingIndicator }

@@ -12,7 +12,7 @@ export async function POST(req: NextRequest) {
     }
 
     const userRole = (session.user as { role?: string })?.role;
-    const adminRoles = [UserRole.SUPER_ADMIN, UserRole.HRMO];
+    const adminRoles: UserRole[] = [UserRole.SUPER_ADMIN, UserRole.HRMO];
 
     if (!adminRoles.includes(userRole as UserRole)) {
       return NextResponse.json({ error: "Forbidden - Only SUPER_ADMIN and HRMO can generate bulk payments" }, { status: 403 });
@@ -107,7 +107,6 @@ export async function POST(req: NextRequest) {
           message: `Payment of ₱${parsedAmount.toFixed(2)} for ${monthNames[parsedMonth]} ${parsedYear} is now due. Please upload your proof of payment.`,
           link: "/dashboard/payments",
         })),
-      skipDuplicates: true,
     });
 
     return NextResponse.json({

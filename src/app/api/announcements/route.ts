@@ -83,7 +83,7 @@ export async function GET(request: NextRequest) {
     // Check if the request is from an authenticated admin
     const session = await getServerSession(authOptions);
     const userRole = session ? (session.user as { role: string }).role : null;
-    const isAdmin = session && ADMIN_ROLES.includes(userRole);
+    const isAdmin = session && ADMIN_ROLES.includes(userRole!);
 
     // Build where clause
     const where: Record<string, unknown> = {
@@ -93,7 +93,7 @@ export async function GET(request: NextRequest) {
     // Search by title
     if (search) {
       (where.AND as Prisma.AnnouncementWhereInput[]).push({
-        title: { contains: search, mode: "insensitive" },
+        title: { contains: search },
       });
     }
 
@@ -103,10 +103,12 @@ export async function GET(request: NextRequest) {
       if (dateRange.gte || dateRange.lte) {
         const dateFilter: Prisma.AnnouncementWhereInput = {};
         if (dateRange.gte) {
-          (dateFilter as Record<string, unknown>).createdAt = { ...(dateFilter as Record<string, unknown>).createdAt, gte: dateRange.gte };
+          const existing = (dateFilter as Record<string, unknown>).createdAt || {};
+          (dateFilter as Record<string, unknown>).createdAt = { ...existing, gte: dateRange.gte };
         }
         if (dateRange.lte) {
-          (dateFilter as Record<string, unknown>).createdAt = { ...(dateFilter as Record<string, unknown>).createdAt, lte: dateRange.lte };
+          const existing = (dateFilter as Record<string, unknown>).createdAt || {};
+          (dateFilter as Record<string, unknown>).createdAt = { ...existing, lte: dateRange.lte };
         }
         (where.AND as Prisma.AnnouncementWhereInput[]).push(dateFilter);
       }

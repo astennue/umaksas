@@ -240,18 +240,6 @@ export default function AttendancePage() {
     };
   }, []);
 
-  // ============== POLLING FOR STATUS ==============
-  useEffect(() => {
-    if (!canClockUser) return;
-    // Poll fetchStats every 15 seconds to keep duty status reactive
-    pollingRef.current = setInterval(() => {
-      fetchStats();
-    }, 15000);
-    return () => {
-      if (pollingRef.current) clearInterval(pollingRef.current);
-    };
-  }, [canClockUser, fetchStats]);
-
   // ============== FETCH DATA ==============
   const fetchRecords = useCallback(async () => {
     try {
@@ -381,6 +369,18 @@ export default function AttendancePage() {
     }
   }, [canClockUser, userId]);
 
+  // ============== POLLING FOR STATUS ==============
+  useEffect(() => {
+    if (!canClockUser) return;
+    // Poll fetchStats every 15 seconds to keep duty status reactive
+    pollingRef.current = setInterval(() => {
+      fetchStats();
+    }, 15000);
+    return () => {
+      if (pollingRef.current) clearInterval(pollingRef.current);
+    };
+  }, [canClockUser, fetchStats]);
+
   useEffect(() => {
     fetchRecords();
     fetchCorrections();
@@ -421,11 +421,13 @@ export default function AttendancePage() {
 
       toast.success((data.message as string) || "Action completed successfully");
 
+      const record = data.record as Record<string, any> | undefined;
+
       // Optimistic update: immediately update duty status
       if (action === "clock_in") {
         setDutyStatus("on_duty");
         setTodayRecord(prev => prev ? prev : {
-          id: data.record?.id || "",
+          id: record?.id || "",
           userId: userId || "",
           firstName: "",
           lastName: "",
@@ -435,35 +437,35 @@ export default function AttendancePage() {
           officeName: null,
           officeCode: null,
           date: new Date().toISOString(),
-          timeIn: data.record?.timeIn || new Date().toISOString(),
+          timeIn: record?.timeIn || new Date().toISOString(),
           timeOut: null,
           breakStart: null,
           breakEnd: null,
           totalHours: 0,
-          status: data.record?.status || "PRESENT",
+          status: record?.status || "PRESENT",
           isCorrected: false,
-          notes: data.record?.notes || null,
-          location: data.record?.location || officeName,
+          notes: record?.notes || null,
+          location: record?.location || officeName,
         });
       } else if (action === "clock_out") {
         setDutyStatus("off_duty");
         setTodayRecord(prev => prev ? {
           ...prev,
-          timeOut: data.record?.timeOut || new Date().toISOString(),
-          totalHours: data.record?.totalHours || 0,
-          status: data.record?.status || prev.status,
+          timeOut: record?.timeOut || new Date().toISOString(),
+          totalHours: record?.totalHours || 0,
+          status: record?.status || prev.status,
         } : prev);
       } else if (action === "break_start") {
         setDutyStatus("on_break");
         setTodayRecord(prev => prev ? {
           ...prev,
-          breakStart: data.record?.breakStart || new Date().toISOString(),
+          breakStart: record?.breakStart || new Date().toISOString(),
         } : prev);
       } else if (action === "break_end") {
         setDutyStatus("on_duty");
         setTodayRecord(prev => prev ? {
           ...prev,
-          breakEnd: data.record?.breakEnd || new Date().toISOString(),
+          breakEnd: record?.breakEnd || new Date().toISOString(),
         } : prev);
       }
 

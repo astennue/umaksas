@@ -53,9 +53,9 @@ export const authOptions: NextAuthOptions = {
         token.id = (user as { id: string }).id;
         token.email = user.email;
         token.name = user.name;
-        token.role = (user as { role: string }).role;
-        token.firstName = (user as { firstName: string }).firstName;
-        token.lastName = (user as { lastName: string }).lastName;
+        token.role = (user as unknown as { role: string }).role;
+        token.firstName = (user as unknown as { firstName: string }).firstName;
+        token.lastName = (user as unknown as { lastName: string }).lastName;
       }
       return token;
     },
@@ -72,6 +72,5 @@ export const authOptions: NextAuthOptions = {
   pages: {
     signIn: "/portal-login",
   },
-  trustHost: true,
   secret: process.env.NEXTAUTH_SECRET,
 };

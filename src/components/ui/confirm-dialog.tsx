@@ -107,4 +107,4 @@ function ConfirmDialog({
   )
 }
 
-export { ConfirmDialog, type ConfirmDialogProps }
+export { ConfirmDialog }

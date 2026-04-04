@@ -72,7 +72,7 @@ export async function GET(
     }
 
     // If reviewed, fetch reviewer info
-    let reviewedByUser = null;
+    let reviewedByUser: { id: string; firstName: string | null; lastName: string | null; email: string } | null = null;
     if (renewal.reviewedBy) {
       const reviewer = await db.user.findUnique({
         where: { id: renewal.reviewedBy },

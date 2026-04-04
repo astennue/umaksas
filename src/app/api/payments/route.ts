@@ -152,7 +152,7 @@ export async function POST(req: NextRequest) {
     }
 
     const userRole = (session.user as { role?: string }).role;
-    const adminRoles = [UserRole.SUPER_ADMIN, UserRole.HRMO, UserRole.OFFICER, UserRole.ADVISER];
+    const adminRoles: UserRole[] = [UserRole.SUPER_ADMIN, UserRole.HRMO, UserRole.OFFICER, UserRole.ADVISER];
 
     if (!adminRoles.includes(userRole as UserRole)) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });

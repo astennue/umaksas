@@ -175,9 +175,7 @@ export const step5Schema = z.object({
     .regex(studentNumberRegex, "Student number can only contain digits and hyphens"),
   college: z.string().min(1, "College is required"),
   program: z.string().min(1, "Program/Course is required"),
-  yearLevel: z.enum(["1st Year", "2nd Year", "3rd Year", "4th Year", "5th Year", "Irregular"], {
-    errorMap: () => ({ message: "Please select a valid year level" }),
-  }),
+  yearLevel: z.enum(["1st Year", "2nd Year", "3rd Year", "4th Year", "5th Year", "Irregular"], "Please select a valid year level"),
   gwa: z
     .string()
     .min(1, "GWA is required")
@@ -322,9 +320,7 @@ export const applicationFormSchema = z.object({
     .regex(studentNumberRegex, "Student number can only contain digits and hyphens"),
   college: z.string().min(1, "College is required"),
   program: z.string().min(1, "Program/Course is required"),
-  yearLevel: z.enum(["1st Year", "2nd Year", "3rd Year", "4th Year", "5th Year", "Irregular"], {
-    errorMap: () => ({ message: "Please select a valid year level" }),
-  }),
+  yearLevel: z.enum(["1st Year", "2nd Year", "3rd Year", "4th Year", "5th Year", "Irregular"], "Please select a valid year level"),
   gwa: z
     .string()
     .min(1, "GWA is required")
@@ -444,7 +440,7 @@ export function jsonToAvailability(json: string): boolean[] {
     DAY_KEYS.forEach((dayKey, dayIndex) => {
       const slots = parsed[dayKey] || [];
       slots.forEach((slotKey) => {
-        const timeIndex = TIME_SLOT_KEYS.indexOf(slotKey);
+        const timeIndex = (TIME_SLOT_KEYS as readonly string[]).indexOf(slotKey);
         if (timeIndex >= 0) {
           result[dayIndex * SLOTS_PER_DAY + timeIndex] = true;
         }

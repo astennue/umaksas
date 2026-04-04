@@ -64,4 +64,4 @@ function EmptyState({
   )
 }
 
-export { EmptyState, type EmptyStateProps, type EmptyStateAction }
+export { EmptyState }

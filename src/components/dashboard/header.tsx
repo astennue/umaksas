@@ -67,6 +67,8 @@ export function DashboardHeader() {
     role?: string;
     firstName?: string;
     lastName?: string;
+    name?: string;
+    email?: string;
   } | undefined;
 
   // resolvedTheme is undefined until mounted (avoid hydration mismatch)

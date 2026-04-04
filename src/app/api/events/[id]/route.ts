@@ -23,6 +23,7 @@ export async function GET(
           select: { id: true, name: true, code: true },
         },
         assignments: {
+          orderBy: { assignedAt: "desc" },
           include: {
             user: {
               select: {
@@ -42,11 +43,7 @@ export async function GET(
                 },
               },
             },
-            assignedByUser: {
-              select: { id: true, firstName: true, lastName: true },
-            },
           },
-          orderBy: { assignedAt: "desc" },
         },
       },
     });

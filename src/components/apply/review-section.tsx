@@ -130,7 +130,7 @@ export function ReviewSection({ data, onEditStep }: ReviewSectionProps) {
           const slots = parsed[dayKey] || [];
           if (slots.length > 0) {
             const displaySlots = slots.map((s) => {
-              const idx = TIME_SLOT_KEYS.indexOf(s);
+              const idx = (TIME_SLOT_KEYS as readonly string[]).indexOf(s);
               return idx >= 0 ? TIME_SLOT_KEYS[idx] : s;
             });
             days.push({ day: DAYS[dayIndex], slots: displaySlots, count: slots.length });

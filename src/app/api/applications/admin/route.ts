@@ -194,7 +194,7 @@ export async function PUT(request: NextRequest) {
         where: { role: "ADVISER", isActive: true },
       });
 
-      if (adviser && adviser.id !== session.user.id) {
+      if (adviser && adviser.id !== (session.user as { id?: string }).id) {
         await db.notification.create({
           data: {
             userId: adviser.id,

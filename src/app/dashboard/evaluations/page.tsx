@@ -188,7 +188,7 @@ const scoreCategories = [
   { key: "attitude", label: "Attitude", icon: Heart },
 ] as const;
 
-type ScoreKey = keyof typeof scoreCategories extends { key: infer K } ? K : never;
+type ScoreKey = typeof scoreCategories[number]["key"];
 
 const MONTHS = [
   "January", "February", "March", "April", "May", "June",
@@ -574,15 +574,13 @@ export default function EvaluationsPage() {
           <CRUDToolbar
             title="Evaluations"
             entityLabel="Evaluations"
-            showAdd={false}
             onSearch={isReadOnly ? setSearch : undefined}
-            extra={
-              <Badge variant="secondary" className="bg-[#1e3a8a]/10 text-[#1e3a8a] w-fit text-sm px-3 py-1 max-w-[300px]">
-                <Building2 className="mr-1.5 h-3.5 w-3.5" />
-                <span className="truncate">{supervisorOffice?.name || "Loading office..."}</span>
-              </Badge>
-            }
-          />
+          >
+            <Badge variant="secondary" className="bg-[#1e3a8a]/10 text-[#1e3a8a] w-fit text-sm px-3 py-1 max-w-[300px]">
+              <Building2 className="mr-1.5 h-3.5 w-3.5" />
+              <span className="truncate">{supervisorOffice?.name || "Loading office..."}</span>
+            </Badge>
+          </CRUDToolbar>
 
           {/* Office Info Card */}
           {supervisorOffice && (
@@ -879,15 +877,13 @@ export default function EvaluationsPage() {
           <CRUDToolbar
             title="Evaluations"
             entityLabel="Evaluations"
-            showAdd={false}
             onSearch={setSearch}
-            extra={
-              <Badge variant="secondary" className="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 w-fit text-sm px-3 py-1">
-                <Eye className="mr-1.5 h-3.5 w-3.5" />
-                Read-Only
-              </Badge>
-            }
-          />
+          >
+            <Badge variant="secondary" className="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 w-fit text-sm px-3 py-1">
+              <Eye className="mr-1.5 h-3.5 w-3.5" />
+              Read-Only
+            </Badge>
+          </CRUDToolbar>
 
           {/* Stats Bar */}
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
@@ -1743,7 +1739,7 @@ export default function EvaluationsPage() {
           </div>
 
           <DialogFooter className="flex-col gap-2 sm:flex-row">
-            <SavingIndicator isSaving={isSubmitting} />
+            <SavingIndicator saving={isSubmitting} />
             <Button
               variant="outline"
               onClick={() => {

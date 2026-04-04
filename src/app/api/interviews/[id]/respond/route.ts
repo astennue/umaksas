@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { db } from "@/lib/db";
+import { InterviewStatus, InterviewAppStatus, NotificationType } from "@prisma/client";
 
 // PUT /api/interviews/[id]/respond - Applicant responds to interview
 export async function PUT(
@@ -62,21 +63,21 @@ export async function PUT(
     }
 
     // Update interview status based on action
-    let newStatus: string;
-    let appInterviewStatus: string;
+    let newStatus: InterviewStatus;
+    let appInterviewStatus: InterviewAppStatus;
 
     switch (action) {
       case "accept":
-        newStatus = "ACCEPTED";
-        appInterviewStatus = "ACCEPTED";
+        newStatus = InterviewStatus.ACCEPTED;
+        appInterviewStatus = InterviewAppStatus.ACCEPTED;
         break;
       case "decline":
-        newStatus = "DECLINED";
-        appInterviewStatus = "PENDING";
+        newStatus = InterviewStatus.DECLINED;
+        appInterviewStatus = InterviewAppStatus.PENDING;
         break;
       case "reschedule":
-        newStatus = "RESCHEDULE_REQUESTED";
-        appInterviewStatus = "RESCHEDULE_REQUESTED";
+        newStatus = InterviewStatus.RESCHEDULE_REQUESTED;
+        appInterviewStatus = InterviewAppStatus.RESCHEDULE_REQUESTED;
         break;
       default:
         return NextResponse.json(
@@ -114,23 +115,23 @@ export async function PUT(
       ? `${user.firstName} ${user.lastName || ""}`.trim()
       : interviewSlot.application.applicantEmail;
 
-    let notifType: string;
-    let notifTitle: string;
-    let notifMessage: string;
+    let notifType: NotificationType = NotificationType.SYSTEM;
+    let notifTitle: string = "";
+    let notifMessage: string = "";
 
     switch (action) {
       case "accept":
-        notifType = "INTERVIEW_SCHEDULED";
+        notifType = NotificationType.INTERVIEW_SCHEDULED;
         notifTitle = "Interview Accepted";
         notifMessage = `${applicantName} has accepted the interview scheduled for ${interviewSlot.scheduledAt.toLocaleDateString()}.`;
         break;
       case "decline":
-        notifType = "SYSTEM";
+        notifType = NotificationType.SYSTEM;
         notifTitle = "Interview Declined";
         notifMessage = `${applicantName} has declined the interview scheduled for ${interviewSlot.scheduledAt.toLocaleDateString()}.`;
         break;
       case "reschedule":
-        notifType = "INTERVIEW_RESCHEDULE_REQUESTED";
+        notifType = NotificationType.INTERVIEW_RESCHEDULE_REQUESTED;
         notifTitle = "Reschedule Requested";
         notifMessage = `${applicantName} has requested to reschedule the interview. Reason: ${reason || "No reason provided"}.`;
         break;
