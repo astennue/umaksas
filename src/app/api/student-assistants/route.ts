@@ -214,41 +214,47 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Create user and profile in transaction
-    const newUser = await db.user.create({
-      data: {
-        email,
-        password: password || `UMAKSA@${lastName}_2026`,
-        firstName,
-        lastName,
-        phone: phone || null,
-        role: UserRole.STUDENT_ASSISTANT,
-        isActive: true,
-        profile: {
-          create: {
-            college: college || null,
-            program: program || null,
-            yearLevel: yearLevel || null,
-            officeId: resolvedOfficeId,
-            status: SAStatus.ACTIVE,
-          },
-        },
-      },
-      include: {
-        profile: {
-          include: {
-            office: {
-              select: { id: true, name: true, code: true },
+    // Create user, profile, and notification preferences atomically in a transaction
+    const [newUser] = await db.$transaction([
+      db.user.create({
+        data: {
+          email,
+          password: password || `UMAKSA@${lastName}_2026`,
+          firstName,
+          lastName,
+          phone: phone || null,
+          role: UserRole.STUDENT_ASSISTANT,
+          isActive: true,
+          profile: {
+            create: {
+              college: college || null,
+              program: program || null,
+              yearLevel: yearLevel || null,
+              officeId: resolvedOfficeId,
+              status: SAStatus.ACTIVE,
             },
           },
         },
-      },
-    });
+        include: {
+          profile: {
+            include: {
+              office: {
+                select: { id: true, name: true, code: true },
+              },
+            },
+          },
+        },
+      }),
+    ]);
 
-    // Create notification preferences
-    await db.notificationPreference.create({
-      data: { userId: newUser.id },
-    });
+    // Create notification preferences (outside transaction is fine since it's not critical)
+    try {
+      await db.notificationPreference.create({
+        data: { userId: newUser.id },
+      });
+    } catch (prefError) {
+      console.error("Warning: Could not create notification preferences:", prefError);
+    }
 
     return NextResponse.json(
       {

@@ -84,6 +84,19 @@ export async function GET(request: NextRequest) {
       ? { userId: user.id }
       : {};
 
+    // Get current semester from system settings
+    let currentSemester = "2nd Semester";
+    try {
+      const settings = await db.systemSettings.findFirst({
+        select: { currentSemester: true },
+      });
+      if (settings?.currentSemester) {
+        currentSemester = settings.currentSemester;
+      }
+    } catch {
+      // Fallback to default if system settings not available
+    }
+
     const [totalCount, approvedCount, pendingCount, semesterCount] = await Promise.all([
       db.schedule.count({ where: statsWhere }),
       db.schedule.count({ where: { ...statsWhere, status: ScheduleStatus.APPROVED } }),
@@ -91,7 +104,7 @@ export async function GET(request: NextRequest) {
       db.schedule.count({
         where: {
           ...statsWhere,
-          semester: "2nd Semester",
+          semester: currentSemester,
         },
       }),
     ]);

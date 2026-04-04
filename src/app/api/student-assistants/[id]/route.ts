@@ -530,19 +530,20 @@ export async function DELETE(
       );
     }
 
-    // Archive instead of hard delete
-    await db.sAProfile.update({
-      where: { userId: id },
-      data: {
-        status: SAStatus.ARCHIVED,
-        archiveDate: new Date(),
-      },
-    });
-
-    await db.user.update({
-      where: { id },
-      data: { isActive: false },
-    });
+    // Archive instead of hard delete — wrap in transaction for atomicity
+    await db.$transaction([
+      db.sAProfile.update({
+        where: { userId: id },
+        data: {
+          status: SAStatus.ARCHIVED,
+          archiveDate: new Date(),
+        },
+      }),
+      db.user.update({
+        where: { id },
+        data: { isActive: false },
+      }),
+    ]);
 
     return NextResponse.json({ success: true, message: "Student assistant archived" });
   } catch (error) {

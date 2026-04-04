@@ -57,14 +57,14 @@ export async function PUT(request: NextRequest) {
       const updated = await db.orgChart.update({
         where: { id: existing.id },
         data: {
-          ...(presidentName && { presidentName }),
-          ...(presidentTitle && { presidentTitle }),
+          ...(presidentName !== undefined && { presidentName }),
+          ...(presidentTitle !== undefined && { presidentTitle }),
           ...(presidentEmail !== undefined && { presidentEmail }),
-          ...(vpName && { vpName }),
-          ...(vpTitle && { vpTitle }),
+          ...(vpName !== undefined && { vpName }),
+          ...(vpTitle !== undefined && { vpTitle }),
           ...(vpEmail !== undefined && { vpEmail }),
-          ...(adviserName && { adviserName }),
-          ...(adviserTitle && { adviserTitle }),
+          ...(adviserName !== undefined && { adviserName }),
+          ...(adviserTitle !== undefined && { adviserTitle }),
           ...(adviserEmail !== undefined && { adviserEmail }),
         },
       })
