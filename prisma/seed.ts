@@ -74,10 +74,19 @@ async function main() {
   // ============================================
   // 1. SUPER ADMIN
   // ============================================
-  console.log('Creating Super Admin...');
-  const superAdmin = await db.user.create({
-    data: {
-      email: getUniqueEmail('superadmin@umak.edu.ph'),
+  console.log('Ensuring Super Admin...');
+  const superAdminEmail = getUniqueEmail('superadmin@umak.edu.ph');
+  const superAdmin = await db.user.upsert({
+    where: { email: superAdminEmail },
+    update: {
+      password: 'UMAKSAS@Super2025',
+      firstName: 'System',
+      lastName: 'Administrator',
+      role: 'SUPER_ADMIN',
+      isActive: true,
+    },
+    create: {
+      email: superAdminEmail,
       password: 'UMAKSAS@Super2025',
       firstName: 'System',
       lastName: 'Administrator',
@@ -86,36 +95,52 @@ async function main() {
     },
   });
   stats.users++;
-  console.log(`  Created: ${superAdmin.email} (SUPER_ADMIN)`);
+  console.log(`  Ensured: ${superAdmin.email} (SUPER_ADMIN)`);
 
   // ============================================
   // 2. ADVISER
   // ============================================
-  console.log('\nCreating Adviser...');
-  const adviser = await db.user.create({
-    data: {
-      email: getUniqueEmail('adviser@umak.edu.ph'),
+  console.log('\nEnsuring Adviser...');
+  const adviserEmail = getUniqueEmail('adviser@umak.edu.ph');
+  const adviser = await db.user.upsert({
+    where: { email: adviserEmail },
+    update: {
       password: 'UMAKSAS@Adviser2025',
       firstName: 'Alvin John Y.',
       lastName: 'Abejo',
       role: 'ADVISER',
       isActive: true,
-      officerProfile: {
-        create: {
-          position: 'ADVISER',
-          orderIndex: 0,
-        },
-      },
+    },
+    create: {
+      email: adviserEmail,
+      password: 'UMAKSAS@Adviser2025',
+      firstName: 'Alvin John Y.',
+      lastName: 'Abejo',
+      role: 'ADVISER',
+      isActive: true,
     },
   });
+  // Ensure officer profile for adviser (separate from upsert since nested create doesn't work with upsert)
+  const existingAdviserProfile = await db.officerProfile.findUnique({
+    where: { userId: adviser.id },
+  });
+  if (!existingAdviserProfile) {
+    await db.officerProfile.create({
+      data: {
+        userId: adviser.id,
+        position: 'ADVISER',
+        orderIndex: 0,
+      },
+    });
+  }
   stats.users++;
   stats.officers++;
-  console.log(`  Created: ${adviser.email} (ADVISER)`);
+  console.log(`  Ensured: ${adviser.email} (ADVISER)`);
 
   // ============================================
   // 3. ORGANIZATION OFFICERS (7 total)
   // ============================================
-  console.log('\nCreating Organization Officers...');
+  console.log('\nEnsuring Organization Officers...');
   const officerData = [
     {
       name: 'Reiner Nuevas',
@@ -163,34 +188,58 @@ async function main() {
 
   for (const officer of officerData) {
     const email = getUniqueEmail(officer.emailBase);
-    const user = await db.user.create({
-      data: {
+    const user = await db.user.upsert({
+      where: { email },
+      update: {
+        password: 'UMAKSAS@Officer_2026',
+        firstName: officer.name,
+        lastName: '',
+        role: 'OFFICER',
+        isActive: true,
+      },
+      create: {
         email,
         password: 'UMAKSAS@Officer_2026',
         firstName: officer.name,
         lastName: '',
         role: 'OFFICER',
         isActive: true,
-        officerProfile: {
-          create: {
-            position: officer.position,
-            orderIndex: officer.order,
-          },
-        },
       },
     });
+    // Ensure officer profile (separate from upsert since nested create doesn't work with upsert)
+    const existingOfficerProfile = await db.officerProfile.findUnique({
+      where: { userId: user.id },
+    });
+    if (!existingOfficerProfile) {
+      await db.officerProfile.create({
+        data: {
+          userId: user.id,
+          position: officer.position,
+          orderIndex: officer.order,
+        },
+      });
+    }
     stats.users++;
     stats.officers++;
-    console.log(`  Created: ${email} (${officer.position})`);
+    console.log(`  Ensured: ${email} (${officer.position})`);
   }
 
   // ============================================
   // 4. HRMO
   // ============================================
-  console.log('\nCreating HRMO...');
-  const hrmo = await db.user.create({
-    data: {
-      email: getUniqueEmail('hrmo@umak.edu.ph'),
+  console.log('\nEnsuring HRMO...');
+  const hrmoEmail = getUniqueEmail('hrmo@umak.edu.ph');
+  const hrmo = await db.user.upsert({
+    where: { email: hrmoEmail },
+    update: {
+      password: 'UMAKSAS@HRMO_2026',
+      firstName: 'Maria',
+      lastName: 'Santos',
+      role: 'HRMO',
+      isActive: true,
+    },
+    create: {
+      email: hrmoEmail,
       password: 'UMAKSAS@HRMO_2026',
       firstName: 'Maria',
       lastName: 'Santos',
@@ -199,7 +248,7 @@ async function main() {
     },
   });
   stats.users++;
-  console.log(`  Created: ${hrmo.email} (HRMO)`);
+  console.log(`  Ensured: ${hrmo.email} (HRMO)`);
 
   // ============================================
   // 5. STUDENT ASSISTANT DATA (58 entries from Excel)
@@ -1050,36 +1099,33 @@ async function main() {
     }
   }
 
-  console.log(`\n  Creating ${officeMap.size} unique offices...`);
+  console.log(`\n  Ensuring ${officeMap.size} unique offices...`);
   const officeIdByCode = new Map<string, string>();
 
   for (const [, officeInfo] of officeMap) {
-    try {
-      const office = await db.office.create({
-        data: {
-          name: officeInfo.name,
-          code: officeInfo.code,
-          email: officeInfo.email || null,
-          isActive: true,
-        },
-      });
-      officeIdByCode.set(officeInfo.code, office.id);
-      stats.offices++;
-    } catch (error: any) {
-      console.log(`  Warning: Office "${officeInfo.name}" (${officeInfo.code}) skipped: ${error.message}`);
-      // Try to find existing office to get its ID
-      const existing = await db.office.findFirst({ where: { code: officeInfo.code } });
-      if (existing) {
-        officeIdByCode.set(officeInfo.code, existing.id);
-      }
-    }
+    const office = await db.office.upsert({
+      where: { code: officeInfo.code },
+      update: {
+        name: officeInfo.name,
+        email: officeInfo.email || null,
+        isActive: true,
+      },
+      create: {
+        name: officeInfo.name,
+        code: officeInfo.code,
+        email: officeInfo.email || null,
+        isActive: true,
+      },
+    });
+    officeIdByCode.set(officeInfo.code, office.id);
+    stats.offices++;
   }
-  console.log(`  Created ${stats.offices} offices`);
+  console.log(`  Ensured ${stats.offices} offices`);
 
   // ============================================
   // 7. CREATE OFFICE SUPERVISOR ACCOUNTS
   // ============================================
-  console.log('\n  Creating Office Supervisor accounts...');
+  console.log('\n  Ensuring Office Supervisor accounts...');
   const supervisorCredentials: Array<{ officeName: string; officeCode: string; email: string; password: string }> = [];
 
   for (const [, officeInfo] of officeMap) {
@@ -1116,38 +1162,42 @@ async function main() {
     }
 
     const email = getUniqueEmail(emailBase);
-    try {
-      const user = await db.user.create({
-        data: {
-          email,
-          password,
-          firstName: officeInfo.name,
-          lastName: 'Supervisor',
-          role: 'OFFICE_SUPERVISOR',
-          isActive: true,
-        },
-      });
-      stats.users++;
-
-      // Link supervisor to office
-      const officeId = officeIdByCode.get(officeInfo.code);
-      if (officeId) {
-        await db.office.update({
-          where: { id: officeId },
-          data: { headUserId: user.id },
-        });
-      }
-
-      supervisorCredentials.push({
-        officeName: officeInfo.name,
-        officeCode: cleanCode,
+    const user = await db.user.upsert({
+      where: { email },
+      update: {
+        password,
+        firstName: officeInfo.name,
+        lastName: 'Supervisor',
+        role: 'OFFICE_SUPERVISOR',
+        isActive: true,
+      },
+      create: {
         email,
         password,
+        firstName: officeInfo.name,
+        lastName: 'Supervisor',
+        role: 'OFFICE_SUPERVISOR',
+        isActive: true,
+      },
+    });
+    stats.users++;
+
+    // Link supervisor to office
+    const officeId = officeIdByCode.get(officeInfo.code);
+    if (officeId) {
+      await db.office.update({
+        where: { id: officeId },
+        data: { headUserId: user.id },
       });
-      console.log(`  Created: ${cleanCode}: ${email} (OFFICE_SUPERVISOR)`);
-    } catch (error: any) {
-      console.log(`  Error creating supervisor for ${cleanCode}: ${error.message}`);
     }
+
+    supervisorCredentials.push({
+      officeName: officeInfo.name,
+      officeCode: cleanCode,
+      email,
+      password,
+    });
+    console.log(`  Ensured: ${cleanCode}: ${email} (OFFICE_SUPERVISOR)`);
   }
 
   // Print supervisor credentials summary
@@ -1161,7 +1211,7 @@ async function main() {
   // ============================================
   // 8. CREATE SA USERS (skip 7 officers)
   // ============================================
-  console.log(`\n  Creating Student Assistants (creating SA profiles for ${officerEmails.size} officers too)...`);
+  console.log(`\n  Ensuring Student Assistants (ensuring SA profiles for ${officerEmails.size} officers too)...`);
   let saCounter = 0;
 
   for (const sa of saData) {
@@ -1171,59 +1221,20 @@ async function main() {
     const officeId = officeIdByCode.get(sa.officeCode) || null;
     const isOfficer = officerEmails.has(sa.umakEmail);
 
-    try {
-      if (isOfficer) {
-        // Officer already has a User account — just create an SA profile for them
-        const existingUser = await db.user.findUnique({
-          where: { email: sa.umakEmail },
+    if (isOfficer) {
+      // Officer already has a User account — just create an SA profile for them
+      const existingUser = await db.user.findUnique({
+        where: { email: sa.umakEmail },
+      });
+      if (existingUser) {
+        // Check if SA profile already exists
+        const existingProfile = await db.sAProfile.findUnique({
+          where: { userId: existingUser.id },
         });
-        if (existingUser) {
-          // Check if SA profile already exists
-          const existingProfile = await db.sAProfile.findUnique({
-            where: { userId: existingUser.id },
-          });
-          if (!existingProfile) {
-            await db.sAProfile.create({
-              data: {
-                userId: existingUser.id,
-                studentNumber: sa.studentNumber || null,
-                college: sa.college || null,
-                program: sa.program || null,
-                status: 'ACTIVE',
-                officeId,
-                dateOfBirth: null,
-                age: null,
-                sex: sa.sex || null,
-                courtesyTitle,
-                contactNumber: sa.contactNumber || null,
-                personalEmail: sa.personalEmail || null,
-              },
-            });
-            stats.saProfiles++;
-            saCounter++;
-            console.log(`  Created SA profile for officer: ${sa.name} (${sa.umakEmail})`);
-          } else {
-            console.log(`  Officer already has SA profile: ${sa.name} (${sa.umakEmail})`);
-          }
-        }
-        continue;
-      }
-
-      const password = `UMAKSA@${surname}_2026`;
-      const email = getUniqueEmail(sa.umakEmail);
-
-      const user = await db.user.create({
-        data: {
-          email,
-          password,
-          firstName: parsed.firstName,
-          lastName: parsed.lastName,
-          middleName: parsed.middleName,
-          role: 'STUDENT_ASSISTANT',
-          isActive: true,
-          phone: sa.contactNumber || null,
-          profile: {
-            create: {
+        if (!existingProfile) {
+          await db.sAProfile.create({
+            data: {
+              userId: existingUser.id,
               studentNumber: sa.studentNumber || null,
               college: sa.college || null,
               program: sa.program || null,
@@ -1236,21 +1247,75 @@ async function main() {
               contactNumber: sa.contactNumber || null,
               personalEmail: sa.personalEmail || null,
             },
-          },
+          });
+          stats.saProfiles++;
+          saCounter++;
+          console.log(`  Created SA profile for officer: ${sa.name} (${sa.umakEmail})`);
+        } else {
+          console.log(`  Officer already has SA profile: ${sa.name} (${sa.umakEmail})`);
+        }
+      }
+      continue;
+    }
+
+    const password = `UMAKSA@${surname}_2026`;
+    const email = getUniqueEmail(sa.umakEmail);
+
+    const user = await db.user.upsert({
+      where: { email },
+      update: {
+        password,
+        firstName: parsed.firstName,
+        lastName: parsed.lastName,
+        middleName: parsed.middleName,
+        role: 'STUDENT_ASSISTANT',
+        isActive: true,
+        phone: sa.contactNumber || null,
+      },
+      create: {
+        email,
+        password,
+        firstName: parsed.firstName,
+        lastName: parsed.lastName,
+        middleName: parsed.middleName,
+        role: 'STUDENT_ASSISTANT',
+        isActive: true,
+        phone: sa.contactNumber || null,
+      },
+    });
+
+    // Ensure SA profile (separate from upsert since nested create doesn't work with upsert)
+    const existingSAP = await db.sAProfile.findUnique({
+      where: { userId: user.id },
+    });
+    if (!existingSAP) {
+      await db.sAProfile.create({
+        data: {
+          userId: user.id,
+          studentNumber: sa.studentNumber || null,
+          college: sa.college || null,
+          program: sa.program || null,
+          status: 'ACTIVE',
+          officeId,
+          dateOfBirth: null,
+          age: null,
+          sex: sa.sex || null,
+          courtesyTitle,
+          contactNumber: sa.contactNumber || null,
+          personalEmail: sa.personalEmail || null,
         },
       });
-      stats.users++;
       stats.saProfiles++;
-      saCounter++;
+    }
 
-      if (saCounter % 10 === 0) {
-        console.log(`  Progress: ${saCounter} SAs created`);
-      }
-    } catch (error: any) {
-      console.log(`  Error creating SA "${sa.name}" (${sa.umakEmail}): ${error.message}`);
+    stats.users++;
+    saCounter++;
+
+    if (saCounter % 10 === 0) {
+      console.log(`  Progress: ${saCounter} SAs ensured`);
     }
   }
-  console.log(`  Created ${saCounter} Student Assistants (including officer SA profiles)`);
+  console.log(`  Ensured ${saCounter} Student Assistants (including officer SA profiles)`);
 
   // ============================================
   // 9. ORG CHART
