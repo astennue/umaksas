@@ -215,7 +215,7 @@ export function AvailabilityGrid({ value, onChange }: AvailabilityGridProps) {
       </div>
 
       <p className="text-xs text-muted-foreground">
-        Click on a time slot to toggle availability. Each slot represents a 1-hour block (e.g., 7:00 AM slot covers 7:00 AM–8:00 AM). Use &quot;All&quot; / &quot;Clear&quot; per day to quickly set your schedule.
+        Click on a time slot to toggle availability. Each slot represents a 30-minute block (e.g., 7:00 AM slot covers 7:00 AM–7:30 AM). Use &quot;All&quot; / &quot;Clear&quot; per day to quickly set your schedule.
       </p>
     </div>
   );

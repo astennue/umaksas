@@ -30,6 +30,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   FileText,
   Search,
@@ -50,6 +51,19 @@ import {
   BookOpen,
   ClipboardList,
   Loader2,
+  Users,
+  Phone,
+  MapPin,
+  Building,
+  Baby,
+  Heart,
+  School,
+  Briefcase,
+  Award,
+  UserCheck,
+  Pencil,
+  CalendarClock,
+  FileCheck,
 } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "sonner";
@@ -62,31 +76,84 @@ interface Application {
   id: string;
   applicantEmail: string;
   userId: string | null;
-  firstName: string | null;
-  lastName: string | null;
-  college: string | null;
-  program: string | null;
   status: string;
-  interviewStatus: string;
-  interviewScore: number | null;
-  interviewDate: string | null;
-  totalScore: number | null;
-  rank: number | null;
   currentStep: number;
   submittedAt: string | null;
   reviewedAt: string | null;
   createdAt: string;
   updatedAt: string;
+  // Personal Information
+  firstName: string | null;
+  middleName: string | null;
+  lastName: string | null;
+  suffix: string | null;
+  dateOfBirth: string | null;
+  placeOfBirth: string | null;
+  gender: string | null;
+  civilStatus: string | null;
+  religion: string | null;
+  citizenship: string | null;
+  // Contact Information
+  email: string | null;
+  phone: string | null;
+  alternatePhone: string | null;
+  // Residence
+  residenceAddress: string | null;
+  residenceCity: string | null;
+  residenceZip: string | null;
+  // Family Background
+  fatherName: string | null;
+  fatherOccupation: string | null;
+  fatherContact: string | null;
+  motherName: string | null;
+  motherMaidenName: string | null;
+  motherOccupation: string | null;
+  motherContact: string | null;
+  guardianName: string | null;
+  guardianRelation: string | null;
+  guardianContact: string | null;
+  siblingsCount: number | null;
+  // Educational Background
+  elementarySchool: string | null;
+  elementaryYear: string | null;
+  highSchool: string | null;
+  highSchoolYear: string | null;
+  seniorHigh: string | null;
+  seniorHighYear: string | null;
+  seniorHighTrack: string | null;
+  // Current Education
+  studentNumber: string | null;
+  college: string | null;
+  program: string | null;
+  yearLevel: string | null;
+  section: string | null;
+  gwa: string | null;
+  // Employment & Skills
+  employmentJson: string | null;
+  // Availability
+  availabilityJson: string | null;
+  // Trainings
+  trainingsJson: string | null;
+  // References
+  referencesJson: string | null;
+  // Essays
+  essayWhyApply: string | null;
+  essayGoals: string | null;
+  essaySkills: string | null;
+  essayChallenges: string | null;
   // Upload fields
   photoUrl: string | null;
   resumeUrl: string | null;
   gradeReportUrl: string | null;
   registrationUrl: string | null;
-  // Additional details
-  studentNumber: string | null;
-  yearLevel: string | null;
-  gwa: string | null;
-  essayWhyApply: string | null;
+  residenceImageUrl: string | null;
+  // Review
+  interviewStatus: string | null;
+  interviewScore: number | null;
+  interviewDate: string | null;
+  interviewNotes: string | null;
+  totalScore: number | null;
+  rank: number | null;
 }
 
 const statusConfig: Record<string, { label: string; color: string }> = {
@@ -99,6 +166,16 @@ const statusConfig: Record<string, { label: string; color: string }> = {
   REJECTED: { label: "Rejected", color: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400" },
   WITHDRAWN: { label: "Withdrawn", color: "bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-500" },
 };
+
+function FieldDisplay({ label, value }: { label: string; value?: string | null }) {
+  if (!value) return null;
+  return (
+    <div className="flex flex-col gap-0.5">
+      <span className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">{label}</span>
+      <span className="text-sm break-words">{value}</span>
+    </div>
+  );
+}
 
 export default function ApplicationsPage() {
   const { data: session } = useSession();
@@ -220,6 +297,26 @@ export default function ApplicationsPage() {
       toast.error(message);
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  const handleDownloadPdf = async (appId: string) => {
+    try {
+      const res = await fetch(`/api/applications/${appId}/pdf`);
+      if (!res.ok) throw new Error("Failed to generate PDF");
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `application-${appId}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      toast.success("PDF downloaded successfully");
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : "Failed to download PDF";
+      toast.error(message);
     }
   };
 
@@ -465,283 +562,416 @@ export default function ApplicationsPage() {
 
       {/* Application Detail Modal */}
       <Dialog open={detailOpen} onOpenChange={setDetailOpen}>
-        <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Application Details</DialogTitle>
+            <DialogTitle className="flex items-center justify-between pr-8">
+              <span>Application Details</span>
+              {selectedApp && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="gap-1.5 text-xs"
+                  onClick={() => handleDownloadPdf(selectedApp.id)}
+                >
+                  <Download className="h-3.5 w-3.5" />
+                  Download PDF
+                </Button>
+              )}
+            </DialogTitle>
           </DialogHeader>
           {selectedApp && (
-            <div className="space-y-4">
-              {/* Header */}
-              <div className="rounded-lg bg-slate-50 p-4 dark:bg-slate-800">
-                <div className="flex items-start justify-between">
-                  <div className="flex items-center gap-3">
-                    {/* Photo */}
-                    {selectedApp.photoUrl ? (
-                      <div className="h-14 w-14 flex-shrink-0 overflow-hidden rounded-full border-2 border-white shadow-sm">
-                        <img
-                          src={selectedApp.photoUrl}
-                          alt="Applicant photo"
-                          className="h-full w-full object-cover"
-                        />
-                      </div>
-                    ) : (
-                      <div className="flex h-14 w-14 flex-shrink-0 items-center justify-center rounded-full bg-[#1e3a8a] text-white">
-                        <User className="h-6 w-6" />
-                      </div>
-                    )}
-                    <div>
-                      <h3 className="font-semibold break-words">
-                        {`${selectedApp.firstName || ""} ${selectedApp.lastName || ""}`.trim() || selectedApp.applicantEmail}
-                      </h3>
-                      <p className="text-sm text-muted-foreground break-words">{selectedApp.applicantEmail}</p>
-                    </div>
-                  </div>
-                  <Badge className={statusConfig[selectedApp.status]?.color || ""} variant="secondary">
-                    {statusConfig[selectedApp.status]?.label || selectedApp.status}
-                  </Badge>
-                </div>
-              </div>
+            <Tabs defaultValue="overview" className="mt-2">
+              <TabsList className="w-full flex-wrap h-auto gap-1">
+                <TabsTrigger value="overview" className="text-xs">Overview</TabsTrigger>
+                <TabsTrigger value="personal" className="text-xs">Personal</TabsTrigger>
+                <TabsTrigger value="family" className="text-xs">Family</TabsTrigger>
+                <TabsTrigger value="education" className="text-xs">Education</TabsTrigger>
+                <TabsTrigger value="availability" className="text-xs">Schedule</TabsTrigger>
+                <TabsTrigger value="essays" className="text-xs">Essays</TabsTrigger>
+                <TabsTrigger value="documents" className="text-xs">Documents</TabsTrigger>
+              </TabsList>
 
-              {/* Applicant Information */}
-              <div className="space-y-3">
-                <h4 className="text-sm font-semibold text-slate-900 dark:text-white">Applicant Information</h4>
-                <div className="grid grid-cols-2 gap-3">
+              {/* Overview Tab */}
+              <TabsContent value="overview" className="space-y-4 mt-4">
+                {/* Header Card */}
+                <div className="rounded-lg bg-slate-50 p-4 dark:bg-slate-800">
+                  <div className="flex items-start justify-between">
+                    <div className="flex items-center gap-3">
+                      {selectedApp.photoUrl ? (
+                        <div className="h-14 w-14 flex-shrink-0 overflow-hidden rounded-full border-2 border-white shadow-sm">
+                          <img src={selectedApp.photoUrl} alt="Applicant photo" className="h-full w-full object-cover" />
+                        </div>
+                      ) : (
+                        <div className="flex h-14 w-14 flex-shrink-0 items-center justify-center rounded-full bg-[#1e3a8a] text-white">
+                          <User className="h-6 w-6" />
+                        </div>
+                      )}
+                      <div>
+                        <h3 className="font-semibold break-words">
+                          {`${selectedApp.firstName || ""} ${selectedApp.middleName ? selectedApp.middleName.charAt(0) + "." : ""} ${selectedApp.lastName || ""} ${selectedApp.suffix || ""}`.trim() || selectedApp.applicantEmail}
+                        </h3>
+                        <p className="text-sm text-muted-foreground break-words">{selectedApp.applicantEmail}</p>
+                        <div className="mt-1 flex flex-wrap gap-2">
+                          {selectedApp.studentNumber && (
+                            <Badge variant="outline" className="text-xs"><IdCard className="mr-1 h-3 w-3" />{selectedApp.studentNumber}</Badge>
+                          )}
+                          {selectedApp.college && (
+                            <Badge variant="outline" className="text-xs"><GraduationCap className="mr-1 h-3 w-3" />{selectedApp.college}</Badge>
+                          )}
+                          {selectedApp.program && (
+                            <Badge variant="outline" className="text-xs">{selectedApp.program}</Badge>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                    <Badge className={statusConfig[selectedApp.status]?.color || ""} variant="secondary">
+                      {statusConfig[selectedApp.status]?.label || selectedApp.status}
+                    </Badge>
+                  </div>
+                </div>
+
+                {/* Key Info Grid */}
+                <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
                   {selectedApp.studentNumber && (
-                    <div className="flex items-center gap-2 text-sm">
-                      <IdCard className="h-4 w-4 text-muted-foreground" />
-                      <div>
-                        <p className="text-xs text-muted-foreground">Student Number</p>
-                        <span className="font-medium">{selectedApp.studentNumber}</span>
-                      </div>
-                    </div>
-                  )}
-                  {selectedApp.college && (
-                    <div className="flex items-center gap-2 text-sm">
-                      <GraduationCap className="h-4 w-4 text-muted-foreground" />
-                      <div>
-                        <p className="text-xs text-muted-foreground">College</p>
-                        <span>{selectedApp.college}</span>
-                      </div>
-                    </div>
-                  )}
-                  {selectedApp.program && (
-                    <div className="flex items-center gap-2 text-sm">
-                      <BookOpen className="h-4 w-4 text-muted-foreground" />
-                      <div>
-                        <p className="text-xs text-muted-foreground">Program</p>
-                        <span>{selectedApp.program}</span>
-                      </div>
+                    <div className="rounded-lg border p-3">
+                      <p className="text-xs text-muted-foreground">Student Number</p>
+                      <p className="text-sm font-medium">{selectedApp.studentNumber}</p>
                     </div>
                   )}
                   {selectedApp.yearLevel && (
-                    <div className="flex items-center gap-2 text-sm">
-                      <User className="h-4 w-4 text-muted-foreground" />
-                      <div>
-                        <p className="text-xs text-muted-foreground">Year Level</p>
-                        <span>{selectedApp.yearLevel}</span>
-                      </div>
+                    <div className="rounded-lg border p-3">
+                      <p className="text-xs text-muted-foreground">Year Level</p>
+                      <p className="text-sm font-medium">{selectedApp.yearLevel}</p>
+                    </div>
+                  )}
+                  {selectedApp.section && (
+                    <div className="rounded-lg border p-3">
+                      <p className="text-xs text-muted-foreground">Section</p>
+                      <p className="text-sm font-medium">{selectedApp.section}</p>
                     </div>
                   )}
                   {selectedApp.gwa && (
-                    <div className="flex items-center gap-2 text-sm">
-                      <Star className="h-4 w-4 text-muted-foreground" />
-                      <div>
-                        <p className="text-xs text-muted-foreground">GWA</p>
-                        <span className="font-medium">{selectedApp.gwa}</span>
-                      </div>
+                    <div className="rounded-lg border p-3">
+                      <p className="text-xs text-muted-foreground">GWA</p>
+                      <p className="text-sm font-bold text-amber-600">{selectedApp.gwa}</p>
                     </div>
                   )}
-                  <div className="flex items-center gap-2 text-sm">
-                    <Clock className="h-4 w-4 text-muted-foreground" />
-                    <div>
-                      <p className="text-xs text-muted-foreground">Submitted</p>
-                      <span>
-                        {selectedApp.submittedAt
-                          ? format(new Date(selectedApp.submittedAt), "MMM d, yyyy 'at' h:mm a")
-                          : "Not submitted yet"}
-                      </span>
-                    </div>
+                  <div className="rounded-lg border p-3">
+                    <p className="text-xs text-muted-foreground">Submitted</p>
+                    <p className="text-sm font-medium">
+                      {selectedApp.submittedAt ? format(new Date(selectedApp.submittedAt), "MMM d, yyyy 'at' h:mm a") : "Not submitted yet"}
+                    </p>
                   </div>
-                  <div className="flex items-center gap-2 text-sm">
-                    <Calendar className="h-4 w-4 text-muted-foreground" />
-                    <div>
-                      <p className="text-xs text-muted-foreground">Interview</p>
-                      <span>
-                        {(selectedApp.interviewStatus || "PENDING").replace(/_/g, " ")}
-                        {selectedApp.interviewDate && ` — ${format(new Date(selectedApp.interviewDate), "MMM d, yyyy 'at' h:mm a")}`}
-                      </span>
-                    </div>
-                  </div>
-                  {selectedApp.interviewScore !== null && (
-                    <div className="flex items-center gap-2 text-sm">
-                      <Star className="h-4 w-4 text-amber-500" />
-                      <div>
-                        <p className="text-xs text-muted-foreground">Interview Score</p>
-                        <span className="font-medium">{selectedApp.interviewScore}/100</span>
-                      </div>
-                    </div>
-                  )}
-                  {selectedApp.totalScore !== null && (
-                    <div className="flex items-center gap-2 text-sm">
-                      <Star className="h-4 w-4 text-blue-500" />
-                      <div>
-                        <p className="text-xs text-muted-foreground">Total Score</p>
-                        <span className="font-medium">{selectedApp.totalScore}</span>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* Why Apply Essay */}
-              {selectedApp.essayWhyApply && (
-                <div className="space-y-2">
-                  <h4 className="text-sm font-semibold text-slate-900 dark:text-white">Why I Want to Apply</h4>
-                  <div className="rounded-lg border bg-slate-50 p-3 dark:bg-slate-800">
-                    <p className="text-sm text-slate-700 dark:text-slate-300 whitespace-pre-wrap break-words max-h-40 overflow-y-auto">
-                      {selectedApp.essayWhyApply}
+                  <div className="rounded-lg border p-3">
+                    <p className="text-xs text-muted-foreground">Interview</p>
+                    <p className="text-sm font-medium">
+                      {(selectedApp.interviewStatus || "PENDING").replace(/_/g, " ")}
+                      {selectedApp.interviewScore !== null ? ` — ${selectedApp.interviewScore}/100` : ""}
                     </p>
                   </div>
                 </div>
-              )}
 
-              {/* Documents Section */}
-              {(selectedApp.photoUrl || selectedApp.resumeUrl || selectedApp.gradeReportUrl || selectedApp.registrationUrl) && (
-                <div className="space-y-2">
-                  <h4 className="text-sm font-semibold text-slate-900 dark:text-white">Documents</h4>
+                {/* Quick Essays */}
+                {selectedApp.essayWhyApply && (
+                  <div className="space-y-2">
+                    <h4 className="text-sm font-semibold">Why I Want to Apply</h4>
+                    <div className="rounded-lg border bg-slate-50 p-3 dark:bg-slate-800">
+                      <p className="text-sm text-slate-700 dark:text-slate-300 whitespace-pre-wrap break-words max-h-32 overflow-y-auto">
+                        {selectedApp.essayWhyApply}
+                      </p>
+                    </div>
+                  </div>
+                )}
+              </TabsContent>
+
+              {/* Personal Tab */}
+              <TabsContent value="personal" className="space-y-4 mt-4">
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <FieldDisplay label="First Name" value={selectedApp.firstName} />
+                  <FieldDisplay label="Middle Name" value={selectedApp.middleName} />
+                  <FieldDisplay label="Last Name" value={selectedApp.lastName} />
+                  <FieldDisplay label="Suffix" value={selectedApp.suffix} />
+                  <FieldDisplay label="Date of Birth" value={selectedApp.dateOfBirth ? format(new Date(selectedApp.dateOfBirth), "MMMM d, yyyy") : null} />
+                  <FieldDisplay label="Place of Birth" value={selectedApp.placeOfBirth} />
+                  <FieldDisplay label="Sex" value={selectedApp.gender} />
+                  <FieldDisplay label="Civil Status" value={selectedApp.civilStatus} />
+                  <FieldDisplay label="Citizenship" value={selectedApp.citizenship} />
+                  <FieldDisplay label="Religion" value={selectedApp.religion} />
+                  <FieldDisplay label="Phone" value={selectedApp.phone} />
+                  <FieldDisplay label="Alternate Phone" value={selectedApp.alternatePhone} />
+                  <FieldDisplay label="Email" value={selectedApp.email} />
+                  <FieldDisplay label="Address" value={selectedApp.residenceAddress} />
+                  <FieldDisplay label="City" value={selectedApp.residenceCity} />
+                  <FieldDisplay label="Zip Code" value={selectedApp.residenceZip} />
+                </div>
+              </TabsContent>
+
+              {/* Family Tab */}
+              <TabsContent value="family" className="space-y-4 mt-4">
+                <div className="rounded-lg border p-4">
+                  <h4 className="mb-3 text-sm font-semibold flex items-center gap-2"><User className="h-4 w-4" />Father&apos;s Information</h4>
                   <div className="grid gap-3 sm:grid-cols-2">
-                    {/* Photo */}
-                    {selectedApp.photoUrl && (
-                      <div className="rounded-lg border bg-white p-3 dark:bg-slate-800">
-                        <div className="flex items-center gap-2 text-sm font-medium mb-2">
-                          <ImageIcon className="h-4 w-4 text-muted-foreground" />
-                          Photo (2x2)
-                        </div>
-                        <div className="flex justify-center">
-                          <div className="h-32 w-32 overflow-hidden rounded-lg border bg-slate-100 dark:bg-slate-700">
-                            <img
-                              src={selectedApp.photoUrl}
-                              alt="Applicant photo"
-                              className="h-full w-full object-cover"
-                            />
-                          </div>
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Resume */}
-                    {selectedApp.resumeUrl && (
-                      <a
-                        href={selectedApp.resumeUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex items-center gap-3 rounded-lg border bg-white p-3 transition-colors hover:bg-slate-50 dark:bg-slate-800 dark:hover:bg-slate-700"
-                      >
-                        <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-red-50 dark:bg-red-900/20">
-                          <FileText className="h-5 w-5 text-red-500" />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium">Resume / CV</p>
-                          <p className="text-xs text-muted-foreground flex items-center gap-1">
-                            <Download className="h-3 w-3" />
-                            Click to view / download
-                          </p>
-                        </div>
-                      </a>
-                    )}
-
-                    {/* Grade Report */}
-                    {selectedApp.gradeReportUrl && (
-                      <a
-                        href={selectedApp.gradeReportUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex items-center gap-3 rounded-lg border bg-white p-3 transition-colors hover:bg-slate-50 dark:bg-slate-800 dark:hover:bg-slate-700"
-                      >
-                        <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-green-50 dark:bg-green-900/20">
-                          <BookOpen className="h-5 w-5 text-green-500" />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium">Grade Report</p>
-                          <p className="text-xs text-muted-foreground flex items-center gap-1">
-                            <Download className="h-3 w-3" />
-                            Click to view / download
-                          </p>
-                        </div>
-                      </a>
-                    )}
-
-                    {/* Registration Form */}
-                    {selectedApp.registrationUrl && (
-                      <a
-                        href={selectedApp.registrationUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex items-center gap-3 rounded-lg border bg-white p-3 transition-colors hover:bg-slate-50 dark:bg-slate-800 dark:hover:bg-slate-700"
-                      >
-                        <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-violet-50 dark:bg-violet-900/20">
-                          <ClipboardList className="h-5 w-5 text-violet-500" />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium">Registration Form</p>
-                          <p className="text-xs text-muted-foreground flex items-center gap-1">
-                            <Download className="h-3 w-3" />
-                            Click to view / download
-                          </p>
-                        </div>
-                      </a>
-                    )}
+                    <FieldDisplay label="Full Name" value={selectedApp.fatherName} />
+                    <FieldDisplay label="Occupation" value={selectedApp.fatherOccupation} />
+                    <FieldDisplay label="Contact" value={selectedApp.fatherContact} />
                   </div>
                 </div>
-              )}
-
-              {/* Action Buttons */}
-              {canManage && !["APPROVED", "REJECTED", "WITHDRAWN", "DRAFT"].includes(selectedApp.status) && (
-                <div className="flex flex-col gap-2 border-t pt-4 sm:flex-row">
-                  <Button
-                    className="flex-1 bg-green-600 hover:bg-green-700 text-white"
-                    onClick={async () => {
-                      const name = `${selectedApp.firstName || ""} ${selectedApp.lastName || ""}`.trim() || selectedApp.applicantEmail;
-                      const ok = await confirm({
-                        title: "Approve Application",
-                        description: `Are you sure you want to approve the application from ${name}? The applicant will be notified about the decision.`,
-                        confirmText: "Approve",
-                      });
-                      if (!ok) return;
-                      handleApprove();
-                    }}
-                  >
-                    <CheckCircle2 className="mr-2 h-4 w-4" />
-                    Approve Application
-                  </Button>
-                  <Button
-                    className="flex-1 bg-red-600 hover:bg-red-700 text-white"
-                    onClick={() => {
-                      setRejectReason("");
-                      setConfirmRejectOpen(true);
-                    }}
-                  >
-                    <XCircle className="mr-2 h-4 w-4" />
-                    Reject Application
-                  </Button>
+                <div className="rounded-lg border p-4">
+                  <h4 className="mb-3 text-sm font-semibold flex items-center gap-2"><Heart className="h-4 w-4" />Mother&apos;s Information</h4>
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <FieldDisplay label="Full Name" value={selectedApp.motherName} />
+                    <FieldDisplay label="Maiden Name" value={selectedApp.motherMaidenName} />
+                    <FieldDisplay label="Occupation" value={selectedApp.motherOccupation} />
+                    <FieldDisplay label="Contact" value={selectedApp.motherContact} />
+                  </div>
                 </div>
-              )}
+                {(selectedApp.guardianName || selectedApp.guardianContact) && (
+                  <div className="rounded-lg border p-4">
+                    <h4 className="mb-3 text-sm font-semibold flex items-center gap-2"><Users className="h-4 w-4" />Guardian&apos;s Information</h4>
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      <FieldDisplay label="Full Name" value={selectedApp.guardianName} />
+                      <FieldDisplay label="Relationship" value={selectedApp.guardianRelation} />
+                      <FieldDisplay label="Contact" value={selectedApp.guardianContact} />
+                      <FieldDisplay label="Siblings Count" value={selectedApp.siblingsCount?.toString()} />
+                    </div>
+                  </div>
+                )}
+              </TabsContent>
 
-              {/* Proceed to Interview button */}
-              {canManage && !["APPROVED", "REJECTED", "WITHDRAWN"].includes(selectedApp.status) && (
-                <div className="border-t pt-4">
-                  <Button
-                    className="w-full bg-[#1e3a8a] hover:bg-[#1e3a8a]/90"
-                    onClick={() => {
-                      setDetailOpen(false);
-                      handleSchedule(selectedApp);
-                    }}
-                  >
-                    <ArrowRight className="mr-2 h-4 w-4" />
-                    Proceed to Interview
-                  </Button>
+              {/* Education Tab */}
+              <TabsContent value="education" className="space-y-4 mt-4">
+                <div className="rounded-lg border p-4">
+                  <h4 className="mb-3 text-sm font-semibold">Current Education</h4>
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <FieldDisplay label="Student Number" value={selectedApp.studentNumber} />
+                    <FieldDisplay label="College" value={selectedApp.college} />
+                    <FieldDisplay label="Program" value={selectedApp.program} />
+                    <FieldDisplay label="Year Level" value={selectedApp.yearLevel} />
+                    <FieldDisplay label="Section" value={selectedApp.section} />
+                    <FieldDisplay label="GWA" value={selectedApp.gwa} />
+                  </div>
                 </div>
-              )}
+                <div className="rounded-lg border p-4">
+                  <h4 className="mb-3 text-sm font-semibold">Educational Background</h4>
+                  <div className="space-y-4">
+                    <div className="rounded-lg bg-slate-50 p-3 dark:bg-slate-800/50">
+                      <p className="text-xs font-semibold text-muted-foreground">Elementary</p>
+                      <div className="grid gap-2 sm:grid-cols-2 mt-1">
+                        <FieldDisplay label="School" value={selectedApp.elementarySchool} />
+                        <FieldDisplay label="Year Graduated" value={selectedApp.elementaryYear} />
+                      </div>
+                    </div>
+                    <div className="rounded-lg bg-slate-50 p-3 dark:bg-slate-800/50">
+                      <p className="text-xs font-semibold text-muted-foreground">High School</p>
+                      <div className="grid gap-2 sm:grid-cols-2 mt-1">
+                        <FieldDisplay label="School" value={selectedApp.highSchool} />
+                        <FieldDisplay label="Year Graduated" value={selectedApp.highSchoolYear} />
+                      </div>
+                    </div>
+                    <div className="rounded-lg bg-slate-50 p-3 dark:bg-slate-800/50">
+                      <p className="text-xs font-semibold text-muted-foreground">Senior High</p>
+                      <div className="grid gap-2 sm:grid-cols-2 mt-1">
+                        <FieldDisplay label="School" value={selectedApp.seniorHigh} />
+                        <FieldDisplay label="Year Graduated" value={selectedApp.seniorHighYear} />
+                        <FieldDisplay label="Strand/Track" value={selectedApp.seniorHighTrack} />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Employment History */}
+                {selectedApp.employmentJson && (
+                  <div className="rounded-lg border p-4">
+                    <h4 className="mb-3 text-sm font-semibold">Employment History</h4>
+                    <div className="space-y-2 max-h-48 overflow-y-auto">
+                      {JSON.parse(selectedApp.employmentJson).map((emp: { company?: string; position?: string; duration?: string; description?: string }, i: number) => (
+                        <div key={i} className="rounded-lg bg-slate-50 p-3 dark:bg-slate-800/50">
+                          <p className="font-medium text-sm">{emp.company || "Unknown Company"}</p>
+                          <p className="text-xs text-muted-foreground">{emp.position} {emp.duration ? `• ${emp.duration}` : ""}</p>
+                          {emp.description && <p className="text-xs text-muted-foreground mt-1">{emp.description}</p>}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Trainings */}
+                {selectedApp.trainingsJson && (
+                  <div className="rounded-lg border p-4">
+                    <h4 className="mb-3 text-sm font-semibold">Trainings & Seminars</h4>
+                    <div className="space-y-2 max-h-48 overflow-y-auto">
+                      {JSON.parse(selectedApp.trainingsJson).map((t: { name?: string; organizer?: string; date?: string; duration?: string }, i: number) => (
+                        <div key={i} className="rounded-lg bg-slate-50 p-3 dark:bg-slate-800/50">
+                          <p className="font-medium text-sm">{t.name || "Unnamed"}</p>
+                          <p className="text-xs text-muted-foreground">{t.organizer} {t.date ? `• ${t.date}` : ""} {t.duration ? `• ${t.duration}` : ""}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Character References */}
+                {selectedApp.referencesJson && (
+                  <div className="rounded-lg border p-4">
+                    <h4 className="mb-3 text-sm font-semibold">Character References</h4>
+                    <div className="space-y-2 max-h-48 overflow-y-auto">
+                      {JSON.parse(selectedApp.referencesJson).map((ref: { name?: string; position?: string; organization?: string; phone?: string; email?: string; relationship?: string }, i: number) => (
+                        <div key={i} className="rounded-lg bg-slate-50 p-3 dark:bg-slate-800/50">
+                          <div className="flex items-center justify-between">
+                            <p className="font-medium text-sm">{ref.name || `Reference ${i + 1}`}</p>
+                            {ref.relationship && <Badge variant="secondary" className="text-xs">{ref.relationship}</Badge>}
+                          </div>
+                          <p className="text-xs text-muted-foreground">{ref.position} {ref.organization ? `at ${ref.organization}` : ""}</p>
+                          <div className="mt-1 flex gap-3 text-xs text-muted-foreground">
+                            {ref.phone && <span>{ref.phone}</span>}
+                            {ref.email && <span>{ref.email}</span>}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </TabsContent>
+
+              {/* Availability Tab */}
+              <TabsContent value="availability" className="mt-4">
+                {selectedApp.availabilityJson ? (
+                  <div className="rounded-lg border p-4">
+                    <h4 className="mb-3 text-sm font-semibold">Weekly Availability</h4>
+                    <AvailabilitySummary availabilityJson={selectedApp.availabilityJson} />
+                  </div>
+                ) : (
+                  <p className="text-sm text-muted-foreground">No availability data provided.</p>
+                )}
+              </TabsContent>
+
+              {/* Essays Tab */}
+              <TabsContent value="essays" className="space-y-4 mt-4">
+                {selectedApp.essayWhyApply && (
+                  <div className="rounded-lg border p-4">
+                    <h4 className="mb-2 text-sm font-semibold">Why I Want to Apply</h4>
+                    <p className="text-sm whitespace-pre-wrap break-words">{selectedApp.essayWhyApply}</p>
+                  </div>
+                )}
+                {selectedApp.essayGoals && (
+                  <div className="rounded-lg border p-4">
+                    <h4 className="mb-2 text-sm font-semibold">My Goals as a Student Assistant</h4>
+                    <p className="text-sm whitespace-pre-wrap break-words">{selectedApp.essayGoals}</p>
+                  </div>
+                )}
+                {selectedApp.essaySkills && (
+                  <div className="rounded-lg border p-4">
+                    <h4 className="mb-2 text-sm font-semibold">Skills I Can Contribute</h4>
+                    <p className="text-sm whitespace-pre-wrap break-words">{selectedApp.essaySkills}</p>
+                  </div>
+                )}
+                {selectedApp.essayChallenges && (
+                  <div className="rounded-lg border p-4">
+                    <h4 className="mb-2 text-sm font-semibold">Balancing Academics & SA Duties</h4>
+                    <p className="text-sm whitespace-pre-wrap break-words">{selectedApp.essayChallenges}</p>
+                  </div>
+                )}
+                {!selectedApp.essayWhyApply && !selectedApp.essayGoals && !selectedApp.essaySkills && !selectedApp.essayChallenges && (
+                  <p className="text-sm text-muted-foreground">No essay responses provided.</p>
+                )}
+              </TabsContent>
+
+              {/* Documents Tab */}
+              <TabsContent value="documents" className="space-y-4 mt-4">
+                <div className="grid gap-3 sm:grid-cols-2">
+                  {selectedApp.photoUrl && (
+                    <div className="rounded-lg border p-3">
+                      <p className="text-sm font-medium mb-2 flex items-center gap-2"><ImageIcon className="h-4 w-4" />2x2 Photo</p>
+                      <div className="flex justify-center">
+                        <div className="h-32 w-32 overflow-hidden rounded-lg border bg-slate-100 dark:bg-slate-700">
+                          <img src={selectedApp.photoUrl} alt="Applicant photo" className="h-full w-full object-cover" />
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                  {selectedApp.resumeUrl && (
+                    <a href={selectedApp.resumeUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 rounded-lg border p-3 transition-colors hover:bg-slate-50 dark:hover:bg-slate-800">
+                      <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-red-50 dark:bg-red-900/20">
+                        <FileText className="h-5 w-5 text-red-500" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium">Resume / CV</p>
+                        <p className="text-xs text-muted-foreground flex items-center gap-1"><Download className="h-3 w-3" />Click to view / download</p>
+                      </div>
+                    </a>
+                  )}
+                  {selectedApp.gradeReportUrl && (
+                    <a href={selectedApp.gradeReportUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 rounded-lg border p-3 transition-colors hover:bg-slate-50 dark:hover:bg-slate-800">
+                      <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-green-50 dark:bg-green-900/20">
+                        <BookOpen className="h-5 w-5 text-green-500" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium">Grade Report</p>
+                        <p className="text-xs text-muted-foreground flex items-center gap-1"><Download className="h-3 w-3" />Click to view / download</p>
+                      </div>
+                    </a>
+                  )}
+                  {selectedApp.registrationUrl && (
+                    <a href={selectedApp.registrationUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 rounded-lg border p-3 transition-colors hover:bg-slate-50 dark:hover:bg-slate-800">
+                      <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-violet-50 dark:bg-violet-900/20">
+                        <ClipboardList className="h-5 w-5 text-violet-500" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium">Registration Form</p>
+                        <p className="text-xs text-muted-foreground flex items-center gap-1"><Download className="h-3 w-3" />Click to view / download</p>
+                      </div>
+                    </a>
+                  )}
+                </div>
+              </TabsContent>
+            </Tabs>
+          )}
+
+          {/* Action Buttons */}
+          {selectedApp && canManage && !["APPROVED", "REJECTED", "WITHDRAWN", "DRAFT"].includes(selectedApp.status) && (
+            <div className="flex flex-col gap-2 border-t pt-4 sm:flex-row">
+              <Button
+                className="flex-1 bg-green-600 hover:bg-green-700 text-white"
+                onClick={async () => {
+                  const name = `${selectedApp.firstName || ""} ${selectedApp.lastName || ""}`.trim() || selectedApp.applicantEmail;
+                  const ok = await confirm({
+                    title: "Approve Application",
+                    description: `Are you sure you want to approve the application from ${name}? The applicant will be notified about the decision.`,
+                    confirmText: "Approve",
+                  });
+                  if (!ok) return;
+                  handleApprove();
+                }}
+              >
+                <CheckCircle2 className="mr-2 h-4 w-4" />
+                Approve Application
+              </Button>
+              <Button
+                className="flex-1 bg-red-600 hover:bg-red-700 text-white"
+                onClick={() => {
+                  setRejectReason("");
+                  setConfirmRejectOpen(true);
+                }}
+              >
+                <XCircle className="mr-2 h-4 w-4" />
+                Reject Application
+              </Button>
+            </div>
+          )}
+
+          {/* Proceed to Interview button */}
+          {selectedApp && canManage && !["APPROVED", "REJECTED", "WITHDRAWN"].includes(selectedApp.status) && (
+            <div className="border-t pt-4">
+              <Button
+                className="w-full bg-[#1e3a8a] hover:bg-[#1e3a8a]/90"
+                onClick={() => {
+                  setDetailOpen(false);
+                  handleSchedule(selectedApp);
+                }}
+              >
+                <ArrowRight className="mr-2 h-4 w-4" />
+                Proceed to Interview
+              </Button>
             </div>
           )}
         </DialogContent>
@@ -796,6 +1026,51 @@ export default function ApplicationsPage() {
           onScheduled={fetchApplications}
         />
       )}
+    </div>
+  );
+}
+
+// Helper component for availability summary
+function AvailabilitySummary({ availabilityJson }: { availabilityJson: string }) {
+  const DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"];
+  const DAY_KEYS = ["monday", "tuesday", "wednesday", "thursday", "friday"];
+
+  let parsed: Record<string, string[]> = {};
+  let totalSlots = 0;
+  let isValid = false;
+
+  try {
+    parsed = JSON.parse(availabilityJson) as Record<string, string[]>;
+    isValid = true;
+  } catch {
+    isValid = false;
+  }
+
+  if (!isValid) {
+    return <p className="text-sm text-muted-foreground">Invalid availability data</p>;
+  }
+
+  DAYS.forEach((day, i) => {
+    const slots = parsed[DAY_KEYS[i]] || [];
+    totalSlots += slots.length;
+  });
+
+  return (
+    <div className="space-y-2">
+      <div className="flex flex-wrap gap-2">
+        {DAYS.map((day, i) => {
+          const slots = parsed[DAY_KEYS[i]] || [];
+          return (
+            <div key={day} className="rounded-lg border px-3 py-2">
+              <p className="text-xs font-semibold">{day}</p>
+              <p className="text-xs text-muted-foreground">
+                {slots.length > 0 ? slots.join(", ") : "None"}
+              </p>
+            </div>
+          );
+        })}
+      </div>
+      <p className="text-xs text-muted-foreground">Total: {totalSlots} time slots</p>
     </div>
   );
 }

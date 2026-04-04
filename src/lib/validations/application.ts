@@ -3,8 +3,8 @@ import { z } from "zod";
 // Custom validators
 const nameRegex = /^[a-zA-ZÀ-ÿ\s'\-.]+$/;
 const phoneRegex = /^[0-9+\-() ]+$/;
-const studentNumberRegex = /^[\d-]+$/;
-const zipCodeRegex = /^\d{5}$/;
+const studentNumberRegex = /^[a-zA-Z0-9\-]+$/;
+const zipCodeRegex = /^\d{4}$/;
 const gwaRegex = /^\d+(\.\d{0,2})?$/;
 
 // Employment record item
@@ -95,7 +95,7 @@ export const step2Schema = z.object({
     .optional()
     .default("")
     .refine((val) => !val || zipCodeRegex.test(val), {
-      message: "Zip code must be exactly 5 digits",
+      message: "Zip code must be exactly 4 digits",
     }),
 });
 
@@ -172,7 +172,7 @@ export const step5Schema = z.object({
   studentNumber: z
     .string()
     .min(5, "Student number must be at least 5 characters")
-    .regex(studentNumberRegex, "Student number can only contain digits and hyphens"),
+    .regex(studentNumberRegex, "Student number can only contain letters, digits, and hyphens"),
   college: z.string().min(1, "College is required"),
   program: z.string().min(1, "Program/Course is required"),
   yearLevel: z.enum(["1st Year", "2nd Year", "3rd Year", "4th Year", "5th Year", "Irregular"], "Please select a valid year level"),
@@ -216,8 +216,16 @@ export const step10Schema = z.object({
   gradeReport: z.string().min(1, "Report Card / Grades is required"),
 });
 
-// Step 11: Review & Submit
+// Step 11: Essay Questions
 export const step11Schema = z.object({
+  essayWhyApply: z.string().min(50, "Please write at least 50 characters"),
+  essayGoals: z.string().min(50, "Please write at least 50 characters"),
+  essaySkills: z.string().min(50, "Please write at least 50 characters"),
+  essayChallenges: z.string().min(50, "Please write at least 50 characters"),
+});
+
+// Step 12: Review & Submit
+export const step12Schema = z.object({
   email: z.string().email("Please enter a valid email address"),
   confirmAccurate: z.literal(true, {
     message: "You must confirm all information is true and accurate",
@@ -288,7 +296,7 @@ export const applicationFormSchema = z.object({
     .optional()
     .default("")
     .refine((val) => !val || zipCodeRegex.test(val), {
-      message: "Zip code must be exactly 5 digits",
+      message: "Zip code must be exactly 4 digits",
     }),
 
   // Step 3: Family Background
@@ -317,7 +325,7 @@ export const applicationFormSchema = z.object({
   studentNumber: z
     .string()
     .min(5, "Student number must be at least 5 characters")
-    .regex(studentNumberRegex, "Student number can only contain digits and hyphens"),
+    .regex(studentNumberRegex, "Student number can only contain letters, digits, and hyphens"),
   college: z.string().min(1, "College is required"),
   program: z.string().min(1, "Program/Course is required"),
   yearLevel: z.enum(["1st Year", "2nd Year", "3rd Year", "4th Year", "5th Year", "Irregular"], "Please select a valid year level"),
@@ -350,7 +358,13 @@ export const applicationFormSchema = z.object({
   resume: z.string().min(1, "Resume/CV is required"),
   gradeReport: z.string().min(1, "Report Card / Grades is required"),
 
-  // Step 11: Review & Submit
+  // Step 11: Essays
+  essayWhyApply: z.string().min(50, "Please write at least 50 characters"),
+  essayGoals: z.string().min(50, "Please write at least 50 characters"),
+  essaySkills: z.string().min(50, "Please write at least 50 characters"),
+  essayChallenges: z.string().min(50, "Please write at least 50 characters"),
+
+  // Step 12: Confirmation
   email: z.string().email("Please enter a valid email address"),
   confirmAccurate: z.literal(true, {
     message: "You must confirm all information is true and accurate",
@@ -362,7 +376,7 @@ export const applicationFormSchema = z.object({
 
 export type ApplicationFormData = z.infer<typeof applicationFormSchema>;
 
-// Step schema map (0-indexed) — 11 steps
+// Step schema map (0-indexed) — 12 steps
 export const stepSchemaMap = {
   0: step1Schema,
   1: step2Schema,
@@ -375,45 +389,48 @@ export const stepSchemaMap = {
   8: step9Schema,
   9: step10Schema,
   10: step11Schema,
+  11: step12Schema,
 } as const;
 
-// Availability constants — 11 time slots × 5 days = 55 total
+// Availability constants — 22 time slots × 5 days = 110 total
 export const DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"] as const;
 
 export const DAY_KEYS = ["monday", "tuesday", "wednesday", "thursday", "friday"] as const;
 
 export const TIME_SLOTS = [
-  "7:00 AM",
-  "8:00 AM",
-  "9:00 AM",
-  "10:00 AM",
-  "11:00 AM",
-  "12:00 PM",
-  "1:00 PM",
-  "2:00 PM",
-  "3:00 PM",
-  "4:00 PM",
-  "5:00 PM",
+  "7:00 AM", "7:30 AM",
+  "8:00 AM", "8:30 AM",
+  "9:00 AM", "9:30 AM",
+  "10:00 AM", "10:30 AM",
+  "11:00 AM", "11:30 AM",
+  "12:00 PM", "12:30 PM",
+  "1:00 PM", "1:30 PM",
+  "2:00 PM", "2:30 PM",
+  "3:00 PM", "3:30 PM",
+  "4:00 PM", "4:30 PM",
+  "5:00 PM", "5:30 PM",
+  "6:00 PM",
 ] as const;
 
 export const TIME_SLOT_KEYS = [
-  "07:00",
-  "08:00",
-  "09:00",
-  "10:00",
-  "11:00",
-  "12:00",
-  "13:00",
-  "14:00",
-  "15:00",
-  "16:00",
-  "17:00",
+  "07:00", "07:30",
+  "08:00", "08:30",
+  "09:00", "09:30",
+  "10:00", "10:30",
+  "11:00", "11:30",
+  "12:00", "12:30",
+  "13:00", "13:30",
+  "14:00", "14:30",
+  "15:00", "15:30",
+  "16:00", "16:30",
+  "17:00", "17:30",
+  "18:00",
 ] as const;
 
-export const SLOTS_PER_DAY = 11;
-export const TOTAL_SLOTS = 55; // 5 days × 11 time slots
+export const SLOTS_PER_DAY = 22;
+export const TOTAL_SLOTS = 110; // 5 days × 22 time slots
 
-// Generate 55 false values for default availability
+// Generate 110 false values for default availability
 const defaultAvailability = Array(TOTAL_SLOTS).fill(false) as boolean[];
 
 // Convert boolean array to weeklyAvailability JSON string
@@ -525,13 +542,19 @@ export const defaultFormValues: ApplicationFormData = {
   resume: "",
   gradeReport: "",
 
-  // Step 11: Confirmation
+  // Step 11: Essays
+  essayWhyApply: "",
+  essayGoals: "",
+  essaySkills: "",
+  essayChallenges: "",
+
+  // Step 12: Confirmation
   email: "",
   confirmAccurate: false as unknown as true,
   agreeTerms: false as unknown as true,
 };
 
-// Step metadata for UI (11 steps)
+// Step metadata for UI (12 steps)
 export const STEPS = [
   { id: 1, title: "Personal Info", shortTitle: "Personal", description: "Basic personal details", icon: "User" },
   { id: 2, title: "Contact", shortTitle: "Contact", description: "Phone & address", icon: "Phone" },
@@ -543,7 +566,8 @@ export const STEPS = [
   { id: 8, title: "Trainings", shortTitle: "Trainings", description: "Seminars attended", icon: "Award" },
   { id: 9, title: "References", shortTitle: "References", description: "Character references", icon: "UserCheck" },
   { id: 10, title: "Documents", shortTitle: "Documents", description: "Upload requirements", icon: "FileUp" },
-  { id: 11, title: "Submit", shortTitle: "Submit", description: "Review & submit", icon: "CheckCircle" },
+  { id: 11, title: "Essays", shortTitle: "Essays", description: "Essay questions", icon: "Pencil" },
+  { id: 12, title: "Submit", shortTitle: "Submit", description: "Review & submit", icon: "CheckCircle" },
 ] as const;
 
 // Field keys per step for partial form data extraction
@@ -568,51 +592,134 @@ export const stepFields: Record<number, string[]> = {
   7: ["trainings"],
   8: ["references"],
   9: ["photo", "resume", "gradeReport"],
-  10: ["email", "confirmAccurate", "agreeTerms"],
+  10: ["essayWhyApply", "essayGoals", "essaySkills", "essayChallenges"],
+  11: ["email", "confirmAccurate", "agreeTerms"],
 };
 
+// UMAK Colleges
 export const COLLEGES = [
-  "College of Computer Studies",
-  "College of Business Administration",
-  "College of Accountancy",
-  "College of Law",
-  "College of Education",
-  "College of Arts and Sciences",
-  "College of Engineering and Technology",
-  "College of Architecture and Design",
+  "College of Business and Financial Sciences",
+  "College of Computing and Information Sciences",
+  "College of Construction Sciences and Engineering",
+  "College of Continuing, Advanced and Professional Studies",
+  "College For Human Kinetics",
+  "College of Governance and Public Policy",
+  "College of Innovative Teacher Education",
+  "College of Liberal Arts and Sciences",
+  "College of Engineering Technology",
   "College of Tourism and Hospitality Management",
-  "College of Criminal Justice Education",
-  "College of Music and Arts",
-  "College of Nursing",
-  "College of Physical Therapy",
-  "College of Medical Technology",
-  "College of Pharmacy",
-  "College of Public Administration",
-  "College of Social Work and Community Development",
-  "College of Informatics and Computing Studies",
-  "College of Environmental Studies",
-  "College of Sports Science and Physical Education",
+  "Institute of Imaging Health Sciences",
+  "Institute of Accountancy",
+  "Institute of Arts and Design",
+  "Institute of Nursing",
+  "Institute of Pharmacy",
+  "Institute of Psychology",
+  "Institute for Social Work",
+  "School of Law",
+  "CITE-Higher School ng UMak",
 ] as const;
 
+// Programs per UMAK college
 export const PROGRAMS_BY_COLLEGE: Record<string, string[]> = {
-  "College of Computer Studies": ["BS Computer Science", "BS Information Technology", "BS Information Systems"],
-  "College of Business Administration": ["BS Business Administration", "BS Marketing Management", "BS Human Resource Management", "BS Office Administration"],
-  "College of Accountancy": ["BS Accountancy", "BS Internal Auditing", "BS Management Accounting"],
-  "College of Law": ["BS Legal Management", "BS Political Science", "AB Juris Doctor"],
-  "College of Education": ["BS Elementary Education", "BS Secondary Education", "BEED", "BTLED"],
-  "College of Arts and Sciences": ["BA English Language", "BA Filipino", "BA Political Science", "BA Communication", "AB History"],
-  "College of Engineering and Technology": ["BS Computer Engineering", "BS Electronics Engineering", "BS Civil Engineering", "BS Electrical Engineering"],
-  "College of Architecture and Design": ["BS Architecture", "BS Interior Design"],
-  "College of Tourism and Hospitality Management": ["BS Tourism Management", "BS Hospitality Management"],
-  "College of Criminal Justice Education": ["BS Criminology", "BS Customs Administration"],
-  "College of Music and Arts": ["AB Music", "AB Theater Arts", "AB Communication Arts"],
-  "College of Nursing": ["BS Nursing"],
-  "College of Physical Therapy": ["BS Physical Therapy"],
-  "College of Medical Technology": ["BS Medical Technology", "BS Radiologic Technology"],
-  "College of Pharmacy": ["BS Pharmacy"],
-  "College of Public Administration": ["BS Public Administration", "BS Public Safety Administration"],
-  "College of Social Work and Community Development": ["BS Social Work", "BS Community Development"],
-  "College of Informatics and Computing Studies": ["BS Informatics", "BS Library and Information Science"],
-  "College of Environmental Studies": ["BS Environmental Science", "BS Environmental Planning"],
-  "College of Sports Science and Physical Education": ["BS Sports Science", "BS Physical Education"],
+  "College of Business and Financial Sciences": [
+    "Bachelor of Science in Business Administration",
+    "Bachelor of Science in Accountancy",
+    "Bachelor of Science in Internal Auditing",
+    "Bachelor of Science in Management Accounting",
+    "Bachelor of Science in Financial Management",
+    "Bachelor of Science in Marketing Management",
+    "Bachelor of Science in Office Administration",
+    "Others (please specify)",
+  ],
+  "College of Computing and Information Sciences": [
+    "Bachelor of Science in Computer Science",
+    "Bachelor of Science in Information Technology",
+    "Bachelor of Science in Information Systems",
+    "Others (please specify)",
+  ],
+  "College of Construction Sciences and Engineering": [
+    "Bachelor of Science in Architecture",
+    "Bachelor of Science in Civil Engineering",
+    "Bachelor of Science in Electronics Engineering",
+    "Bachelor of Science in Computer Engineering",
+    "Others (please specify)",
+  ],
+  "College of Continuing, Advanced and Professional Studies": [
+    "Others (please specify)",
+  ],
+  "College For Human Kinetics": [
+    "Bachelor of Physical Education",
+    "Bachelor of Sports Science",
+    "Others (please specify)",
+  ],
+  "College of Governance and Public Policy": [
+    "Bachelor of Science in Public Administration",
+    "Bachelor of Science in Political Science",
+    "Others (please specify)",
+  ],
+  "College of Innovative Teacher Education": [
+    "Bachelor of Elementary Education",
+    "Bachelor of Secondary Education",
+    "Bachelor of Technical-Vocational Teacher Education",
+    "Others (please specify)",
+  ],
+  "College of Liberal Arts and Sciences": [
+    "Bachelor of Arts in English Language",
+    "Bachelor of Arts in Filipino",
+    "Bachelor of Arts in Communication",
+    "Bachelor of Arts in Political Science",
+    "Bachelor of Arts in History",
+    "Bachelor of Science in Psychology",
+    "Others (please specify)",
+  ],
+  "College of Engineering Technology": [
+    "Bachelor of Science in Electronics Technology",
+    "Bachelor of Science in Electrical Technology",
+    "Bachelor of Science in Mechanical Technology",
+    "Others (please specify)",
+  ],
+  "College of Tourism and Hospitality Management": [
+    "Bachelor of Science in Tourism Management",
+    "Bachelor of Science in Hospitality Management",
+    "Others (please specify)",
+  ],
+  "Institute of Imaging Health Sciences": [
+    "Bachelor of Science in Medical Technology",
+    "Bachelor of Science in Radiologic Technology",
+    "Others (please specify)",
+  ],
+  "Institute of Accountancy": [
+    "Bachelor of Science in Accountancy",
+    "Others (please specify)",
+  ],
+  "Institute of Arts and Design": [
+    "Bachelor of Arts in Fine Arts",
+    "Bachelor of Arts in Multimedia Arts",
+    "Others (please specify)",
+  ],
+  "Institute of Nursing": [
+    "Bachelor of Science in Nursing",
+    "Others (please specify)",
+  ],
+  "Institute of Pharmacy": [
+    "Bachelor of Science in Pharmacy",
+    "Others (please specify)",
+  ],
+  "Institute of Psychology": [
+    "Bachelor of Science in Psychology",
+    "Others (please specify)",
+  ],
+  "Institute for Social Work": [
+    "Bachelor of Science in Social Work",
+    "Others (please specify)",
+  ],
+  "School of Law": [
+    "Juris Doctor",
+    "Bachelor of Science in Legal Management",
+    "Others (please specify)",
+  ],
+  "CITE-Higher School ng UMak": [
+    "Senior High School (SHS)",
+    "Others (please specify)",
+  ],
 };

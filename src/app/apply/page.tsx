@@ -76,7 +76,7 @@ import { cn } from "@/lib/utils";
 
 const DRAFT_KEY = "umak-sas-draft";
 const AUTO_SAVE_INTERVAL = 30000;
-const TOTAL_STEPS = 11;
+const TOTAL_STEPS = 12;
 
 const slideVariants = {
   enter: (direction: number) => ({
@@ -631,7 +631,8 @@ export default function ApplyPage() {
                   {currentStep === 8 && <Step8Trainings formData={formData} updateField={updateField} errors={errors} />}
                   {currentStep === 9 && <Step9References formData={formData} updateField={updateField} errors={errors} />}
                   {currentStep === 10 && <Step10Documents formData={formData} updateField={updateField} errors={errors} handlePhotoSelect={handlePhotoSelect} />}
-                  {currentStep === 11 && <Step11Review formData={formData} updateField={updateField} errors={errors} goToStep={goToStep} onSubmitClick={() => setShowSubmitConfirmDialog(true)} />}
+                  {currentStep === 11 && <Step11Essays formData={formData} updateField={updateField} errors={errors} />}
+                  {currentStep === 12 && <Step12Review formData={formData} updateField={updateField} errors={errors} goToStep={goToStep} onSubmitClick={() => setShowSubmitConfirmDialog(true)} />}
                 </CardContent>
               </Card>
             </motion.div>
@@ -1028,7 +1029,7 @@ function Step2Contact({ formData, updateField, errors }: StepProps) {
   };
 
   const handleZipInput = (value: string) => {
-    const filtered = value.replace(/[^0-9]/g, "").slice(0, 5);
+    const filtered = value.replace(/[^0-9]/g, "").slice(0, 4);
     updateField("residenceZip", filtered);
   };
 
@@ -1077,9 +1078,9 @@ function Step2Contact({ formData, updateField, errors }: StepProps) {
                 placeholder="e.g., 1210"
                 value={formData.residenceZip}
                 onChange={(e) => handleZipInput(e.target.value)}
-                maxLength={5}
+                maxLength={4}
               />
-              <p className="text-xs text-muted-foreground">5 digits only</p>
+              <p className="text-xs text-muted-foreground">4 digits only</p>
             </FormField>
           </div>
         </div>
@@ -1305,7 +1306,7 @@ function Step4Education({ formData, updateField, errors }: StepProps) {
 
 // Step 5: Current Education
 function Step5Current({ formData, updateField, errors }: StepProps) {
-  const isOthersProgram = formData.program === "__others__";
+  const [isOthersMode, setIsOthersMode] = useState(false);
 
   const programs = useMemo(() => {
     if (formData.college && PROGRAMS_BY_COLLEGE[formData.college]) {
@@ -1314,17 +1315,23 @@ function Step5Current({ formData, updateField, errors }: StepProps) {
     return [];
   }, [formData.college]);
 
+  const isOthersProgram = isOthersMode;
+
   const handleCollegeChange = (college: string) => {
     updateField("college", college);
     // Reset program when college changes
     updateField("program", "");
+    setIsOthersMode(false);
   };
 
   const handleProgramChange = (program: string) => {
     if (program === "__others__") {
-      updateField("program", "__others__");
+      // Don't set program to __others__, just clear it so the user can type
+      updateField("program", "");
+      setIsOthersMode(true);
     } else {
       updateField("program", program);
+      setIsOthersMode(false);
     }
   };
 
@@ -1343,9 +1350,9 @@ function Step5Current({ formData, updateField, errors }: StepProps) {
       <div className="grid gap-4 sm:grid-cols-2">
         <FormField label="Student Number" error={errors.studentNumber} required>
           <Input
-            placeholder="e.g., 2024-00001"
+            placeholder="e.g., 2024-00001 or ABC-12345"
             value={formData.studentNumber}
-            onChange={(e) => updateField("studentNumber", e.target.value.replace(/[^\d-]/g, ""))}
+            onChange={(e) => updateField("studentNumber", e.target.value.replace(/[^a-zA-Z0-9\-]/g, ""))}
             maxLength={15}
           />
         </FormField>
@@ -1389,7 +1396,7 @@ function Step5Current({ formData, updateField, errors }: StepProps) {
             <Input
               placeholder="Enter your program name"
               className="mt-2"
-              value={formData.program === "__others__" ? "" : formData.program}
+              value={formData.program}
               onChange={(e) => updateField("program", e.target.value)}
             />
           )}
@@ -1904,8 +1911,71 @@ function Step10Documents({
   );
 }
 
-// Step 11: Review & Submit
-function Step11Review({
+// Step 11: Essay Questions
+function Step11Essays({ formData, updateField, errors }: StepProps) {
+  return (
+    <div className="space-y-6">
+      <p className="text-sm text-muted-foreground">
+        Please answer the following essay questions thoughtfully. Each answer should be at least 50 characters.
+      </p>
+
+      <FormField label="Why do you want to become a Student Assistant?" error={errors.essayWhyApply} required>
+        <Textarea
+          placeholder="Share your motivation for applying to the Student Assistant program..."
+          value={formData.essayWhyApply}
+          onChange={(e) => updateField("essayWhyApply", e.target.value)}
+          rows={5}
+          className="resize-none"
+        />
+        <p className="text-xs text-muted-foreground">
+          {formData.essayWhyApply.length < 50 ? `${50 - formData.essayWhyApply.length} more characters needed` : `${formData.essayWhyApply.length} characters (minimum met)`}
+        </p>
+      </FormField>
+
+      <FormField label="What are your goals as a Student Assistant?" error={errors.essayGoals} required>
+        <Textarea
+          placeholder="Describe what you hope to achieve and learn as a Student Assistant..."
+          value={formData.essayGoals}
+          onChange={(e) => updateField("essayGoals", e.target.value)}
+          rows={5}
+          className="resize-none"
+        />
+        <p className="text-xs text-muted-foreground">
+          {formData.essayGoals.length < 50 ? `${50 - formData.essayGoals.length} more characters needed` : `${formData.essayGoals.length} characters (minimum met)`}
+        </p>
+      </FormField>
+
+      <FormField label="What skills can you contribute to the SA program?" error={errors.essaySkills} required>
+        <Textarea
+          placeholder="Highlight the skills and abilities you can bring to the program and your assigned office..."
+          value={formData.essaySkills}
+          onChange={(e) => updateField("essaySkills", e.target.value)}
+          rows={5}
+          className="resize-none"
+        />
+        <p className="text-xs text-muted-foreground">
+          {formData.essaySkills.length < 50 ? `${50 - formData.essaySkills.length} more characters needed` : `${formData.essaySkills.length} characters (minimum met)`}
+        </p>
+      </FormField>
+
+      <FormField label="How do you plan to balance your academics and SA duties?" error={errors.essayChallenges} required>
+        <Textarea
+          placeholder="Explain your time management strategies and how you plan to handle both responsibilities..."
+          value={formData.essayChallenges}
+          onChange={(e) => updateField("essayChallenges", e.target.value)}
+          rows={5}
+          className="resize-none"
+        />
+        <p className="text-xs text-muted-foreground">
+          {formData.essayChallenges.length < 50 ? `${50 - formData.essayChallenges.length} more characters needed` : `${formData.essayChallenges.length} characters (minimum met)`}
+        </p>
+      </FormField>
+    </div>
+  );
+}
+
+// Step 12: Review & Submit
+function Step12Review({
   formData,
   updateField,
   errors,

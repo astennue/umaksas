@@ -495,14 +495,52 @@ export function ReviewSection({ data, onEditStep }: ReviewSectionProps) {
         </CardContent>
       </Card>
 
-      {/* Step 11: Email */}
+      {/* Step 11: Essays */}
+      <Card className="border-0 shadow-lg">
+        <CardHeader className="pb-3">
+          <SectionHeader
+            title="Essay Questions"
+            icon={<Pencil className="h-4 w-4 text-blue-700 dark:text-amber-500" />}
+            step={11}
+            onEdit={() => onEditStep(11)}
+          />
+        </CardHeader>
+        <CardContent className="space-y-3">
+          {data.essayWhyApply && (
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1">Why I Want to Apply</p>
+              <p className="text-sm whitespace-pre-wrap">{data.essayWhyApply}</p>
+            </div>
+          )}
+          {data.essayGoals && (
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1">My Goals</p>
+              <p className="text-sm whitespace-pre-wrap">{data.essayGoals}</p>
+            </div>
+          )}
+          {data.essaySkills && (
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1">Skills I Can Contribute</p>
+              <p className="text-sm whitespace-pre-wrap">{data.essaySkills}</p>
+            </div>
+          )}
+          {data.essayChallenges && (
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1">Balancing Academics & SA Duties</p>
+              <p className="text-sm whitespace-pre-wrap">{data.essayChallenges}</p>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Step 12: Email */}
       <Card className="border-0 shadow-lg">
         <CardHeader className="pb-3">
           <SectionHeader
             title="Contact Email"
             icon={<Mail className="h-4 w-4 text-blue-700 dark:text-amber-500" />}
-            step={11}
-            onEdit={() => onEditStep(11)}
+            step={12}
+            onEdit={() => onEditStep(12)}
           />
         </CardHeader>
         <CardContent>
