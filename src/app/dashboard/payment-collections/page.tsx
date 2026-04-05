@@ -955,7 +955,7 @@ export default function PaymentCollectionsPage() {
               </DialogDescription>
             </DialogHeader>
 
-            <div className="space-y-4 py-2">
+            <div className="space-y-5 py-2">
               <div className="space-y-2">
                 <Label htmlFor="col-title">Title *</Label>
                 <Input id="col-title" placeholder="e.g., Monthly SAS Fee - October 2024" value={formData.title} onChange={(e) => setFormData((p) => ({ ...p, title: e.target.value }))} />
@@ -966,7 +966,7 @@ export default function PaymentCollectionsPage() {
                 <Textarea id="col-desc" placeholder="Brief description..." value={formData.description} onChange={(e) => setFormData((p) => ({ ...p, description: e.target.value }))} rows={2} />
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="col-amount">Amount *</Label>
                   <div className="relative">

@@ -240,6 +240,15 @@ export const step12Schema = z.object({
   }),
 });
 
+// Step 13: E-Signature
+export const step13Schema = z.object({
+  signatureData: z.string().min(1, "Please draw your signature before submitting"),
+  printedName: z.string().min(1, "Printed name is required"),
+  signatureAgreeTerms: z.literal(true, {
+    message: "You must agree to the terms and conditions",
+  }),
+});
+
 // Full form schema
 export const applicationFormSchema = z.object({
   // Step 1: Personal Information
@@ -377,11 +386,18 @@ export const applicationFormSchema = z.object({
   agreeTerms: z.literal(true, {
     message: "You must agree to the terms and conditions",
   }),
+
+  // Step 13: E-Signature
+  signatureData: z.string().min(1, "Please draw your signature before submitting"),
+  printedName: z.string().min(1, "Printed name is required"),
+  signatureAgreeTerms: z.literal(true, {
+    message: "You must agree to the terms and conditions",
+  }),
 });
 
 export type ApplicationFormData = z.infer<typeof applicationFormSchema>;
 
-// Step schema map (0-indexed) — 12 steps
+// Step schema map (0-indexed) — 13 steps
 export const stepSchemaMap = {
   0: step1Schema,
   1: step2Schema,
@@ -395,6 +411,7 @@ export const stepSchemaMap = {
   9: step10Schema,
   10: step11Schema,
   11: step12Schema,
+  12: step13Schema,
 } as const;
 
 // Availability constants — 22 time slots × 5 days = 110 total
@@ -558,9 +575,14 @@ export const defaultFormValues: ApplicationFormData = {
   email: "",
   confirmAccurate: false as unknown as true,
   agreeTerms: false as unknown as true,
+
+  // Step 13: E-Signature
+  signatureData: "",
+  printedName: "",
+  signatureAgreeTerms: false as unknown as true,
 };
 
-// Step metadata for UI (12 steps)
+// Step metadata for UI (13 steps)
 export const STEPS = [
   { id: 1, title: "Personal Info", shortTitle: "Personal", description: "Basic personal details", icon: "User" },
   { id: 2, title: "Contact", shortTitle: "Contact", description: "Phone & address", icon: "Phone" },
@@ -573,7 +595,8 @@ export const STEPS = [
   { id: 9, title: "References", shortTitle: "References", description: "Character references", icon: "UserCheck" },
   { id: 10, title: "Documents", shortTitle: "Documents", description: "Upload requirements", icon: "FileUp" },
   { id: 11, title: "Essays", shortTitle: "Essays", description: "Essay questions", icon: "Pencil" },
-  { id: 12, title: "Submit", shortTitle: "Submit", description: "Review & submit", icon: "CheckCircle" },
+  { id: 12, title: "Review", shortTitle: "Review", description: "Review & confirm", icon: "CheckCircle" },
+  { id: 13, title: "Signature", shortTitle: "Signature", description: "E-sign & submit", icon: "PenTool" },
 ] as const;
 
 // Field keys per step for partial form data extraction
@@ -600,6 +623,7 @@ export const stepFields: Record<number, string[]> = {
   9: ["photo", "resume", "gradeReport"],
   10: ["essayWhyApply", "essayGoals", "essaySkills", "essayChallenges"],
   11: ["email", "confirmAccurate", "agreeTerms"],
+  12: ["signatureData", "printedName", "signatureAgreeTerms"],
 };
 
 // UMAK Colleges (authoritative source: src/lib/colleges.ts)

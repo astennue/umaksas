@@ -475,7 +475,7 @@ export default function ProfilePage() {
       {/* Profile Header Card */}
       <Card className="overflow-hidden shadow-lg">
         {/* Banner */}
-        <div className="h-28 sm:h-32 bg-gradient-to-r from-[#1e3a8a] via-[#1e3a8a] to-[#0f2567] relative">
+        <div className="h-32 sm:h-36 bg-gradient-to-r from-[#0f2567] via-[#1e3a8a] to-[#1e3a8a] relative overflow-hidden">
           {/* Decorative elements */}
           <div className="absolute inset-0 opacity-10">
             <div className="absolute top-4 left-8 h-16 w-16 rounded-full bg-white/20" />
@@ -486,8 +486,8 @@ export default function ProfilePage() {
           <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-[#C5A000] to-transparent" />
         </div>
 
-        <CardContent className="p-6">
-          <div className="flex flex-col items-center sm:flex-row sm:items-end gap-4 -mt-14 sm:-mt-12">
+        <CardContent className="px-4 sm:px-6 pt-4 sm:pt-2 pb-6">
+          <div className="flex flex-col items-center sm:flex-row sm:items-end gap-4 -mt-16 sm:-mt-14">
             {/* Avatar */}
             <div className="relative group">
               <div className="h-24 w-24 sm:h-28 sm:w-28 rounded-full border-4 border-white dark:border-slate-800 shadow-lg overflow-hidden bg-[#1e3a8a]/10">

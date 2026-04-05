@@ -22,6 +22,7 @@ import {
   Search,
   FileEdit,
   GraduationCap,
+  PenLine,
 } from "lucide-react";
 import { PublicLayout } from "@/components/public/public-layout";
 import { StepIndicator } from "@/components/apply/step-indicator";
@@ -29,6 +30,7 @@ import { FileUpload } from "@/components/apply/file-upload";
 import { ImageCropDialog } from "@/components/apply/image-crop-dialog";
 import { ReviewSection } from "@/components/apply/review-section";
 import { AvailabilityGrid } from "@/components/apply/availability-grid";
+import { SignaturePad, SignaturePadRef } from "@/components/apply/signature-pad";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -79,7 +81,7 @@ import { cn } from "@/lib/utils";
 
 const DRAFT_KEY = "umak-sas-draft";
 const AUTO_SAVE_INTERVAL = 30000;
-const TOTAL_STEPS = 12;
+const TOTAL_STEPS = 13;
 
 const slideVariants = {
   enter: (direction: number) => ({
@@ -122,6 +124,7 @@ export default function ApplyPage() {
   const [pendingDraft, setPendingDraft] = useState<any>(null);
   const [showLeaveDialog, setShowLeaveDialog] = useState(false);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const signaturePadRef = useRef<SignaturePadRef>(null);
 
   // Track if user has started / has unsaved changes
   const hasStarted = useMemo(() => {
@@ -387,6 +390,13 @@ export default function ApplyPage() {
       return;
     }
 
+    // Capture signature data from the canvas pad
+    const sigData = signaturePadRef.current?.getSignatureData();
+    if (!sigData) {
+      toast.error("Please draw your signature before submitting.");
+      return;
+    }
+
     setIsSubmitting(true);
     try {
       const payload = {
@@ -425,6 +435,20 @@ export default function ApplyPage() {
           throw new Error(data.error || "Failed to create application");
         }
         setApplicationId(data.id);
+      }
+
+      // Save the digital signature
+      const sigResponse = await fetch(`/api/applications/${data.id}/signature`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          signatureData: sigData,
+          printedName: formData.printedName,
+        }),
+      });
+      const sigResult = await sigResponse.json();
+      if (!sigResponse.ok) {
+        throw new Error(sigResult.error || "Failed to save signature");
       }
 
       // Submit the application
@@ -576,7 +600,7 @@ export default function ApplyPage() {
                   </div>
                 </div>
                 <p className="text-sm text-muted-foreground mb-6 flex-1">
-                  Begin your application to the UMAK Student Assistant Program. The form consists of 12 steps and typically takes 15-20 minutes to complete.
+                  Begin your application to the UMAK Student Assistant Program. The form consists of 13 steps and typically takes 15-20 minutes to complete.
                 </p>
                 <Button
                   onClick={() => setShowForm(true)}
@@ -760,7 +784,8 @@ export default function ApplyPage() {
                   {currentStep === 9 && <Step9References formData={formData} updateField={updateField} errors={errors} />}
                   {currentStep === 10 && <Step10Documents formData={formData} updateField={updateField} errors={errors} handlePhotoSelect={handlePhotoSelect} />}
                   {currentStep === 11 && <Step11Essays formData={formData} updateField={updateField} errors={errors} />}
-                  {currentStep === 12 && <Step12Review formData={formData} updateField={updateField} errors={errors} goToStep={goToStep} onSubmitClick={() => setShowSubmitConfirmDialog(true)} />}
+                  {currentStep === 12 && <Step12Review formData={formData} updateField={updateField} errors={errors} goToStep={goToStep} />}
+                  {currentStep === 13 && <Step13Signature formData={formData} updateField={updateField} errors={errors} signaturePadRef={signaturePadRef} onSubmitClick={() => setShowSubmitConfirmDialog(true)} />}
                 </CardContent>
               </Card>
             </motion.div>
@@ -2184,6 +2209,144 @@ function Step12Review({
             </Label>
             {errors.agreeTerms && (
               <p className="mt-1 text-sm font-medium text-destructive">{errors.agreeTerms}</p>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Step 13: E-Signature
+function Step13Signature({
+  formData,
+  updateField,
+  errors,
+  signaturePadRef,
+  onSubmitClick,
+}: StepProps & {
+  signaturePadRef: React.RefObject<SignaturePadRef | null>;
+  onSubmitClick: () => void;
+}) {
+  // Auto-fill printed name from form data
+  const printedName = useMemo(() => {
+    const parts = [formData.firstName, formData.middleName, formData.lastName].filter(Boolean);
+    if (formData.suffix && formData.suffix !== "None") {
+      parts.push(formData.suffix);
+    }
+    return parts.join(" ");
+  }, [formData.firstName, formData.middleName, formData.lastName, formData.suffix]);
+
+  // Sync auto-filled printed name with form data
+  useEffect(() => {
+    if (printedName && !formData.printedName) {
+      updateField("printedName", printedName);
+    }
+  }, [printedName, formData.printedName, updateField]);
+
+  return (
+    <div className="space-y-6">
+      {/* Instructions */}
+      <div className="rounded-lg border border-blue-200 bg-blue-50 p-4 dark:border-blue-800 dark:bg-blue-950/30">
+        <div className="flex items-start gap-3">
+          <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-blue-100 dark:bg-blue-900/40">
+            <PenLine className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+          </div>
+          <div className="text-sm text-muted-foreground">
+            <p className="font-semibold text-blue-800 dark:text-blue-400">
+              E-Signature Required
+            </p>
+            <p className="mt-1">
+              Please draw your signature in the box below using your finger (mobile) or mouse (desktop).
+              This electronic signature confirms the accuracy of all information provided in your application.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* Signature Pad */}
+      <div className="space-y-3">
+        <SignaturePad
+          ref={signaturePadRef}
+          height={200}
+          penColor="#1a1a2e"
+          lineWidth={2.5}
+          onSignedChange={(signed) => {
+            if (signed) {
+              const data = signaturePadRef.current?.getSignatureData();
+              if (data) {
+                updateField("signatureData", data);
+              }
+            } else {
+              updateField("signatureData", "");
+            }
+          }}
+        />
+        {errors.signatureData && (
+          <p className="text-sm font-medium text-destructive">{errors.signatureData}</p>
+        )}
+      </div>
+
+      {/* Signature Preview */}
+      {formData.signatureData && (
+        <div className="space-y-2">
+          <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+            Signature Preview
+          </p>
+          <div className="relative rounded-lg border bg-white p-4 dark:bg-gray-900">
+            <div className="flex flex-col items-center">
+              {/* Signature Image */}
+              <div className="w-full max-w-sm">
+                {/* eslint-disable-next-line @next/next-img */}
+                <img
+                  src={formData.signatureData}
+                  alt="Your signature"
+                  className="h-auto w-full object-contain"
+                  style={{ maxHeight: 120 }}
+                />
+              </div>
+              {/* Printed Name Line */}
+              <div className="mt-3 w-full max-w-sm border-t border-gray-300 pt-2">
+                <p className="text-xs text-muted-foreground">Printed Name</p>
+                <p className="text-sm font-semibold text-gray-800 dark:text-gray-200 italic">
+                  {formData.printedName || printedName}
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Printed Name Field */}
+      <FormField label="Printed Name" error={errors.printedName} required>
+        <Input
+          placeholder="Your full name"
+          value={formData.printedName}
+          onChange={(e) => updateField("printedName", e.target.value)}
+        />
+        <p className="text-xs text-muted-foreground">
+          This will appear below your signature on the application document.
+        </p>
+      </FormField>
+
+      {/* Terms Checkbox */}
+      <div className="rounded-lg border p-5 space-y-4">
+        <div className="flex items-start gap-4">
+          <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded border border-2">
+            <Checkbox
+              id="signatureAgreeTerms"
+              checked={!!formData.signatureAgreeTerms}
+              onCheckedChange={(v) => updateField("signatureAgreeTerms", (v === true) as true)}
+              className="h-5 w-5"
+            />
+          </div>
+          <div>
+            <Label htmlFor="signatureAgreeTerms" className="text-sm font-semibold leading-relaxed cursor-pointer">
+              I agree to the terms and conditions of the Student Assistant Program and confirm that the above
+              electronic signature is my own and was executed voluntarily.
+            </Label>
+            {errors.signatureAgreeTerms && (
+              <p className="mt-1 text-sm font-medium text-destructive">{errors.signatureAgreeTerms}</p>
             )}
           </div>
         </div>

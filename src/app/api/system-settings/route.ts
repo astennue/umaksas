@@ -60,9 +60,11 @@ export async function PUT(request: NextRequest) {
     }
 
     const userRole = (session.user as { role?: string })?.role;
+    const officerPosition = (session.user as { officerPosition?: string | null })?.officerPosition || null;
+    const isPresident = userRole === "OFFICER" && officerPosition === "PRESIDENT";
 
-    // Check role - only SUPER_ADMIN, ADVISER, and OFFICER can modify settings
-    if (userRole !== "SUPER_ADMIN" && userRole !== "ADVISER" && userRole !== "OFFICER") {
+    // Check role - only SUPER_ADMIN, ADVISER, and OFFICER(President) can modify settings
+    if (userRole !== "SUPER_ADMIN" && userRole !== "ADVISER" && !isPresident) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
@@ -104,16 +106,7 @@ export async function PUT(request: NextRequest) {
       paymentFields.forEach(field => { delete body[field]; });
     }
 
-    // OFFICER can only modify payment and season fields — silently ignore the rest
-    if (userRole === "OFFICER") {
-      const allowedFields = ["paymentCollectionEnabled", "gcashQrUrl", "gcashNumber", "paymentInstructions", "applicationOpen", "renewalOpen"];
-      const allBodyFields = Object.keys(body);
-      allBodyFields.forEach(field => {
-        if (!allowedFields.includes(field)) {
-          delete body[field];
-        }
-      });
-    }
+    // PRESIDENT (OFFICER role) has full access, no field restrictions needed
     const {
       siteName,
       siteDescription,

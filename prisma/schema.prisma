@@ -802,6 +802,7 @@ model DigitalSignature {
 
   // Signature Data
   signatureData     String  
+  printedName       String?
 
   // Timestamps
   createdAt         DateTime @default(now())
@@ -1454,6 +1455,88 @@ model OrgChart {
   updatedAt         DateTime @updatedAt
 
   @@map("org_chart")
+}
+
+// ============================================
+// JOURNEY EVENTS (CMS)
+// ============================================
+
+model JourneyEvent {
+  id                String   @id @default(cuid())
+
+  // Event Details
+  year              String
+  title             String
+  description       String?
+
+  // Ordering
+  orderIndex        Int      @default(0)
+
+  // Status
+  isActive          Boolean  @default(true)
+
+  // Timestamps
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@map("journey_events")
+}
+
+// ============================================
+// EVALUATION RUBRIC CMS
+// ============================================
+
+model EvaluationRubricCategory {
+  id                String   @id @default(cuid())
+
+  // Category Details
+  name              String
+  description       String?
+
+  // Weight (percentage, must total 100% across all categories)
+  weight            Float    @default(25)
+
+  // Scoring Scale (1-5 or 1-10)
+  maxScore          Int      @default(5)
+
+  // Ordering
+  orderIndex        Int      @default(0)
+
+  // Status
+  isActive          Boolean  @default(true)
+
+  // Timestamps
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  // Relations
+  questions         EvaluationRubricQuestion[]
+
+  @@map("evaluation_rubric_categories")
+}
+
+model EvaluationRubricQuestion {
+  id                String   @id @default(cuid())
+
+  // Parent Category
+  categoryId        String
+  category          EvaluationRubricCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  // Question Details
+  question           String
+  description       String?
+
+  // Ordering
+  orderIndex        Int      @default(0)
+
+  // Status
+  isActive          Boolean  @default(true)
+
+  // Timestamps
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@map("evaluation_rubric_questions")
 }
 
 // ============================================

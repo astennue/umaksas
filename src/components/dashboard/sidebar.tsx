@@ -39,6 +39,8 @@ import {
   RefreshCw,
   UserCog,
   Network,
+  History,
+  FileEdit,
   type LucideIcon,
 } from "lucide-react";
 import { useState } from "react";
@@ -103,11 +105,20 @@ const navItems: NavItem[] = [
   // Org Chart CMS - Super Admin, Adviser, President
   { label: "Org Chart", href: "/dashboard/org-chart", icon: Network, roles: ["SUPER_ADMIN", "ADVISER", "OFFICER"], presidentOnly: true },
 
+  // Our Journey CMS - Super Admin, Adviser, President
+  { label: "Our Journey", href: "/dashboard/journey", icon: History, roles: ["SUPER_ADMIN", "ADVISER", "OFFICER"], presidentOnly: true },
+
   // Manage Users - Super Admin, Adviser, President
   { label: "Manage Users", href: "/dashboard/users", icon: UserCog, roles: ["SUPER_ADMIN", "ADVISER", "OFFICER"], presidentOnly: true },
 
   // CMS / Content - Super Admin, Adviser, President only
   { label: "CMS / Content", href: "/dashboard/content", icon: PenSquare, roles: ["SUPER_ADMIN", "ADVISER", "OFFICER"], presidentOnly: true },
+
+  // Application CMS - Super Admin, Adviser, President only
+  { label: "Application CMS", href: "/dashboard/application-cms", icon: FileEdit, roles: ["SUPER_ADMIN", "ADVISER", "OFFICER"], presidentOnly: true },
+
+  // Evaluation CMS - Super Admin, Adviser, President only
+  { label: "Evaluation CMS", href: "/dashboard/evaluation-cms", icon: ClipboardCheck, roles: ["SUPER_ADMIN", "ADVISER", "OFFICER"], presidentOnly: true },
 
   // Renewals Management - Super Admin, Adviser, Officer
   { label: "Renewals", href: "/dashboard/renewals", icon: RefreshCw, roles: ["SUPER_ADMIN", "ADVISER", "OFFICER"] },
@@ -153,11 +164,11 @@ function SidebarNav({ collapsed, onNavigate }: { collapsed: boolean; onNavigate?
   });
 
   return (
-    <div className="flex h-full flex-col">
+    <div className="flex h-full flex-col min-h-0">
       {/* Brand */}
       <div
         className={cn(
-          "flex items-center gap-3 border-b border-white/10 px-4 py-5",
+          "flex items-center gap-3 border-b border-white/10 px-4 py-5 shrink-0",
           collapsed && "justify-center px-2"
         )}
       >
@@ -179,7 +190,7 @@ function SidebarNav({ collapsed, onNavigate }: { collapsed: boolean; onNavigate?
       </div>
 
       {/* Navigation */}
-      <ScrollArea className="flex-1 px-3 py-4">
+      <ScrollArea className="flex-1 min-h-0 px-3 py-4">
         <nav className="flex flex-col gap-1">
           {filteredItems.map((item) => {
             const isActive =
@@ -214,8 +225,8 @@ function SidebarNav({ collapsed, onNavigate }: { collapsed: boolean; onNavigate?
         </nav>
       </ScrollArea>
 
-      {/* Footer */}
-      <div className="border-t border-white/10 p-3">
+      {/* Footer - always visible */}
+      <div className="border-t border-white/10 p-3 shrink-0">
         {!collapsed && session?.user && (
           <div className="mb-3 rounded-lg bg-white/5 px-3 py-2.5">
             <div className="flex items-center gap-2.5">

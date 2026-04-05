@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { OnDutyIndicator } from "./on-duty-indicator";
 import { getCollegeDisplay } from "@/lib/colleges";
+import { cn } from "@/lib/utils";
 
 export interface SACardData {
   id: string;
@@ -148,8 +149,24 @@ export function SACard({ sa, onClick, isAuthenticated, onViewFullProfile }: SACa
         {/* Separator */}
         <div className="border-t border-gray-100 dark:border-gray-700/50 my-4" />
 
-        {/* Badges row: Academic Year + Semester */}
+        {/* Badges row: Duty Status + Academic Year + Semester */}
         <div className="flex items-center justify-center gap-2 flex-wrap">
+          {/* Duty status badge - always shown */}
+          <Badge
+            variant="secondary"
+            className={cn(
+              "text-xs font-medium px-3 py-1",
+              sa.isOnDuty
+                ? "bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-300 border-green-200 dark:border-green-800/50"
+                : "bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-700"
+            )}
+          >
+            <span className={cn(
+              "w-1.5 h-1.5 rounded-full mr-1.5",
+              sa.isOnDuty ? "bg-green-500 animate-pulse" : "bg-slate-400"
+            )} />
+            {sa.isOnDuty ? "On Duty" : "Off Duty"}
+          </Badge>
           {sa.academicYear && (
             <Badge
               variant="secondary"
@@ -169,16 +186,6 @@ export function SACard({ sa, onClick, isAuthenticated, onViewFullProfile }: SACa
             </Badge>
           )}
         </div>
-
-        {/* On Duty badge */}
-        {sa.isOnDuty && (
-          <div className="mt-3 flex justify-center">
-            <Badge className="bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-300 border-green-200 dark:border-green-800/50 text-xs font-medium px-3 py-1">
-              <span className="w-1.5 h-1.5 rounded-full bg-green-500 mr-1.5 animate-pulse" />
-              On Duty
-            </Badge>
-          </div>
-        )}
 
         {/* View Full Profile button (authenticated only) */}
         {isAuthenticated && (

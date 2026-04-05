@@ -82,14 +82,72 @@ function SectionHeader({
 /* ═══════════════════════════════════════════════════════════════════════════
    ABOUT PAGE
    ═══════════════════════════════════════════════════════════════════════════ */
+/* ───────────────────────── default journey events (fallback) ───────────────────────── */
+const defaultJourneyEvents = [
+  {
+    year: "2002",
+    title: "Program Inception",
+    description:
+      "The University of Makati established the Student Assistant Program to support underprivileged but deserving students with work opportunities within the university.",
+  },
+  {
+    year: "2008",
+    title: "Campus-Wide Expansion",
+    description:
+      "The program expanded to deploy student assistants across all university colleges and administrative offices.",
+  },
+  {
+    year: "2014",
+    title: "Policy Reforms",
+    description:
+      "Comprehensive policies and guidelines were formalized, including attendance tracking, evaluation criteria, and benefit structures.",
+  },
+  {
+    year: "2018",
+    title: "Digital Transition",
+    description:
+      "The system transitioned from manual record-keeping to digital processes, improving efficiency and accountability.",
+  },
+  {
+    year: "2022",
+    title: "Unified Management",
+    description:
+      "A unified management approach was adopted, standardizing operations across all offices and departments.",
+  },
+  {
+    year: "2025",
+    title: "Full System Launch",
+    description:
+      "The comprehensive UMak SAS digital platform launched with real-time attendance, schedule management, evaluations, and analytics.",
+  },
+];
+
 export default function AboutPage() {
   const [stats, setStats] = useState({ saCount: 58, officeCount: 41, collegeCount: 12 });
+  const [journeyEvents, setJourneyEvents] = useState(defaultJourneyEvents);
 
   useEffect(() => {
     fetch("/api/public-stats")
       .then((res) => res.json())
       .then((data) => setStats(data))
       .catch(() => {/* use defaults */});
+  }, []);
+
+  useEffect(() => {
+    fetch("/api/journey-events")
+      .then((res) => res.json())
+      .then((data) => {
+        if (Array.isArray(data) && data.length > 0) {
+          setJourneyEvents(
+            data.map((e: { year: string; title: string; description?: string }) => ({
+              year: e.year || "",
+              title: e.title || "",
+              description: e.description || "",
+            }))
+          );
+        }
+      })
+      .catch(() => {/* keep defaults */});
   }, []);
 
   return (
@@ -373,44 +431,7 @@ export default function AboutPage() {
             <div className="absolute left-[19px] top-2 bottom-2 w-0.5 bg-gradient-to-b from-yellow-500/40 via-yellow-500/20 to-yellow-500/40 md:left-1/2 md:-translate-x-px" />
 
             {/* Timeline events */}
-            {[
-              {
-                year: "2002",
-                title: "Program Inception",
-                description:
-                  "The University of Makati established the Student Assistant Program to support underprivileged but deserving students with work opportunities within the university.",
-              },
-              {
-                year: "2008",
-                title: "Campus-Wide Expansion",
-                description:
-                  "The program expanded to deploy student assistants across all university colleges and administrative offices.",
-              },
-              {
-                year: "2014",
-                title: "Policy Reforms",
-                description:
-                  "Comprehensive policies and guidelines were formalized, including attendance tracking, evaluation criteria, and benefit structures.",
-              },
-              {
-                year: "2018",
-                title: "Digital Transition",
-                description:
-                  "The system transitioned from manual record-keeping to digital processes, improving efficiency and accountability.",
-              },
-              {
-                year: "2022",
-                title: "Unified Management",
-                description:
-                  "A unified management approach was adopted, standardizing operations across all offices and departments.",
-              },
-              {
-                year: "2025",
-                title: "Full System Launch",
-                description:
-                  "The comprehensive UMak SAS digital platform launched with real-time attendance, schedule management, evaluations, and analytics.",
-              },
-            ].map((event, i) => (
+            {journeyEvents.map((event, i) => (
               <SectionReveal key={event.year} delay={0.1 + i * 0.12}>
                 <div className="relative mb-10">
                   {/* Timeline node — yellow dot with glow */}
