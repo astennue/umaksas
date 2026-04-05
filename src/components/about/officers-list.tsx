@@ -168,12 +168,20 @@ export function OfficersList({ officers, open, onOpenChange }: OfficersListProps
                       <div className="flex justify-center mb-3">
                         <div className="relative">
                           <Avatar className="w-14 h-14 border-2 shadow-sm" style={{ borderColor: `${colors.light}30` }}>
-                            <AvatarFallback
-                              className="text-base font-bold text-white"
-                              style={{ backgroundColor: colors.bg }}
-                            >
-                              {getInitials(officer.user.fullName)}
-                            </AvatarFallback>
+                            {officer.user.photoUrl ? (
+                              <img
+                                src={officer.user.photoUrl}
+                                alt={officer.user.fullName}
+                                className="w-full h-full rounded-full object-cover"
+                              />
+                            ) : (
+                              <AvatarFallback
+                                className="text-base font-bold text-white"
+                                style={{ backgroundColor: colors.bg }}
+                              >
+                                {getInitials(officer.user.fullName)}
+                              </AvatarFallback>
+                            )}
                           </Avatar>
                           <div
                             className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full flex items-center justify-center text-white shadow-sm"

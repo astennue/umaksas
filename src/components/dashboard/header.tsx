@@ -9,7 +9,7 @@ import { NotificationPopup } from "@/components/notifications/notification-popup
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -28,6 +28,7 @@ import {
   Shield,
 } from "lucide-react";
 import Link from "next/link";
+import { useUserPhoto } from "@/hooks/use-user-photo";
 
 const roleLabels: Record<string, string> = {
   SUPER_ADMIN: "Super Administrator",
@@ -66,6 +67,7 @@ export function DashboardHeader() {
   const pathname = usePathname();
   const { setTheme, resolvedTheme } = useTheme();
   const { unreadCount } = useNotifications({ enabled: true, unreadOnly: true, limit: 1 });
+  const userPhotoUrl = useUserPhoto();
   const user = session?.user as {
     role?: string;
     firstName?: string;
@@ -147,6 +149,9 @@ export function DashboardHeader() {
                   className="flex items-center gap-2 h-9 px-2 hover:bg-gray-100 dark:hover:bg-gray-800"
                 >
                   <Avatar className="h-7 w-7">
+                    {userPhotoUrl && (
+                      <AvatarImage src={userPhotoUrl} alt={user?.name || "User"} />
+                    )}
                     <AvatarFallback className="bg-blue-700 text-white text-xs font-semibold">
                       {initials}
                     </AvatarFallback>

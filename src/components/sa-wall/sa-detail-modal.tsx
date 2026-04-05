@@ -77,8 +77,18 @@ export function SADetailModal({
                 {/* Avatar */}
                 <div className="flex justify-center mb-3 relative z-10">
                   <div className="relative">
-                    <div className="h-[120px] w-[120px] rounded-full bg-gradient-to-br from-white/20 to-white/5 border-3 border-white/30 flex items-center justify-center text-white font-bold text-3xl shadow-lg">
-                      {initials}
+                    <div className="h-[120px] w-[120px] rounded-full overflow-hidden border-3 border-white/30 flex items-center justify-center shadow-lg">
+                      {sa.photoUrl ? (
+                        <img
+                          src={sa.photoUrl}
+                          alt={fullName}
+                          className="h-full w-full object-cover"
+                        />
+                      ) : (
+                        <div className="h-full w-full bg-gradient-to-br from-white/20 to-white/5 flex items-center justify-center text-white font-bold text-3xl">
+                          {initials}
+                        </div>
+                      )}
                     </div>
                     {/* On duty indicator */}
                     {sa.isOnDuty && (

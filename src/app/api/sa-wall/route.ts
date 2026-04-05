@@ -92,6 +92,7 @@ export async function GET(request: NextRequest) {
             email: true,
             phone: true,
             role: true,
+            photoUrl: true,
           },
         },
         office: {
@@ -138,6 +139,7 @@ export async function GET(request: NextRequest) {
         email: true,
         phone: true,
         role: true,
+        photoUrl: true,
         officerProfile: {
           select: {
             position: true,
@@ -177,6 +179,7 @@ export async function GET(request: NextRequest) {
       umakEmail: profile.user.email || null,
       isOfficer: profile.user.role === UserRole.OFFICER,
       officerPosition: profile.user.role === UserRole.OFFICER ? "Student Assistant" : null,
+      photoUrl: profile.user.photoUrl || null,
     });
 
     const formatOfficer = (officer: typeof officersWithoutProfiles[0]) => ({
@@ -207,6 +210,7 @@ export async function GET(request: NextRequest) {
       umakEmail: officer.email || null,
       isOfficer: true,
       officerPosition: officer.officerProfile?.position || null,
+      photoUrl: officer.photoUrl || null,
     });
 
     const allResults = [

@@ -55,6 +55,7 @@ import { format } from "date-fns";
 import Link from "next/link";
 import { useConfirm } from "@/hooks/use-confirm";
 import { SavingIndicator } from "@/components/ui/saving-indicator";
+import { refreshUserPhoto } from "@/hooks/use-user-photo";
 
 // Types
 interface SAProfileData {
@@ -266,6 +267,7 @@ export default function ProfilePage() {
       }
 
       toast.success("Profile photo updated successfully");
+      refreshUserPhoto();
       fetchProfile();
     } catch (error: unknown) {
       toast.error(error instanceof Error ? error.message : "Failed to upload photo", { duration: 5000 });
@@ -281,6 +283,7 @@ export default function ProfilePage() {
       const res = await fetch("/api/user/photo", { method: "DELETE" });
       if (!res.ok) throw new Error("Failed to remove photo");
       toast.success("Profile photo removed");
+      refreshUserPhoto(null);
       setRemovePhotoDialogOpen(false);
       fetchProfile();
     } catch (error: unknown) {

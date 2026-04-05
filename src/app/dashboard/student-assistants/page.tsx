@@ -352,9 +352,17 @@ export default function StudentAssistantsPage() {
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex items-center gap-3 min-w-0">
                       {/* Avatar */}
-                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#1e3a8a]/10 text-[#1e3a8a] text-sm font-semibold">
-                        {sa.firstName.charAt(0)}{sa.lastName.charAt(0)}
-                      </div>
+                      {sa.photoUrl ? (
+                        <img
+                          src={sa.photoUrl}
+                          alt={fullName}
+                          className="flex h-10 w-10 shrink-0 rounded-full object-cover"
+                        />
+                      ) : (
+                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#1e3a8a]/10 text-[#1e3a8a] text-sm font-semibold">
+                          {sa.firstName.charAt(0)}{sa.lastName.charAt(0)}
+                        </div>
+                      )}
                       <div className="min-w-0">
                         <h3 className="text-sm font-semibold truncate">{fullName}</h3>
                         <p className="text-xs text-muted-foreground truncate">{sa.email}</p>
@@ -478,9 +486,17 @@ export default function StudentAssistantsPage() {
           {detailSA && (
             <div className="space-y-4">
               <div className="flex items-center gap-4 min-w-0">
-                <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-[#1e3a8a]/10 text-[#1e3a8a] text-xl font-bold">
-                  {detailSA.firstName.charAt(0)}{detailSA.lastName.charAt(0)}
-                </div>
+                {detailSA.photoUrl ? (
+                  <img
+                    src={detailSA.photoUrl}
+                    alt={`${detailSA.firstName} ${detailSA.lastName}`}
+                    className="flex h-16 w-16 shrink-0 rounded-full object-cover"
+                  />
+                ) : (
+                  <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-[#1e3a8a]/10 text-[#1e3a8a] text-xl font-bold">
+                    {detailSA.firstName.charAt(0)}{detailSA.lastName.charAt(0)}
+                  </div>
+                )}
                 <div className="min-w-0">
                   <h3 className="text-lg font-semibold break-words">
                     {`${detailSA.firstName} ${detailSA.lastName}`.trim()}

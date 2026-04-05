@@ -41,6 +41,7 @@ import {
 import { useState } from "react";
 import { signOut } from "next-auth/react";
 import { useSidebarStore } from "@/stores/sidebar-store";
+import { useUserPhoto } from "@/hooks/use-user-photo";
 
 interface NavItem {
   label: string;
@@ -119,6 +120,7 @@ const roleLabels: Record<string, string> = {
 function SidebarNav({ collapsed, onNavigate }: { collapsed: boolean; onNavigate?: () => void }) {
   const pathname = usePathname();
   const { data: session } = useSession();
+  const userPhotoUrl = useUserPhoto();
   const userRole = (session?.user as { role?: string })?.role || "";
 
   const filteredItems = navItems.filter(
@@ -191,12 +193,27 @@ function SidebarNav({ collapsed, onNavigate }: { collapsed: boolean; onNavigate?
       <div className="border-t border-white/10 p-3">
         {!collapsed && session?.user && (
           <div className="mb-3 rounded-lg bg-white/5 px-3 py-2.5">
-            <p className="text-xs font-medium text-white truncate">
-              {userRole === "HRMO" ? "HRMO" : session.user.name}
-            </p>
-            <p className="text-[10px] text-blue-300/60 truncate mt-0.5">
-              {roleLabels[userRole] || userRole}
-            </p>
+            <div className="flex items-center gap-2.5">
+              {userPhotoUrl ? (
+                <img
+                  src={userPhotoUrl}
+                  alt={session.user.name || "User"}
+                  className="h-8 w-8 rounded-full object-cover shrink-0 ring-2 ring-white/10"
+                />
+              ) : (
+                <div className="h-8 w-8 rounded-full bg-white/10 flex items-center justify-center shrink-0 text-white text-xs font-bold">
+                  {((session.user as { firstName?: string })?.firstName?.[0] || (session.user.name?.[0] || "U")).toUpperCase()}
+                </div>
+              )}
+              <div className="min-w-0 flex-1">
+                <p className="text-xs font-medium text-white truncate">
+                  {userRole === "HRMO" ? "HRMO" : session.user.name}
+                </p>
+                <p className="text-[10px] text-blue-300/60 truncate">
+                  {roleLabels[userRole] || userRole}
+                </p>
+              </div>
+            </div>
           </div>
         )}
         <button

@@ -40,6 +40,7 @@ export interface SACardData {
   contactNumber?: string | null;
   personalEmail?: string | null;
   umakEmail?: string | null;
+  photoUrl?: string | null;
 }
 
 interface SACardProps {
@@ -85,9 +86,17 @@ export function SACard({ sa, onClick, isAuthenticated }: SACardProps) {
         {/* Avatar */}
         <div className="flex flex-col items-center text-center">
           <div className="relative mb-3">
-            <div className="h-20 w-20 rounded-full bg-gradient-to-br from-blue-700 to-blue-900 flex items-center justify-center text-white font-bold text-xl shadow-md ring-4 ring-blue-100 dark:ring-blue-900/50 group-hover:ring-yellow-200 dark:group-hover:ring-yellow-800/50 transition-all duration-300">
-              {initials}
-            </div>
+            {sa.photoUrl ? (
+              <img
+                src={sa.photoUrl}
+                alt={fullName}
+                className="h-20 w-20 rounded-full object-cover shadow-md ring-4 ring-blue-100 dark:ring-blue-900/50 group-hover:ring-yellow-200 dark:group-hover:ring-yellow-800/50 transition-all duration-300"
+              />
+            ) : (
+              <div className="h-20 w-20 rounded-full bg-gradient-to-br from-blue-700 to-blue-900 flex items-center justify-center text-white font-bold text-xl shadow-md ring-4 ring-blue-100 dark:ring-blue-900/50 group-hover:ring-yellow-200 dark:group-hover:ring-yellow-800/50 transition-all duration-300">
+                {initials}
+              </div>
+            )}
             <OnDutyIndicator isOnDuty={sa.isOnDuty} />
           </div>
 
