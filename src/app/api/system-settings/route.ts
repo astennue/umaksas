@@ -3,6 +3,9 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { db } from "@/lib/db";
 
+export const maxDuration = 60;
+export const dynamic = "force-dynamic";
+
 // GET /api/system-settings - Public-safe fields
 export async function GET() {
   try {
@@ -63,7 +66,37 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    const body = await request.json();
+    // Accept either JSON or FormData (FormData avoids body size limits for large base64 payloads)
+    let body: Record<string, unknown>;
+    const contentType = request.headers.get("content-type") || "";
+
+    if (contentType.includes("multipart/form-data")) {
+      const formData = await request.formData();
+      body = {};
+
+      // Extract all scalar fields from FormData
+      for (const [key, value] of formData.entries()) {
+        if (value instanceof File) {
+          // If a file is sent for gcashQrUrl, convert to base64 data URL
+          if (key === "gcashQr") {
+            const arrayBuffer = await value.arrayBuffer();
+            const base64 = Buffer.from(arrayBuffer).toString("base64");
+            body["gcashQrUrl"] = `data:${value.type};base64,${base64}`;
+          }
+          // Ignore other file fields
+        } else {
+          // Parse booleans and numbers from string values
+          const strVal = value as string;
+          if (strVal === "true") body[key] = true;
+          else if (strVal === "false") body[key] = false;
+          else if (strVal !== "" && !isNaN(Number(strVal))) body[key] = Number(strVal);
+          else if (strVal === "null" || strVal === "undefined") body[key] = null;
+          else body[key] = strVal;
+        }
+      }
+    } else {
+      body = await request.json();
+    }
 
     // ADVISER cannot modify payment collection settings — silently ignore them
     if (userRole === "ADVISER") {
@@ -105,7 +138,7 @@ export async function PUT(request: NextRequest) {
       rubricInterview,
       rubricSkills,
       rubricCharacter,
-    } = body;
+    } = body as Record<string, any>;
 
     let settings = await db.systemSettings.findFirst();
 

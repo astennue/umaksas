@@ -27,6 +27,7 @@ import {
   Building2,
   Award,
   Bell,
+  Wallet,
   User,
   Menu,
   LogOut,
@@ -77,6 +78,9 @@ const navItems: NavItem[] = [
 
   // Payments - Super Admin, Adviser, Officer, SA (NOT HRMO, NOT Office Supervisor)
   { label: "Payments", href: "/dashboard/payments", icon: DollarSign, roles: ["SUPER_ADMIN", "ADVISER", "OFFICER", "STUDENT_ASSISTANT"] },
+
+  // Collections - Super Admin, Adviser, Officer
+  { label: "Collections", href: "/dashboard/payment-collections", icon: Wallet, roles: ["SUPER_ADMIN", "ADVISER", "OFFICER"] },
 
   // Events - Super Admin, Adviser, Officer, Student Assistant
   { label: "Events", href: "/dashboard/events", icon: CalendarPlus, roles: ["SUPER_ADMIN", "ADVISER", "OFFICER", "STUDENT_ASSISTANT"] },

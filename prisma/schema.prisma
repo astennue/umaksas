@@ -96,6 +96,8 @@ model User {
   renewal           Renewal?
   formFieldResponses FormFieldResponse[]
   announcements     Announcement[]
+  collectionsCreated PaymentCollection[] @relation("CollectionCreator")
+  collectionPayments CollectionPayment[]
 
   @@index([role])
   @@map("users")
@@ -351,6 +353,9 @@ model Application {
   registrationUrl   String?
   gradeReportUrl    String?
   residenceImageUrl String?
+
+  // Review
+  reviewNotes       String?
 
   // Review Scores
   totalScore        Float?
@@ -858,6 +863,97 @@ enum PaymentStatus {
   PENDING
   PAID
   REJECTED
+}
+
+// ============================================
+// PAYMENT COLLECTION SYSTEM
+// ============================================
+
+enum CollectionStatus {
+  ACTIVE
+  CLOSED
+  DRAFT
+}
+
+model PaymentCollection {
+  id                String           @id @default(cuid())
+  
+  // Collection Details
+  title             String
+  description       String?
+  amount            Float            @default(20.00)
+  
+  // Period
+  startDate         DateTime?
+  endDate           DateTime?
+  
+  // Configuration
+  targetRoles       String           @default("STUDENT_ASSISTANT") // JSON array of roles that need to pay, e.g. '["STUDENT_ASSISTANT","OFFICER"]'
+  allowPartial      Boolean          @default(false)
+  
+  // Payment settings
+  paymentMethod     String           @default("GCASH") // GCASH, MANUAL, BOTH
+  paymentInstructions String?
+  gcashNumber       String?
+  gcashQrUrl        String?
+  
+  // Status
+  status            CollectionStatus @default(DRAFT)
+  
+  // Creator
+  createdBy         String
+  creator           User             @relation("CollectionCreator", fields: [createdBy], references: [id])
+  
+  // Timestamps
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+  
+  // Relations
+  collectionPayments CollectionPayment[]
+  
+  @@index([status])
+  @@index([createdBy])
+  @@map("payment_collections")
+}
+
+model CollectionPayment {
+  id                String           @id @default(cuid())
+  
+  // Collection Reference
+  collectionId      String
+  collection        PaymentCollection @relation(fields: [collectionId], references: [id], onDelete: Cascade)
+  
+  // Payer
+  userId            String
+  user              User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  // Payment Details
+  amount            Float            @default(20.00)
+  amountPaid        Float?
+  transactionNumber String?
+  
+  // Proof
+  proofUrl          String?
+  uploadedAt        DateTime?
+  
+  // Tracking
+  trackingNumber    String?          @unique
+  
+  // Verification
+  status            PaymentStatus    @default(UNPAID)
+  verifiedBy        String?
+  verifiedAt        DateTime?
+  verificationNotes String?
+  
+  // Timestamps
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+  
+  @@unique([collectionId, userId])
+  @@index([userId])
+  @@index([status])
+  @@index([collectionId])
+  @@map("collection_payments")
 }
 
 // ============================================

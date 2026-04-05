@@ -82,7 +82,7 @@ import {
 } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "sonner";
-import { cn } from "@/lib/utils";
+import { cn, safeJsonParse } from "@/lib/utils";
 import { RoleGuard } from "@/components/auth/role-guard";
 import { useConfirm } from "@/hooks/use-confirm";
 import { useKeyboardShortcuts } from "@/hooks/use-keyboard-shortcuts";
@@ -298,7 +298,7 @@ export default function PaymentsPage() {
     try {
       const res = await fetch(`/api/officers/profile?userId=${currentUserId}`);
       if (res.ok) {
-        const data = await res.json();
+        const data = await safeJsonParse<any>(res);
         setOfficer(data);
       }
     } catch {
@@ -311,7 +311,7 @@ export default function PaymentsPage() {
     try {
       const res = await fetch("/api/system-settings");
       if (res.ok) {
-        const data = await res.json();
+        const data = await safeJsonParse<any>(res);
         setSystemSettings({
           paymentCollectionEnabled: data.paymentCollectionEnabled || false,
           gcashQrUrl: data.gcashQrUrl || null,
@@ -342,7 +342,7 @@ export default function PaymentsPage() {
 
       const res = await fetch(`/api/payments?${params.toString()}`);
       if (!res.ok) throw new Error("Failed to fetch payments");
-      const data = await res.json();
+      const data = await safeJsonParse<any>(res);
       let fetchedPayments = data.payments || [];
 
       // Client-side filter for "mine" tab since API doesn't support userId for officers
@@ -370,7 +370,7 @@ export default function PaymentsPage() {
 
       const res = await fetch(`/api/payments?${params.toString()}`);
       if (!res.ok) return;
-      const data = await res.json();
+      const data = await safeJsonParse<any>(res);
       let allPayments = data.payments || [];
 
       // Client-side filter for "mine" tab

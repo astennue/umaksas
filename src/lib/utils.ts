@@ -5,6 +5,15 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
 
+export async function safeJsonParse<T>(res: Response): Promise<T> {
+  const contentType = res.headers.get("content-type") || "";
+  if (!contentType.includes("application/json")) {
+    const text = await res.text().catch(() => "");
+    throw new Error(`Expected JSON but received ${contentType || "unknown"} response. ${text.slice(0, 200)}`);
+  }
+  return res.json();
+}
+
 export function timeAgo(date: string | Date): string {
   const seconds = Math.floor((new Date().getTime() - new Date(date).getTime()) / 1000);
   if (seconds < 60) return 'just now';

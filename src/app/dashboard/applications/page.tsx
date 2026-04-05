@@ -68,6 +68,7 @@ import {
 } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "sonner";
+import { safeJsonParse } from "@/lib/utils";
 import { useConfirm } from "@/hooks/use-confirm";
 import { useKeyboardShortcuts } from "@/hooks/use-keyboard-shortcuts";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -219,7 +220,7 @@ export default function ApplicationsPage() {
 
       const res = await fetch(`/api/applications/admin?${params.toString()}`);
       if (!res.ok) throw new Error("Failed to fetch applications");
-      const data = await res.json();
+      const data = await safeJsonParse<any>(res);
       setApplications(data.applications || []);
       setTotal(data.total || 0);
     } catch (error) {

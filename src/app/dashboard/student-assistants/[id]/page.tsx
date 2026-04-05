@@ -41,6 +41,7 @@ import {
   Pencil,
 } from "lucide-react";
 import { EmptyState } from "@/components/ui/empty-state";
+import { safeJsonParse } from "@/lib/utils";
 
 // --- Types ---
 interface SAData {
@@ -296,7 +297,7 @@ export default function SAProfilePage() {
           else setError("Failed to load profile");
           return;
         }
-        const json = await res.json();
+        const json = await safeJsonParse<any>(res);
         setData(json);
       } catch {
         setError("Failed to load profile");

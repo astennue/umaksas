@@ -73,6 +73,15 @@ export async function PUT(
     const userId = authResult.user.id;
     const userRole = authResult.user.role;
 
+    let officerPosition: string | null = null;
+    if (userRole === "OFFICER") {
+      const officerProfile = await db.officerProfile.findUnique({
+        where: { userId: authResult.user.id! },
+        select: { position: true },
+      });
+      officerPosition = officerProfile?.position || null;
+    }
+
     const payment = await db.payment.findUnique({ where: { id } });
     if (!payment) {
       return NextResponse.json({ error: "Payment not found" }, { status: 404 });
@@ -135,12 +144,49 @@ export async function PUT(
       return NextResponse.json({ error: "Forbidden action" }, { status: 403 });
     }
 
+    // OFFICER can only upload proof for their OWN payments
+    if (userRole === "OFFICER") {
+      if (payment.userId !== userId) {
+        return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      }
+      if (action === "upload_proof") {
+        if (!proofUrl) {
+          return NextResponse.json({ error: "proofUrl is required" }, { status: 400 });
+        }
+        if (payment.status !== PaymentStatus.UNPAID && payment.status !== PaymentStatus.REJECTED) {
+          return NextResponse.json({ error: "Can only upload proof for unpaid or rejected payments" }, { status: 400 });
+        }
+        const trackingNumber = `TRK-${new Date().getFullYear()}${String(new Date().getMonth() + 1).padStart(2, '0')}${Date.now().toString(36).toUpperCase()}`;
+        const updated = await db.payment.update({
+          where: { id },
+          data: {
+            proofUrl,
+            uploadedAt: new Date(),
+            status: PaymentStatus.PENDING,
+            ...(transactionNumber && { transactionNumber }),
+            ...(amountPaid !== undefined && amountPaid !== null && { amountPaid: parseFloat(amountPaid) }),
+            trackingNumber,
+          },
+          include: {
+            user: {
+              select: {
+                id: true, firstName: true, lastName: true, email: true, photoUrl: true,
+                profile: { select: { college: true, program: true, office: { select: { name: true, code: true } } } },
+              },
+            },
+          },
+        });
+        return NextResponse.json({ payment: updated, trackingNumber });
+      }
+      return NextResponse.json({ error: "Forbidden action" }, { status: 403 });
+    }
+
     // RBAC: SUPER_ADMIN, ADVISER, and OFFICER (Treasurer/President) can verify/reject payments
-    const canVerify = userRole === "SUPER_ADMIN" || userRole === "ADVISER" || userRole === "OFFICER";
+    const canVerify = userRole === "SUPER_ADMIN" || userRole === "ADVISER" || (userRole === "OFFICER" && (officerPosition === "PRESIDENT" || officerPosition === "TREASURER"));
 
     if (action === "verify" || action === "approve") {
       if (!canVerify) {
-        return NextResponse.json({ error: "Forbidden: only SUPER_ADMIN, ADVISER, or OFFICER can verify payments" }, { status: 403 });
+        return NextResponse.json({ error: "Forbidden: only SUPER_ADMIN, ADVISER, PRESIDENT, or TREASURER can verify payments" }, { status: 403 });
       }
 
       if (payment.status !== PaymentStatus.PENDING) {
@@ -196,7 +242,7 @@ export async function PUT(
 
     if (action === "reject") {
       if (!canVerify) {
-        return NextResponse.json({ error: "Forbidden: only SUPER_ADMIN, ADVISER, or OFFICER can reject payments" }, { status: 403 });
+        return NextResponse.json({ error: "Forbidden: only SUPER_ADMIN, ADVISER, PRESIDENT, or TREASURER can reject payments" }, { status: 403 });
       }
       if (payment.status !== PaymentStatus.PENDING) {
         return NextResponse.json({ error: "Can only reject pending payments" }, { status: 400 });

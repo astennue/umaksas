@@ -16,6 +16,7 @@ import {
   GraduationCap,
   UserCircle,
 } from "lucide-react";
+import { safeJsonParse } from "@/lib/utils";
 import { useKeyboardShortcuts } from "@/hooks/use-keyboard-shortcuts";
 import { EmptyState } from "@/components/ui/empty-state";
 import { PublicLayout } from "@/components/public/public-layout";
@@ -77,7 +78,7 @@ export default function SAWallPage() {
 
       const res = await fetch(`/api/sa-wall?${params.toString()}`);
       if (!res.ok) throw new Error("Failed to fetch");
-      const data = await res.json();
+      const data = await safeJsonParse<any[]>(res);
       setSas(data);
     } catch (err) {
       console.error("Failed to fetch SAs:", err);

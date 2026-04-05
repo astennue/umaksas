@@ -50,6 +50,7 @@ const pageTitles: Record<string, string> = {
   "/dashboard/attendance": "Attendance",
   "/dashboard/evaluations": "Evaluations",
   "/dashboard/payments": "Payments",
+  "/dashboard/payment-collections": "Payment Collections",
   "/dashboard/events": "Events",
   "/dashboard/offices": "Offices",
   "/dashboard/certificates": "Certificates",

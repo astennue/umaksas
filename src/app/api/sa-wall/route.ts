@@ -93,6 +93,9 @@ export async function GET(request: NextRequest) {
             phone: true,
             role: true,
             photoUrl: true,
+            officerProfile: {
+              select: { position: true },
+            },
           },
         },
         office: {
@@ -178,7 +181,7 @@ export async function GET(request: NextRequest) {
       personalEmail: profile.personalEmail || null,
       umakEmail: profile.user.email || null,
       isOfficer: profile.user.role === UserRole.OFFICER,
-      officerPosition: profile.user.role === UserRole.OFFICER ? "Student Assistant" : null,
+      officerPosition: profile.user.role === UserRole.OFFICER ? (profile.user.officerProfile?.position || null) : null,
       photoUrl: profile.user.photoUrl || null,
     });
 

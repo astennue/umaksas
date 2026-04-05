@@ -50,6 +50,7 @@ import { SAFormModal } from "@/components/dashboard/sa-form-modal";
 import { CRUDToolbar } from "@/components/crud-toolbar";
 import { CRUDActions } from "@/components/crud-actions";
 import { RoleGuard } from "@/components/auth/role-guard";
+import { safeJsonParse } from "@/lib/utils";
 import { EmptyState } from "@/components/ui/empty-state";
 import { useConfirm } from "@/hooks/use-confirm";
 import { useKeyboardShortcuts } from "@/hooks/use-keyboard-shortcuts";
@@ -146,7 +147,7 @@ export default function StudentAssistantsPage() {
 
       const res = await fetch(`/api/student-assistants?${params.toString()}`);
       if (!res.ok) throw new Error("Failed to fetch student assistants");
-      const data = await res.json();
+      const data = await safeJsonParse<any>(res);
       setStudents(data.studentAssistants || []);
       setTotal(data.total || 0);
     } catch (error) {
