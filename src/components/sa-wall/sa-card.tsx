@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -48,6 +47,7 @@ interface SACardProps {
   index: number;
   onClick?: () => void;
   isAuthenticated?: boolean;
+  onViewFullProfile?: (saId: string) => void;
 }
 
 function getInitials(firstName: string, lastName: string): string {
@@ -56,7 +56,7 @@ function getInitials(firstName: string, lastName: string): string {
   return `${f}${l}`;
 }
 
-export function SACard({ sa, onClick, isAuthenticated }: SACardProps) {
+export function SACard({ sa, onClick, isAuthenticated, onViewFullProfile }: SACardProps) {
   const initials = getInitials(sa.firstName, sa.lastName);
   const fullName = `${sa.firstName} ${sa.lastName}`.trim();
 
@@ -167,16 +167,18 @@ export function SACard({ sa, onClick, isAuthenticated }: SACardProps) {
         {/* View Full Profile button (authenticated only) */}
         {isAuthenticated && (
           <div className="mt-3 pt-3 border-t border-gray-100 dark:border-gray-700/50">
-            <Link href={`/dashboard/student-assistants/${sa.id}`} onClick={(e) => e.stopPropagation()}>
-              <Button
-                variant="outline"
-                size="sm"
-                className="w-full h-8 text-xs gap-1.5"
-              >
-                <User className="h-3.5 w-3.5" />
-                View Full Profile
-              </Button>
-            </Link>
+            <Button
+              variant="outline"
+              size="sm"
+              className="w-full h-8 text-xs gap-1.5"
+              onClick={(e) => {
+                e.stopPropagation();
+                onViewFullProfile?.(sa.id);
+              }}
+            >
+              <User className="h-3.5 w-3.5" />
+              View Full Profile
+            </Button>
           </div>
         )}
       </CardContent>

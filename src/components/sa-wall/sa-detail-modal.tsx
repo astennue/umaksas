@@ -18,7 +18,6 @@ import {
   BookOpen,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import Link from "next/link";
 import type { SACardData } from "./sa-card";
 import { getCollegeDisplay } from "@/lib/colleges";
 
@@ -27,6 +26,7 @@ interface SADetailModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   isAuthenticated?: boolean;
+  onViewFullProfile?: (saId: string) => void;
 }
 
 function getInitials(firstName: string, lastName: string): string {
@@ -40,6 +40,7 @@ export function SADetailModal({
   open,
   onOpenChange,
   isAuthenticated,
+  onViewFullProfile,
 }: SADetailModalProps) {
   if (!sa) return null;
 
@@ -185,15 +186,16 @@ export function SADetailModal({
                 {/* View Full Profile button (authenticated only) */}
                 {isAuthenticated === true && (
                   <div className={hasDetails ? "mt-5" : "mt-2"}>
-                    <Link
-                      href={`/dashboard/student-assistants/${sa.id}`}
-                      onClick={() => onOpenChange(false)}
+                    <Button
+                      className="w-full bg-blue-900 hover:bg-blue-800 text-white h-10 gap-2"
+                      onClick={() => {
+                        onOpenChange(false);
+                        onViewFullProfile?.(sa.id);
+                      }}
                     >
-                      <Button className="w-full bg-blue-900 hover:bg-blue-800 text-white h-10 gap-2">
-                        <User className="w-4 h-4" />
-                        View Full Profile
-                      </Button>
-                    </Link>
+                      <User className="w-4 h-4" />
+                      View Full Profile
+                    </Button>
                   </div>
                 )}
               </div>

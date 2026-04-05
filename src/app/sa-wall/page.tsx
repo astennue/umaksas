@@ -21,6 +21,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { PublicLayout } from "@/components/public/public-layout";
 import { SACard, type SACardData } from "@/components/sa-wall/sa-card";
 import { SADetailModal } from "@/components/sa-wall/sa-detail-modal";
+import { SAFullProfileModal } from "@/components/sa-wall/sa-full-profile-modal";
 import { useAttendanceSocket } from "@/hooks/use-attendance-socket";
 
 type SortOption = "name" | "college" | "office";
@@ -41,6 +42,11 @@ export default function SAWallPage() {
   const [genderFilter, setGenderFilter] = useState<string>("all");
   const [sortBy, setSortBy] = useState<SortOption>("name");
   const [selectedSA, setSelectedSA] = useState<SACardData | null>(null);
+  const [fullProfileId, setFullProfileId] = useState<string | null>(null);
+
+  const handleViewFullProfile = useCallback((saId: string) => {
+    setFullProfileId(saId);
+  }, []);
 
   const { isConnected, onDutySAs } = useAttendanceSocket();
 
@@ -463,6 +469,7 @@ export default function SAWallPage() {
                     index={index}
                     onClick={() => setSelectedSA(sa)}
                     isAuthenticated={showProfileButton}
+                    onViewFullProfile={handleViewFullProfile}
                   />
                 </motion.div>
               ))}
@@ -491,6 +498,16 @@ export default function SAWallPage() {
           if (!open) setSelectedSA(null);
         }}
         isAuthenticated={showProfileButton}
+        onViewFullProfile={handleViewFullProfile}
+      />
+
+      {/* Full Profile Modal */}
+      <SAFullProfileModal
+        saId={fullProfileId}
+        open={!!fullProfileId}
+        onOpenChange={(open) => {
+          if (!open) setFullProfileId(null);
+        }}
       />
     </PublicLayout>
   );
