@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 
 // Global cache so all components share the same photoUrl
 let cachedPhotoUrl: string | null | undefined = undefined;
@@ -30,35 +30,32 @@ export function useUserPhoto() {
   }, []);
 
   useEffect(() => {
-    // Already cached
     if (cachedPhotoUrl !== undefined) {
-      setPhotoUrl(cachedPhotoUrl);
       return;
     }
 
     let cancelled = false;
-    async function fetchPhoto() {
-      try {
-        const res = await fetch("/api/user/profile");
+    fetch("/api/user/profile")
+      .then((res) => {
         if (!res.ok) {
           cachedPhotoUrl = null;
           if (!cancelled) setPhotoUrl(null);
-          return;
+          return null;
         }
-        const data = await res.json();
+        return res.json();
+      })
+      .then((data) => {
+        if (!data || cancelled) return;
         const url: string | null = data.user?.photoUrl || null;
         cachedPhotoUrl = url;
         cachedUserId = data.user?.id || null;
-        if (!cancelled) {
-          setPhotoUrl(url);
-        }
-      } catch {
+        setPhotoUrl(url);
+      })
+      .catch(() => {
         cachedPhotoUrl = null;
         if (!cancelled) setPhotoUrl(null);
-      }
-    }
+      });
 
-    fetchPhoto();
     return () => {
       cancelled = true;
     };

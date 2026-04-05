@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
@@ -140,30 +140,18 @@ function InfoRow({ label, value }: { label: string; value: string | null | undef
 }
 
 function JsonSection({ title, data }: { title: string; data: unknown }) {
-  const [parsed, setParsed] = useState<Array<Record<string, unknown>> | null>(null);
-  const [error, setError] = useState(false);
-
-  useEffect(() => {
-    if (!data) {
-      setParsed(null);
-      setError(false);
-      return;
-    }
+  const parsed = useMemo(() => {
+    if (!data) return null;
     try {
       const p = typeof data === "string" ? JSON.parse(data) : data;
-      if (Array.isArray(p) && p.length > 0) {
-        setParsed(p);
-        setError(false);
-      } else {
-        setParsed(null);
-      }
+      if (Array.isArray(p) && p.length > 0) return p;
+      return null;
     } catch {
-      setParsed(null);
-      setError(true);
+      return null;
     }
   }, [data]);
 
-  if (!parsed || error) return null;
+  if (!parsed) return null;
 
   return (
     <div className="space-y-3">
@@ -297,6 +285,11 @@ export default function ApplicationDetailPage() {
     }
   };
 
+  // Rejection dialog state
+  const [rejectOpen, setRejectOpen] = useState(false);
+  const [rejectRemarks, setRejectRemarks] = useState("");
+  const [revertOpen, setRevertOpen] = useState(false);
+
   if (!session || loading) {
     return (
       <div className="space-y-6">
@@ -325,11 +318,6 @@ export default function ApplicationDetailPage() {
   const statusInfo = statusConfig[app.status] || statusConfig.DRAFT;
 
   const trackingRef = app.id.slice(0, 8).toUpperCase();
-
-  // Rejection dialog state
-  const [rejectOpen, setRejectOpen] = useState(false);
-  const [rejectRemarks, setRejectRemarks] = useState("");
-  const [revertOpen, setRevertOpen] = useState(false);
 
   const handleReject = async () => {
     if (!app || !rejectRemarks.trim()) {

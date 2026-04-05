@@ -2297,7 +2297,6 @@ function Step13Signature({
             <div className="flex flex-col items-center">
               {/* Signature Image */}
               <div className="w-full max-w-sm">
-                {/* eslint-disable-next-line @next/next-img */}
                 <img
                   src={formData.signatureData}
                   alt="Your signature"

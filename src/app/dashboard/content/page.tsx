@@ -1723,5 +1723,6 @@ export default function CMSContentPage() {
         </TabsContent>
       </Tabs>
     </div>
+    </RoleGuard>
   );
 }
