@@ -66,7 +66,7 @@ export function SACard({ sa, onClick, isAuthenticated, onViewFullProfile }: SACa
 
   return (
     <Card
-      className="group relative overflow-hidden rounded-xl border-0 shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all duration-300 cursor-pointer"
+      className="h-full group relative overflow-hidden rounded-xl border-0 shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all duration-300 cursor-pointer"
       onClick={onClick}
       role="button"
       tabIndex={0}
@@ -86,7 +86,7 @@ export function SACard({ sa, onClick, isAuthenticated, onViewFullProfile }: SACa
         }`}
       />
 
-      <CardContent className="p-5 pt-6">
+      <CardContent className="flex flex-col flex-1 p-5 pt-6">
         {/* Avatar */}
         <div className="flex flex-col items-center text-center">
           <div className="relative mb-3">
@@ -146,8 +146,8 @@ export function SACard({ sa, onClick, isAuthenticated, onViewFullProfile }: SACa
           )}
         </div>
 
-        {/* Separator */}
-        <div className="border-t border-gray-100 dark:border-gray-700/50 my-4" />
+        {/* Separator — mt-auto pushes bottom content to card floor */}
+        <div className="mt-auto border-t border-gray-100 dark:border-gray-700/50 my-4" />
 
         {/* Badges row: Duty Status + Academic Year + Semester */}
         <div className="flex items-center justify-center gap-2 flex-wrap">

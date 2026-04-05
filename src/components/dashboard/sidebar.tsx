@@ -35,7 +35,6 @@ import {
   ChevronRight,
   Megaphone,
   Settings,
-  PenSquare,
   RefreshCw,
   UserCog,
   Network,
@@ -110,9 +109,6 @@ const navItems: NavItem[] = [
 
   // Manage Users - Super Admin, Adviser, President
   { label: "Manage Users", href: "/dashboard/users", icon: UserCog, roles: ["SUPER_ADMIN", "ADVISER", "OFFICER"], presidentOnly: true },
-
-  // CMS / Content - Super Admin, Adviser, President only
-  { label: "CMS / Content", href: "/dashboard/content", icon: PenSquare, roles: ["SUPER_ADMIN", "ADVISER", "OFFICER"], presidentOnly: true },
 
   // Application CMS - Super Admin, Adviser, President only
   { label: "Application CMS", href: "/dashboard/application-cms", icon: FileEdit, roles: ["SUPER_ADMIN", "ADVISER", "OFFICER"], presidentOnly: true },

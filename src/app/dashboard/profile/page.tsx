@@ -515,7 +515,7 @@ export default function ProfilePage() {
 
               {/* Photo action overlay (visible on hover, hidden during upload) */}
               {!isUploadingPhoto && (
-                <div className="absolute inset-0 rounded-full border-4 border-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200 -m-4">
+                <div className="absolute inset-0 rounded-full border-4 border-transparent opacity-0 group-hover:opacity-100 hover:opacity-100 sm:max-[768px]:opacity-100 transition-opacity duration-200 -m-4">
                   <div className="absolute inset-0 rounded-full bg-black/40 flex items-center justify-center gap-1">
                     <button
                       onClick={() => fileInputRef.current?.click()}

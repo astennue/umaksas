@@ -75,10 +75,10 @@ export default function NotificationsPage() {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#1e3a8a]/10 dark:bg-[#3b82f6]/10">
-                <Bell className="h-5 w-5 text-[#1e3a8a] dark:text-[#3b82f6]" />
+                <Bell className="h-5 w-5 text-slate-900 dark:text-white" />
               </div>
               <div>
-                <h1 className="text-2xl font-bold text-[#1e3a8a] dark:text-white">
+                <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
                   Notifications
                 </h1>
                 <p className="text-sm text-muted-foreground">

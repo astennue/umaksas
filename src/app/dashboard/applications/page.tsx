@@ -599,7 +599,7 @@ export default function ApplicationsPage() {
           </DialogHeader>
           {selectedApp && (
             <Tabs defaultValue="overview" className="mt-2">
-              <TabsList className="w-full flex-wrap h-auto gap-1">
+              <TabsList className="w-full overflow-x-auto flex-nowrap h-auto gap-1">
                 <TabsTrigger value="overview" className="text-xs">Overview</TabsTrigger>
                 <TabsTrigger value="personal" className="text-xs">Personal</TabsTrigger>
                 <TabsTrigger value="family" className="text-xs">Family</TabsTrigger>

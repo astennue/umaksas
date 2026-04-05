@@ -56,7 +56,6 @@ const pageTitles: Record<string, string> = {
   "/dashboard/certificates": "Certificates",
   "/dashboard/announcements": "Announcements",
   "/dashboard/notifications": "Notifications",
-  "/dashboard/content": "CMS / Content",
   "/dashboard/renewals": "Renewals",
   "/dashboard/renewal": "My Renewal",
   "/dashboard/settings": "Settings",

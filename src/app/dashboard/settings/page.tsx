@@ -335,6 +335,7 @@ export default function SettingsPage() {
   }
 
   return (
+    <>
     <div className="max-w-4xl mx-auto space-y-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -391,15 +392,6 @@ export default function SettingsPage() {
               <CardDescription className="mt-1.5">
                 Enable GCash payment collection for organizational fees and configure payment settings
               </CardDescription>
-            </div>
-            <div className="flex items-center gap-3">
-              <span className="text-xs text-muted-foreground">
-                {paymentCollectionEnabled ? "Active" : "Inactive"}
-              </span>
-              <Switch
-                checked={paymentCollectionEnabled}
-                onCheckedChange={setPaymentCollectionEnabled}
-              />
             </div>
           </div>
         </CardHeader>
@@ -727,58 +719,8 @@ export default function SettingsPage() {
         </Card>
       </div>
 
-      {/* Current Status */}
-      <Card className="border-0 shadow-lg rounded-xl">
-        <CardHeader className="pb-4">
-          <CardTitle className="text-lg">Current Status Summary</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div className="rounded-lg border p-4 text-center">
-              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1">Academic Year</p>
-              <p className="text-lg font-bold text-gray-900 dark:text-white">{academicYear || "Not set"}</p>
-            </div>
-            <div className="rounded-lg border p-4 text-center">
-              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1">Semester</p>
-              <p className="text-lg font-bold text-gray-900 dark:text-white">{currentSemester || "Not set"}</p>
-            </div>
-            <div className="rounded-lg border p-4 text-center">
-              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1">Application</p>
-              <Badge variant="secondary" className={cn(
-                applicationOpen
-                  ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300"
-                  : "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300"
-              )}>
-                {applicationOpen ? "Open" : "Closed"}
-              </Badge>
-            </div>
-            <div className="rounded-lg border p-4 text-center">
-              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1">Renewal</p>
-              <Badge variant="secondary" className={cn(
-                renewalOpen
-                  ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300"
-                  : "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300"
-              )}>
-                {renewalOpen ? "Open" : "Closed"}
-              </Badge>
-            </div>
-            <div className="rounded-lg border p-4 text-center sm:col-span-2">
-              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1">Payment Collection</p>
-              <Badge variant="secondary" className={cn(
-                paymentCollectionEnabled
-                  ? "bg-[#004EE0]/10 text-[#004EE0] dark:bg-[#004EE0]/20"
-                  : "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400"
-              )}>
-                {paymentCollectionEnabled ? "Active" : "Inactive"}
-              </Badge>
-            </div>
-            <div className="rounded-lg border p-4 text-center sm:col-span-2">
-              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1">GCash Number</p>
-              <p className="text-lg font-bold text-gray-900 dark:text-white">{gcashNumber || "Not set"}</p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
     </div>
+    <ConfirmDialog />
+    </>
   );
 }
