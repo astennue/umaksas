@@ -1,12 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireRole } from "@/lib/auth-helpers";
 import { db } from "@/lib/db";
-import { CollectionStatus, PaymentStatus } from "@prisma/client";
+import { CollectionStatus, PaymentStatus, UserRole } from "@prisma/client";
 
 export const dynamic = "force-dynamic";
 
+// Helper: check if OFFICER has PRESIDENT or TREASURER position
+async function isOfficerWithActivateAccess(userId: string): Promise<boolean> {
+  const officer = await db.officerProfile.findUnique({ where: { userId } });
+  return !!officer && ["PRESIDENT", "TREASURER"].includes(officer.position);
+}
+
 // Helper: parse targetRoles field
-function parseTargetRoles(targetRolesStr: string): { mode: string; userIds?: string[]; legacyRoles?: string[] } {
+function parseTargetRoles(targetRolesStr: string): { mode: string; userIds?: string[]; legacyRoles?: UserRole[] } {
   try {
     const parsed = JSON.parse(targetRolesStr);
     if (Array.isArray(parsed)) {
@@ -24,10 +30,19 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const authResult = await requireRole(["SUPER_ADMIN", "ADVISER"]);
+    const authResult = await requireRole(["SUPER_ADMIN", "ADVISER", "OFFICER"]);
     if (authResult instanceof NextResponse) return authResult;
 
     const { user } = authResult;
+
+    // OFFICER must be PRESIDENT or TREASURER to activate collections
+    if (user.role === "OFFICER") {
+      const hasAccess = await isOfficerWithActivateAccess(user.id);
+      if (!hasAccess) {
+        return NextResponse.json({ error: "Only President or Treasurer can activate collections" }, { status: 403 });
+      }
+    }
+
     const { id } = await params;
 
     const collection = await db.paymentCollection.findUnique({ where: { id } });

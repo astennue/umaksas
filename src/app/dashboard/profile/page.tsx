@@ -262,6 +262,10 @@ export default function ProfilePage() {
       });
 
       if (!res.ok) {
+        const contentType = res.headers.get("content-type");
+        if (contentType && !contentType.includes("application/json")) {
+          throw new Error("Server error: received an unexpected response. The image may be too large (max 10MB). Try a smaller image or contact support.");
+        }
         const data = await res.json();
         throw new Error(data.error || "Failed to upload photo");
       }
@@ -446,6 +450,7 @@ export default function ProfilePage() {
   const roleInfo = roleConfig[profile.role] || roleConfig.PUBLIC_VISITOR;
   const isSA = profile.role === "STUDENT_ASSISTANT";
   const isOfficer = ["OFFICER", "ADVISER"].includes(profile.role);
+  const isSAorOfficer = isSA || isOfficer;
 
   return (
     <div className="space-y-6">
@@ -533,7 +538,7 @@ export default function ProfilePage() {
               )}
 
               {/* Online indicator */}
-              {isSA && profile.profile?.isOnDuty && (
+              {isSAorOfficer && profile.profile?.isOnDuty && (
                 <div className="absolute bottom-1 right-1 h-4 w-4 rounded-full bg-green-500 border-2 border-white dark:border-slate-800">
                   <div className="h-full w-full rounded-full bg-green-400 animate-ping opacity-75" />
                 </div>
@@ -889,8 +894,8 @@ export default function ProfilePage() {
         </Card>
       </div>
 
-      {/* Work Information Card (SA only) */}
-      {isSA && profile.profile && (
+      {/* Work Information Card (SA + Officer with SA duties) */}
+      {isSAorOfficer && profile.profile && (
         <Card className="shadow-lg">
           <div className="flex items-center gap-3 p-4 sm:p-6 pb-0">
             <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-green-100 dark:bg-green-900/20">
@@ -900,7 +905,7 @@ export default function ProfilePage() {
               <h3 className="text-base font-semibold text-slate-900 dark:text-white">
                 Work Information
               </h3>
-              <p className="text-xs text-muted-foreground">Your SA assignment and work details</p>
+              <p className="text-xs text-muted-foreground">{isOfficer ? "Your SA assignment and officer work details" : "Your SA assignment and work details"}</p>
             </div>
             {profile.profile.isOnDuty && (
               <Badge className="bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 ml-auto" variant="secondary">

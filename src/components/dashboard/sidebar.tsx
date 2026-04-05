@@ -76,8 +76,8 @@ const navItems: NavItem[] = [
   // Evaluations - Super Admin, Adviser, Officer, Office Supervisor (NOT SA)
   { label: "Evaluations", href: "/dashboard/evaluations", icon: ClipboardCheck, roles: ["SUPER_ADMIN", "ADVISER", "OFFICER", "OFFICE_SUPERVISOR"] },
 
-  // My Payments - Student Assistant only (view & pay collection fees)
-  { label: "My Payments", href: "/dashboard/payments", icon: DollarSign, roles: ["STUDENT_ASSISTANT"] },
+  // My Payments - Student Assistant & Officer (SA monthly dues + Officer combined duties)
+  { label: "My Payments", href: "/dashboard/payments", icon: DollarSign, roles: ["STUDENT_ASSISTANT", "OFFICER"] },
 
   // Collections - Super Admin, Adviser, Officer (manage + view own payments)
   { label: "Collections", href: "/dashboard/payment-collections", icon: Wallet, roles: ["SUPER_ADMIN", "ADVISER", "OFFICER"] },

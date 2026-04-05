@@ -196,20 +196,27 @@ export async function POST(request: NextRequest) {
     }
 
     // STUDENT_ASSISTANT can only create for themselves
+    // OFFICER creating for themselves is treated like SA (WORK type, PENDING)
+    const isSA = user.role === UserRole.STUDENT_ASSISTANT;
+    const isOfficerForSelf = user.role === UserRole.OFFICER && (!userId || userId === user.id);
+    const isCreatingForSelf = isSA || isOfficerForSelf;
     let targetUserId = userId;
-    if (user.role === UserRole.STUDENT_ASSISTANT) {
-      if (userId && userId !== user.id) {
-        return NextResponse.json(
-          { error: "Student assistants can only create schedules for themselves" },
-          { status: 403 }
-        );
-      }
+    if (isCreatingForSelf) {
       targetUserId = user.id;
+    }
 
-      // SAs can only create WORK type schedules
+    if (isSA && userId && userId !== user.id) {
+      return NextResponse.json(
+        { error: "Student assistants can only create schedules for themselves" },
+        { status: 403 }
+      );
+    }
+
+    if (isCreatingForSelf) {
+      // SAs/Officers (for self) can only create WORK type schedules
       if (type !== "WORK") {
         return NextResponse.json(
-          { error: "Student assistants can only create work schedules" },
+          { error: "You can only create work schedules for yourself" },
           { status: 400 }
         );
       }
@@ -287,7 +294,7 @@ export async function POST(request: NextRequest) {
         semester: scheduleSemester || null,
         academicYear: scheduleAcademicYear || null,
         notes: notes || null,
-        status: user.role === UserRole.STUDENT_ASSISTANT
+        status: isCreatingForSelf
           ? ScheduleStatus.PENDING
           : ScheduleStatus.APPROVED,
       },

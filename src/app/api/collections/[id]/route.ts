@@ -1,12 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireRole } from "@/lib/auth-helpers";
 import { db } from "@/lib/db";
-import { CollectionStatus, PaymentStatus } from "@prisma/client";
+import { CollectionStatus, PaymentStatus, UserRole } from "@prisma/client";
 
 export const dynamic = "force-dynamic";
 
+// Helper: check if OFFICER has PRESIDENT or TREASURER position
+async function isOfficerWithManageAccess(userId: string): Promise<boolean> {
+  const officer = await db.officerProfile.findUnique({ where: { userId } });
+  return !!officer && ["PRESIDENT", "TREASURER"].includes(officer.position);
+}
+
 // Helper: parse targetRoles field (supports both old array format and new object format)
-function parseTargetRoles(targetRolesStr: string): { mode: string; userIds?: string[]; legacyRoles?: string[] } {
+function parseTargetRoles(targetRolesStr: string): { mode: string; userIds?: string[]; legacyRoles?: UserRole[] } {
   try {
     const parsed = JSON.parse(targetRolesStr);
     if (Array.isArray(parsed)) {
@@ -151,10 +157,19 @@ export async function PUT(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const authResult = await requireRole(["SUPER_ADMIN", "ADVISER"]);
+    const authResult = await requireRole(["SUPER_ADMIN", "ADVISER", "OFFICER"]);
     if (authResult instanceof NextResponse) return authResult;
 
     const { user } = authResult;
+
+    // OFFICER must be PRESIDENT or TREASURER to update collections
+    if (user.role === "OFFICER") {
+      const hasAccess = await isOfficerWithManageAccess(user.id);
+      if (!hasAccess) {
+        return NextResponse.json({ error: "Only President or Treasurer can update collections" }, { status: 403 });
+      }
+    }
+
     const { id } = await params;
     const body = await req.json();
 
@@ -258,8 +273,18 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const authResult = await requireRole(["SUPER_ADMIN", "ADVISER"]);
+    const authResult = await requireRole(["SUPER_ADMIN", "ADVISER", "OFFICER"]);
     if (authResult instanceof NextResponse) return authResult;
+
+    const { user } = authResult;
+
+    // OFFICER must be PRESIDENT or TREASURER to delete collections
+    if (user.role === "OFFICER") {
+      const hasAccess = await isOfficerWithManageAccess(user.id);
+      if (!hasAccess) {
+        return NextResponse.json({ error: "Only President or Treasurer can delete collections" }, { status: 403 });
+      }
+    }
 
     const { id } = await params;
 
