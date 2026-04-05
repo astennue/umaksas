@@ -157,13 +157,18 @@ export const step3Schema = z.object({
 });
 
 // Step 4: Educational Background
+const yearGraduatedSchema = z.string().min(1, "Year graduated is required").refine((val) => /^\d{4}$/.test(val), "Year must be exactly 4 digits").refine((val) => {
+  const year = parseInt(val, 10);
+  return year >= 1970 && year <= new Date().getFullYear() + 1;
+}, "Year must be between 1970 and " + (new Date().getFullYear() + 1));
+
 export const step4Schema = z.object({
   elementarySchool: z.string().min(1, "Elementary school is required"),
-  elementaryYear: z.string().min(1, "Year graduated is required"),
+  elementaryYear: yearGraduatedSchema,
   highSchool: z.string().min(1, "High school is required"),
-  highSchoolYear: z.string().min(1, "Year graduated is required"),
+  highSchoolYear: yearGraduatedSchema,
   seniorHigh: z.string().min(1, "Senior high school is required"),
-  seniorHighYear: z.string().min(1, "Year graduated is required"),
+  seniorHighYear: yearGraduatedSchema,
   seniorHighTrack: z.string().optional().default(""),
 });
 
@@ -314,11 +319,11 @@ export const applicationFormSchema = z.object({
 
   // Step 4: Educational Background
   elementarySchool: z.string().min(1, "Elementary school is required"),
-  elementaryYear: z.string().min(1, "Year graduated is required"),
+  elementaryYear: yearGraduatedSchema,
   highSchool: z.string().min(1, "High school is required"),
-  highSchoolYear: z.string().min(1, "Year graduated is required"),
+  highSchoolYear: yearGraduatedSchema,
   seniorHigh: z.string().min(1, "Senior high school is required"),
-  seniorHighYear: z.string().min(1, "Year graduated is required"),
+  seniorHighYear: yearGraduatedSchema,
   seniorHighTrack: z.string().optional().default(""),
 
   // Step 5: Current Education
@@ -535,6 +540,7 @@ export const defaultFormValues: ApplicationFormData = {
     { name: "", position: "", organization: "", phone: "", email: "", relationship: "" },
     { name: "", position: "", organization: "", phone: "", email: "", relationship: "" },
     { name: "", position: "", organization: "", phone: "", email: "", relationship: "" },
+    { name: "", position: "", organization: "", phone: "", email: "", relationship: "" },
   ],
 
   // Step 10: Documents
@@ -596,13 +602,14 @@ export const stepFields: Record<number, string[]> = {
   11: ["email", "confirmAccurate", "agreeTerms"],
 };
 
-// UMAK Colleges
+// UMAK Colleges (authoritative source: src/lib/colleges.ts)
+// Names verified against https://www.umak.edu.ph/admissions/programofferings (Feb 2025)
 export const COLLEGES = [
-  "College of Business and Financial Sciences",
+  "College of Business and Financial Science",
   "College of Computing and Information Sciences",
   "College of Construction Sciences and Engineering",
   "College of Continuing, Advanced and Professional Studies",
-  "College For Human Kinetics",
+  "College of Human Kinetics",
   "College of Governance and Public Policy",
   "College of Innovative Teacher Education",
   "College of Liberal Arts and Sciences",
@@ -614,112 +621,98 @@ export const COLLEGES = [
   "Institute of Nursing",
   "Institute of Pharmacy",
   "Institute of Psychology",
-  "Institute for Social Work",
+  "Institute for Social Development for Nation Building",
   "School of Law",
   "CITE-Higher School ng UMak",
 ] as const;
 
 // Programs per UMAK college
+// Source: https://www.umak.edu.ph/admissions/programofferings (verified Feb 2025)
+// Undergraduate (bachelor's) programs only. "Others (please specify)" is NOT included
+// here — it is appended once by the UI in the apply form.
 export const PROGRAMS_BY_COLLEGE: Record<string, string[]> = {
-  "College of Business and Financial Sciences": [
-    "Bachelor of Science in Business Administration",
-    "Bachelor of Science in Accountancy",
-    "Bachelor of Science in Internal Auditing",
-    "Bachelor of Science in Management Accounting",
-    "Bachelor of Science in Financial Management",
-    "Bachelor of Science in Marketing Management",
-    "Bachelor of Science in Office Administration",
-    "Others (please specify)",
+  "College of Business and Financial Science": [
+    "BS in Business Administration Major in Building and Property Management",
+    "BS in Business Administration Major in Supply Management",
+    "BS in Entrepreneurial Management",
+    "BS in Financial Management",
+    "BS in Office Administration",
   ],
   "College of Computing and Information Sciences": [
-    "Bachelor of Science in Computer Science",
-    "Bachelor of Science in Information Technology",
-    "Bachelor of Science in Information Systems",
-    "Others (please specify)",
+    "BS in Computer Science",
+    "BS in Information Technology",
   ],
   "College of Construction Sciences and Engineering": [
-    "Bachelor of Science in Architecture",
-    "Bachelor of Science in Civil Engineering",
-    "Bachelor of Science in Electronics Engineering",
-    "Bachelor of Science in Computer Engineering",
-    "Others (please specify)",
+    "BS in Civil Engineering",
   ],
   "College of Continuing, Advanced and Professional Studies": [
-    "Others (please specify)",
+    "BA in Political Science Major in Local Government Administration",
+    "Bachelor in Automotive Technology",
+    "Bachelor in Industrial Facilities Technology Management",
+    "BS in Entrepreneurship",
   ],
-  "College For Human Kinetics": [
-    "Bachelor of Physical Education",
-    "Bachelor of Sports Science",
-    "Others (please specify)",
+  "College of Human Kinetics": [
+    "BS in Exercise and Sports Science",
   ],
   "College of Governance and Public Policy": [
-    "Bachelor of Science in Public Administration",
-    "Bachelor of Science in Political Science",
-    "Others (please specify)",
+    "BA in Political Science Major in Paralegal Studies",
+    "BA in Political Science Major in Policy Management",
+    "BA in Political Science Major in Local Government Administration",
   ],
   "College of Innovative Teacher Education": [
     "Bachelor of Elementary Education",
-    "Bachelor of Secondary Education",
-    "Bachelor of Technical-Vocational Teacher Education",
-    "Others (please specify)",
+    "Bachelor of Secondary Education Major in English",
+    "Bachelor of Secondary Education Major in Mathematics",
+    "Bachelor of Secondary Education Major in Social Studies",
+    "Bachelor of Secondary Education Major in Filipino",
+    "Bachelor of Secondary Education Major in General Science",
   ],
   "College of Liberal Arts and Sciences": [
-    "Bachelor of Arts in English Language",
-    "Bachelor of Arts in Filipino",
-    "Bachelor of Arts in Communication",
-    "Bachelor of Arts in Political Science",
-    "Bachelor of Arts in History",
-    "Bachelor of Science in Psychology",
-    "Others (please specify)",
+    "BA in Communication",
+    "BA in English Language Studies",
+    "BA in Filipino",
+    "BA in History",
   ],
   "College of Engineering Technology": [
-    "Bachelor of Science in Electronics Technology",
-    "Bachelor of Science in Electrical Technology",
-    "Bachelor of Science in Mechanical Technology",
-    "Others (please specify)",
+    "BS in Building Technology Management",
+    "BS in Electrical Technology",
+    "BS in Electronics and Telecommunication Technology",
   ],
   "College of Tourism and Hospitality Management": [
-    "Bachelor of Science in Tourism Management",
-    "Bachelor of Science in Hospitality Management",
-    "Others (please specify)",
+    "BS in Hospitality Management",
+    "BS in Tourism Management",
   ],
   "Institute of Imaging Health Sciences": [
-    "Bachelor of Science in Medical Technology",
-    "Bachelor of Science in Radiologic Technology",
-    "Others (please specify)",
+    "BS in Radiologic Technology",
   ],
   "Institute of Accountancy": [
-    "Bachelor of Science in Accountancy",
-    "Others (please specify)",
+    "BS in Accountancy",
+    "BS in Management Accounting",
   ],
   "Institute of Arts and Design": [
-    "Bachelor of Arts in Fine Arts",
-    "Bachelor of Arts in Multimedia Arts",
-    "Others (please specify)",
+    "Bachelor in Multimedia Arts",
   ],
   "Institute of Nursing": [
-    "Bachelor of Science in Nursing",
-    "Others (please specify)",
+    "BS in Nursing",
   ],
   "Institute of Pharmacy": [
-    "Bachelor of Science in Pharmacy",
-    "Others (please specify)",
+    "BS in Pharmacy",
   ],
   "Institute of Psychology": [
-    "Bachelor of Science in Psychology",
-    "Others (please specify)",
+    "BS in Psychology",
   ],
-  "Institute for Social Work": [
-    "Bachelor of Science in Social Work",
-    "Others (please specify)",
+  "Institute for Social Development for Nation Building": [
+    "BS in Social Work",
+    "BS in Disaster Risk Management",
   ],
   "School of Law": [
     "Juris Doctor",
-    "Bachelor of Science in Legal Management",
-    "Others (please specify)",
   ],
   "CITE-Higher School ng UMak": [
-    "Senior High School (SHS)",
-    "Others (please specify)",
+    "Senior High School - ABM",
+    "Senior High School - HUMSS",
+    "Senior High School - STEM",
+    "Senior High School - GAS",
+    "Senior High School - TVL",
   ],
 };

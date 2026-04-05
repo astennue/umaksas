@@ -4,11 +4,11 @@ export interface College {
 }
 
 export const COLLEGES: College[] = [
-  { name: "College of Business and Financial Sciences", acronym: "CBFS" },
+  { name: "College of Business and Financial Science", acronym: "CBFS" },
   { name: "College of Computing and Information Sciences", acronym: "CCIS" },
   { name: "College of Construction Sciences and Engineering", acronym: "CCSE" },
   { name: "College of Continuing, Advanced and Professional Studies", acronym: "CCAPS" },
-  { name: "College For Human Kinetics", acronym: "CHK" },
+  { name: "College of Human Kinetics", acronym: "CHK" },
   { name: "College of Governance and Public Policy", acronym: "CGPP" },
   { name: "College of Innovative Teacher Education", acronym: "CITE" },
   { name: "College of Liberal Arts and Sciences", acronym: "CLAS" },
@@ -20,7 +20,7 @@ export const COLLEGES: College[] = [
   { name: "Institute of Nursing", acronym: "ION" },
   { name: "Institute of Pharmacy", acronym: "IOP" },
   { name: "Institute of Psychology", acronym: "IOPsy" },
-  { name: "Institute for Social Work", acronym: "ISW" },
+  { name: "Institute for Social Development for Nation Building", acronym: "ISDNB" },
   { name: "School of Law", acronym: "SOL" },
   { name: "CITE-Higher School ng UMak", acronym: "CITE-HSU" },
 ];

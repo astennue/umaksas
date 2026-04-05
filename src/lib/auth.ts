@@ -20,14 +20,23 @@ export const authOptions: NextAuthOptions = {
             where: { email: credentials.email },
           });
 
-          if (!user || !user.isActive) {
+          if (!user) {
+            console.warn(`Auth failed: No user found with email "${credentials.email}"`);
+            return null;
+          }
+
+          if (!user.isActive) {
+            console.warn(`Auth failed: User "${credentials.email}" is inactive (isActive=false)`);
             return null;
           }
 
           // Plain text password comparison (production should use bcrypt)
-          if (credentials.password !== user.password) {
+          if (credentials.password.trim() !== (user.password || "").trim()) {
+            console.warn(`Auth failed: Password mismatch for user "${credentials.email}" (role: ${user.role})`);
             return null;
           }
+
+          console.log(`Auth success: "${credentials.email}" logged in (role: ${user.role})`);
 
           return {
             id: user.id,

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { db } from "@/lib/db";
+import { sendApplicationStatusEmail } from "@/lib/email";
 
 // GET /api/applications/admin - List all applications for admin dashboard
 export async function GET(request: NextRequest) {
@@ -263,6 +264,23 @@ export async function PUT(request: NextRequest) {
       }
     } catch (notifError) {
       console.error("Error creating adviser notification:", notifError);
+    }
+
+    // Send status update email to applicant (async, don't fail the review)
+    try {
+      const applicantName = `${application.firstName || ""} ${application.lastName || ""}`.trim() || application.applicantEmail;
+      const applicantEmail = application.email || application.applicantEmail;
+      if (applicantEmail) {
+        await sendApplicationStatusEmail(
+          applicantEmail,
+          applicantName,
+          application.id,
+          status as "APPROVED" | "REJECTED",
+          reviewNotes || undefined
+        );
+      }
+    } catch (emailError) {
+      console.error("Warning: Could not send status email:", emailError);
     }
 
     return NextResponse.json({

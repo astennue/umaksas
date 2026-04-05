@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useSession } from "next-auth/react";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -454,9 +455,11 @@ export default function ApplicationsPage() {
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => { setSelectedApp(app); setDetailOpen(true); }}
+                            asChild
                           >
-                            <Eye className="h-3.5 w-3.5" />
+                            <Link href={`/dashboard/applications/${app.id}`}>
+                              <Eye className="h-3.5 w-3.5" />
+                            </Link>
                           </Button>
                           {canManage && !["APPROVED", "REJECTED", "WITHDRAWN"].includes(app.status) && (
                             <Button
@@ -511,10 +514,12 @@ export default function ApplicationsPage() {
                         variant="outline"
                         size="sm"
                         className="flex-1 h-8 text-xs"
-                        onClick={() => { setSelectedApp(app); setDetailOpen(true); }}
+                        asChild
                       >
-                        <Eye className="mr-1 h-3 w-3" />
-                        View
+                        <Link href={`/dashboard/applications/${app.id}`}>
+                          <Eye className="mr-1 h-3 w-3" />
+                          View
+                        </Link>
                       </Button>
                       {canManage && !["APPROVED", "REJECTED", "WITHDRAWN"].includes(app.status) && (
                         <Button

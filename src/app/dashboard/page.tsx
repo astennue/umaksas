@@ -31,6 +31,9 @@ import {
   CreditCard,
   ToggleLeft,
   Megaphone,
+  LogIn,
+  LogOut,
+  Activity,
 } from "lucide-react";
 import Image from "next/image";
 import { format } from "date-fns";
@@ -64,6 +67,25 @@ interface RecentApplication {
   status: string;
   createdAt: string;
   college?: string;
+}
+
+interface OnDutySA {
+  id: string;
+  firstName: string;
+  lastName: string;
+  officeName: string | null;
+  college: string | null;
+  isOnDuty: boolean;
+  lastClockIn: string | null;
+}
+
+interface SASelfStatus {
+  id: string;
+  isOnDuty: boolean;
+  hoursThisSemester: number;
+  totalHoursWorked: number;
+  officeName: string | null;
+  lastClockIn: string | null;
 }
 
 const roleLabels: Record<string, string> = {
@@ -134,6 +156,9 @@ export default function DashboardPage() {
   });
   const [recentInterviews, setRecentInterviews] = useState<RecentInterview[]>([]);
   const [recentApplications, setRecentApplications] = useState<RecentApplication[]>([]);
+  const [announcements, setAnnouncements] = useState<Array<{id: string; title: string; excerpt: string | null; imageUrl: string | null; createdAt: string; priority: string; isPinned: boolean}>>([]);
+  const [onDutyList, setOnDutyList] = useState<OnDutySA[]>([]);
+  const [saSelfStatus, setSaSelfStatus] = useState<SASelfStatus | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -197,6 +222,49 @@ export default function DashboardPage() {
             applicantEmail: i.application.applicantEmail,
           }));
           setRecentInterviews(recent);
+        }
+
+        // Fetch Announcements
+        const annRes = await fetch("/api/announcements?limit=5&sort=newest");
+        if (annRes.ok) {
+          const annData = await annRes.json();
+          setAnnouncements(annData.announcements || []);
+        }
+
+        // Fetch on-duty SAs for widget
+        const saWallRes = await fetch("/api/sa-wall?sort=name");
+        if (saWallRes.ok) {
+          const saWallData = await saWallRes.json();
+          const allSAs: OnDutySA[] = (saWallData || []).map((sa: OnDutySA) => ({
+            id: sa.id,
+            firstName: sa.firstName,
+            lastName: sa.lastName,
+            officeName: sa.officeName,
+            college: sa.college,
+            isOnDuty: sa.isOnDuty,
+            lastClockIn: sa.lastClockIn,
+          }));
+          setOnDutyList(allSAs.filter((sa: OnDutySA) => sa.isOnDuty));
+        }
+
+        // For SA role: fetch own status
+        const currentUserRole = (session?.user as { role?: string })?.role || "";
+        if (currentUserRole === "STUDENT_ASSISTANT") {
+          const saRes = await fetch("/api/student-assistants?limit=1");
+          if (saRes.ok) {
+            const saData = await saRes.json();
+            const mySA = (saData.studentAssistants || [])[0];
+            if (mySA) {
+              setSaSelfStatus({
+                id: mySA.id,
+                isOnDuty: mySA.isOnDuty || false,
+                hoursThisSemester: mySA.hoursThisSemester || 0,
+                totalHoursWorked: mySA.totalHoursWorked || 0,
+                officeName: mySA.officeName || null,
+                lastClockIn: mySA.lastClockIn || null,
+              });
+            }
+          }
         }
       } catch (error) {
         console.error("Error fetching dashboard data:", error);
@@ -559,11 +627,271 @@ export default function DashboardPage() {
         </div>
       )}
 
+      {/* Quick Stats Widget - On Duty Now */}
+      {userRole === "STUDENT_ASSISTANT" ? (
+        /* SA-specific widget: own status */
+        <Card className="border-0 shadow-lg rounded-xl overflow-hidden">
+          <div className="h-1 bg-gradient-to-r from-[#1e3a8a] to-blue-500" />
+          <CardContent className="p-5">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400">
+                  <Activity className="h-5 w-5" />
+                </div>
+                <div>
+                  <CardTitle className="text-base font-semibold text-gray-900 dark:text-white">My Status</CardTitle>
+                  <p className="text-xs text-muted-foreground">Your current duty status</p>
+                </div>
+              </div>
+              {saSelfStatus?.isOnDuty && (
+                <Badge className="bg-green-50 text-green-700 dark:bg-green-900/30 dark:text-green-300 border-green-200 dark:border-green-800 gap-1.5">
+                  <span className="relative flex h-2 w-2">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75" />
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500" />
+                  </span>
+                  On Duty
+                </Badge>
+              )}
+            </div>
+            <div className="mt-4 grid grid-cols-2 gap-4">
+              <div className="rounded-lg bg-gray-50 dark:bg-gray-800/50 p-3">
+                <p className="text-xs text-muted-foreground">Hours This Semester</p>
+                <p className="mt-1 text-xl font-bold text-gray-900 dark:text-white">{saSelfStatus?.hoursThisSemester ?? 0}<span className="text-sm font-normal text-muted-foreground ml-1">hrs</span></p>
+              </div>
+              <div className="rounded-lg bg-gray-50 dark:bg-gray-800/50 p-3">
+                <p className="text-xs text-muted-foreground">Total Hours Worked</p>
+                <p className="mt-1 text-xl font-bold text-gray-900 dark:text-white">{saSelfStatus?.totalHoursWorked ?? 0}<span className="text-sm font-normal text-muted-foreground ml-1">hrs</span></p>
+              </div>
+            </div>
+            {saSelfStatus?.officeName && (
+              <p className="mt-3 text-xs text-muted-foreground flex items-center gap-1.5">
+                <Building2 className="h-3 w-3" />
+                Assigned to: {saSelfStatus.officeName}
+              </p>
+            )}
+            {saSelfStatus?.lastClockIn && (
+              <p className="mt-1 text-xs text-muted-foreground flex items-center gap-1.5">
+                <Clock className="h-3 w-3" />
+                Last clock in: {format(new Date(saSelfStatus.lastClockIn), "h:mm a, MMM d")}
+              </p>
+            )}
+            <div className="mt-4">
+              <Link href="/dashboard/attendance">
+                <Button
+                  size="sm"
+                  className={cn(
+                    "w-full gap-2 text-sm",
+                    saSelfStatus?.isOnDuty
+                      ? "bg-red-600 hover:bg-red-700 text-white"
+                      : "bg-[#1e3a8a] hover:bg-[#1e3070] text-white"
+                  )}
+                >
+                  {saSelfStatus?.isOnDuty ? (
+                    <>
+                      <LogOut className="h-4 w-4" />
+                      Clock Out
+                    </>
+                  ) : (
+                    <>
+                      <LogIn className="h-4 w-4" />
+                      Clock In
+                    </>
+                  )}
+                </Button>
+              </Link>
+            </div>
+          </CardContent>
+        </Card>
+      ) : (
+        /* Admin/officer widget: on duty SAs + pending badge */
+        <div className="grid gap-4 lg:grid-cols-2">
+          {/* On Duty Now */}
+          <Card className="border-0 shadow-lg rounded-xl overflow-hidden">
+            <div className="h-1 bg-gradient-to-r from-[#1e3a8a] to-emerald-500" />
+            <CardContent className="p-5">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400">
+                    <UserCheck className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <CardTitle className="text-base font-semibold text-gray-900 dark:text-white">On Duty Now</CardTitle>
+                    <p className="text-xs text-muted-foreground">
+                      {onDutyList.length > 0
+                        ? `${onDutyList.length} SA${onDutyList.length !== 1 ? "s" : ""} currently active`
+                        : "No SAs currently on duty"}
+                    </p>
+                  </div>
+                </div>
+                {onDutyList.length > 0 && (
+                  <div className="flex items-center gap-1.5">
+                    <span className="relative flex h-2.5 w-2.5">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75" />
+                      <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-green-500" />
+                    </span>
+                    <span className="text-sm font-semibold text-green-600 dark:text-green-400">{onDutyList.length}</span>
+                  </div>
+                )}
+              </div>
+              {onDutyList.length === 0 ? (
+                <div className="text-center py-6">
+                  <Users className="h-8 w-8 text-gray-300 dark:text-gray-600 mx-auto mb-2" />
+                  <p className="text-sm text-muted-foreground">No SAs are currently on duty</p>
+                </div>
+              ) : (
+                <div className="space-y-2 max-h-64 overflow-y-auto pr-1">
+                  {onDutyList.slice(0, 6).map((sa) => (
+                    <div
+                      key={sa.id}
+                      className="flex items-center gap-3 rounded-lg px-3 py-2.5 bg-gray-50 dark:bg-gray-800/50 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                    >
+                      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#1e3a8a] text-white text-xs font-bold">
+                        {sa.firstName?.[0]}{sa.lastName?.[0]}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
+                          {sa.firstName} {sa.lastName}
+                        </p>
+                        {sa.officeName && (
+                          <p className="text-xs text-muted-foreground truncate">{sa.officeName}</p>
+                        )}
+                      </div>
+                      <span className="relative flex h-2 w-2 shrink-0">
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75" />
+                        <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500" />
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+              {onDutyList.length > 6 && (
+                <Link href="/sa-wall" className="block mt-3 text-center">
+                  <Button variant="ghost" size="sm" className="h-7 text-xs text-[#1e3a8a] hover:text-[#1e3070] dark:text-blue-400 dark:hover:text-blue-300 gap-1">
+                    View All {onDutyList.length} on SA Wall <ArrowRight className="h-3 w-3" />
+                  </Button>
+                </Link>
+              )}
+              {onDutyList.length > 0 && onDutyList.length <= 6 && (
+                <Link href="/sa-wall" className="block mt-3 text-center">
+                  <Button variant="ghost" size="sm" className="h-7 text-xs text-[#1e3a8a] hover:text-[#1e3070] dark:text-blue-400 dark:hover:text-blue-300 gap-1">
+                    View SA Wall <ArrowRight className="h-3 w-3" />
+                  </Button>
+                </Link>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Quick Stats Summary */}
+          <Card className="border-0 shadow-lg rounded-xl overflow-hidden">
+            <div className="h-1 bg-gradient-to-r from-[#1e3a8a] to-amber-500" />
+            <CardContent className="p-5">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-50 text-amber-600 dark:bg-amber-900/20 dark:text-amber-400">
+                  <TrendingUp className="h-5 w-5" />
+                </div>
+                <div>
+                  <CardTitle className="text-base font-semibold text-gray-900 dark:text-white">Quick Stats</CardTitle>
+                  <p className="text-xs text-muted-foreground">Key metrics at a glance</p>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="rounded-lg bg-blue-50 dark:bg-blue-900/20 p-3">
+                  <div className="flex items-center gap-1.5 mb-1">
+                    <UserCheck className="h-3.5 w-3.5 text-blue-600 dark:text-blue-400" />
+                    <span className="text-xs text-muted-foreground">On Duty</span>
+                  </div>
+                  <p className="text-2xl font-bold text-[#1e3a8a] dark:text-blue-300">{stats.onDutySAs}</p>
+                </div>
+                <div className="rounded-lg bg-amber-50 dark:bg-amber-900/20 p-3">
+                  <div className="flex items-center gap-1.5 mb-1">
+                    <Users className="h-3.5 w-3.5 text-amber-600 dark:text-amber-400" />
+                    <span className="text-xs text-muted-foreground">Active SAs</span>
+                  </div>
+                  <p className="text-2xl font-bold text-amber-700 dark:text-amber-300">{stats.activeSAs}</p>
+                </div>
+                <div className="rounded-lg bg-green-50 dark:bg-green-900/20 p-3">
+                  <div className="flex items-center gap-1.5 mb-1">
+                    <CheckCircle className="h-3.5 w-3.5 text-green-600 dark:text-green-400" />
+                    <span className="text-xs text-muted-foreground">Interviews Done</span>
+                  </div>
+                  <p className="text-2xl font-bold text-green-700 dark:text-green-300">{stats.completedInterviews}</p>
+                </div>
+                <div className="rounded-lg bg-violet-50 dark:bg-violet-900/20 p-3">
+                  <div className="flex items-center gap-1.5 mb-1">
+                    <Calendar className="h-3.5 w-3.5 text-violet-600 dark:text-violet-400" />
+                    <span className="text-xs text-muted-foreground">Scheduled</span>
+                  </div>
+                  <p className="text-2xl font-bold text-violet-700 dark:text-violet-300">{stats.scheduledInterviews}</p>
+                </div>
+              </div>
+              {stats.pendingApplications > 0 && (
+                <Link href="/dashboard/applications" className="block mt-4">
+                  <div className="flex items-center gap-2 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800/50 px-3 py-2.5 hover:bg-amber-100 dark:hover:bg-amber-900/30 transition-colors">
+                    <AlertCircle className="h-4 w-4 text-amber-600 dark:text-amber-400 shrink-0" />
+                    <p className="text-sm text-amber-800 dark:text-amber-200 flex-1">
+                      <span className="font-semibold">{stats.pendingApplications}</span> pending application{stats.pendingApplications !== 1 ? "s" : ""} need{stats.pendingApplications === 1 ? "s" : ""} review
+                    </p>
+                    <ArrowRight className="h-4 w-4 text-amber-500" />
+                  </div>
+                </Link>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
       {/* Quick Actions - Role Based */}
       <div>
         <h2 className="text-base font-semibold text-gray-900 dark:text-white mb-3">Quick Actions</h2>
         {renderQuickActions()}
       </div>
+
+      {/* Announcements Widget - visible to all roles */}
+      {announcements.length > 0 && (
+        <Card className="border-0 shadow-lg rounded-xl">
+          <CardHeader className="pb-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Megaphone className="h-4 w-4 text-blue-600" />
+                <CardTitle className="text-base font-semibold text-gray-900 dark:text-white">Announcements</CardTitle>
+              </div>
+              <Button variant="ghost" size="sm" className="h-8 text-xs text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300" asChild>
+                <Link href="/dashboard/announcements">
+                  View All <ArrowRight className="ml-1 h-3 w-3" />
+                </Link>
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent className="pt-0">
+            <div className="space-y-3">
+              {announcements.slice(0, 3).map((ann) => (
+                <Link
+                  key={ann.id}
+                  href={`/dashboard/announcements?id=${ann.id}`}
+                  className="block rounded-lg p-3 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors"
+                >
+                  <div className="flex items-start gap-3">
+                    {ann.imageUrl && (
+                      <div className="h-12 w-12 rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-800 flex-shrink-0">
+                        <img src={ann.imageUrl} alt="" className="h-full w-full object-cover" />
+                      </div>
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        {ann.isPinned && <span className="text-[10px] text-amber-600 font-medium">📌</span>}
+                        {ann.priority === "URGENT" && <Badge variant="destructive" className="text-[9px] px-1.5 py-0 h-4">Urgent</Badge>}
+                        <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{ann.title}</p>
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">{ann.excerpt || "No description"}</p>
+                      <p className="text-[10px] text-muted-foreground mt-1">{format(new Date(ann.createdAt), "MMM d, yyyy")}</p>
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Recent Lists (hidden for SA role) */}
       {showStats && (

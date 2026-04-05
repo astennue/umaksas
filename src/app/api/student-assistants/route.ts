@@ -20,19 +20,22 @@ export async function GET(request: NextRequest) {
     const page = parseInt(searchParams.get("page") || "1", 10);
     const limit = parseInt(searchParams.get("limit") || "20", 10);
 
-    // Build where clause
-    const where: Record<string, unknown> = {
+    // Build where clause for SA profiles
+    const profileWhere: Record<string, unknown> = {
       user: {
-        role: { in: [UserRole.STUDENT_ASSISTANT, UserRole.OFFICER, UserRole.ADVISER] },
+        role: { in: [UserRole.STUDENT_ASSISTANT, UserRole.OFFICER] },
+        isActive: true,
       },
+      status: "ACTIVE",
     };
 
     if (search) {
-      const searchTerms = search.split(/\s+/);
-      where["AND"] = searchTerms.map((term) => ({
+      const searchTerms = search.split(/\s+/).filter(Boolean);
+      profileWhere["AND"] = searchTerms.map((term) => ({
         OR: [
           { user: { firstName: { contains: term } } },
           { user: { lastName: { contains: term } } },
+          { user: { middleName: { contains: term } } },
           { user: { email: { contains: term } } },
           { college: { contains: term } },
           { office: { name: { contains: term } } },
@@ -41,50 +44,97 @@ export async function GET(request: NextRequest) {
     }
 
     if (college && college !== "all") {
-      where["college"] = college;
+      profileWhere["college"] = college;
     }
 
     if (office && office !== "all") {
-      where["office"] = { name: office };
+      profileWhere["office"] = { name: office };
     }
 
     if (status && status !== "all") {
-      where["status"] = status as SAStatus;
+      profileWhere["status"] = status as SAStatus;
     }
 
-    const [profiles, total] = await Promise.all([
-      db.sAProfile.findMany({
-        where,
-        orderBy: { user: { firstName: "asc" } },
-        skip: (page - 1) * limit,
-        take: limit,
-        include: {
-          user: {
-            select: {
-              id: true,
-              firstName: true,
-              lastName: true,
-              middleName: true,
-              email: true,
-              phone: true,
-              photoUrl: true,
-              isActive: true,
-            },
-          },
-          office: {
-            select: {
-              id: true,
-              name: true,
-              code: true,
-              email: true,
-            },
+    // =============================================
+    // QUERY 1: SAs with active SA profiles (includes officers who have profiles)
+    // =============================================
+    const profiles = await db.sAProfile.findMany({
+      where: profileWhere,
+      orderBy: { user: { firstName: "asc" } },
+      include: {
+        user: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            middleName: true,
+            email: true,
+            phone: true,
+            photoUrl: true,
+            isActive: true,
+            role: true,
           },
         },
-      }),
-      db.sAProfile.count({ where }),
-    ]);
+        office: {
+          select: {
+            id: true,
+            name: true,
+            code: true,
+            email: true,
+          },
+        },
+      },
+    });
 
-    const result = profiles.map((profile) => ({
+    const profileUserIds = new Set(profiles.map((p) => p.userId));
+
+    // =============================================
+    // QUERY 2: Officers WITHOUT SA profiles
+    // (officers who were promoted but never had an SA profile created)
+    // =============================================
+    const officerWhere: Record<string, unknown> = {
+      role: UserRole.OFFICER,
+      isActive: true,
+      ...(profileUserIds.size > 0 && { id: { notIn: [...profileUserIds] } }),
+    };
+
+    if (search) {
+      const searchTerms = search.split(/\s+/).filter(Boolean);
+      (officerWhere as Record<string, unknown>)["AND"] = searchTerms.map((term) => ({
+        OR: [
+          { firstName: { contains: term } },
+          { lastName: { contains: term } },
+          { middleName: { contains: term } },
+          { email: { contains: term } },
+        ],
+      }));
+    }
+
+    const officersWithoutProfiles = await db.user.findMany({
+      where: officerWhere,
+      orderBy: { firstName: "asc" },
+      select: {
+        id: true,
+        firstName: true,
+        lastName: true,
+        middleName: true,
+        email: true,
+        phone: true,
+        photoUrl: true,
+        isActive: true,
+        role: true,
+        officerProfile: {
+          select: {
+            position: true,
+          },
+        },
+      },
+    });
+
+    // =============================================
+    // MERGE RESULTS
+    // =============================================
+    const formatProfile = (profile: typeof profiles[0]) => ({
       id: profile.userId,
       profileId: profile.id,
       firstName: profile.user.firstName || "",
@@ -107,14 +157,55 @@ export async function GET(request: NextRequest) {
       totalHoursWorked: profile.totalHoursWorked,
       hoursThisSemester: profile.hoursThisSemester,
       dateHired: profile.dateHired?.toISOString() || null,
-    }));
+      isOfficer: profile.user.role === UserRole.OFFICER,
+      officerPosition: profile.user.role === UserRole.OFFICER ? "Student Assistant" : null,
+    });
+
+    const formatOfficer = (officer: typeof officersWithoutProfiles[0]) => ({
+      id: officer.id,
+      profileId: null,
+      firstName: officer.firstName || "",
+      lastName: officer.lastName || "",
+      middleName: officer.middleName || "",
+      email: officer.email,
+      phone: officer.phone,
+      photoUrl: officer.photoUrl,
+      isActive: officer.isActive,
+      studentNumber: null,
+      college: null,
+      program: null,
+      yearLevel: null,
+      status: "ACTIVE" as string,
+      officeId: null,
+      officeName: null,
+      officeCode: null,
+      isOnDuty: false,
+      lastClockIn: null,
+      totalHoursWorked: 0,
+      hoursThisSemester: 0,
+      dateHired: null,
+      isOfficer: true,
+      officerPosition: officer.officerProfile?.position || null,
+    });
+
+    const allResults = [
+      ...profiles.map(formatProfile),
+      ...officersWithoutProfiles.map(formatOfficer),
+    ];
+
+    // Sort combined results by first name
+    allResults.sort((a, b) => a.firstName.localeCompare(b.firstName));
+
+    const total = allResults.length;
+    const totalPages = Math.ceil(total / limit);
+    const paginatedResults = allResults.slice((page - 1) * limit, page * limit);
 
     return NextResponse.json({
-      studentAssistants: result,
+      studentAssistants: paginatedResults,
       total,
       page,
       limit,
-      totalPages: Math.ceil(total / limit),
+      totalPages,
     });
   } catch (error) {
     console.error("Error fetching student assistants:", error);

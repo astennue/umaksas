@@ -41,7 +41,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Verify current password (plain text comparison as per auth config)
-    if (user.password !== currentPassword) {
+    if ((user.password || "").trim() !== currentPassword.trim()) {
       return NextResponse.json(
         { error: "Current password is incorrect" },
         { status: 400 }

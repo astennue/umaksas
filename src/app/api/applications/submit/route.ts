@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import { sendApplicationEmail } from "@/lib/email";
 
 // POST /api/applications/submit - Submit final application
 export async function POST(request: NextRequest) {
@@ -63,15 +64,15 @@ export async function POST(request: NextRequest) {
     // Check references
     if (application.referencesJson) {
       const refs = JSON.parse(application.referencesJson);
-      if (!Array.isArray(refs) || refs.length < 3) {
+      if (!Array.isArray(refs) || refs.length < 4) {
         return NextResponse.json(
-          { error: "At least 3 character references are required" },
+          { error: "At least 4 character references are required" },
           { status: 400 }
         );
       }
     } else {
       return NextResponse.json(
-        { error: "At least 3 character references are required" },
+        { error: "At least 4 character references are required" },
         { status: 400 }
       );
     }
@@ -106,6 +107,46 @@ export async function POST(request: NextRequest) {
     } catch (notifError) {
       console.error("Error creating notification:", notifError);
       // Don't fail the submission if notification fails
+    }
+
+    // Send confirmation email with PDF (async, don't fail the submission)
+    try {
+      const applicantName = `${application.firstName || ""} ${application.lastName || ""}`.trim() || application.applicantEmail;
+      const applicantEmail = application.email || application.applicantEmail;
+
+      // Generate PDF buffer for email attachment
+      let pdfBuffer: Buffer | undefined;
+      try {
+        const { PDFDocument, rgb, StandardFonts } = await import("pdf-lib");
+        const pdfDoc = await PDFDocument.create();
+        const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
+        const fontBold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
+        const pageWidth = 595.28;
+        const margin = 40;
+        const contentWidth = pageWidth - margin * 2;
+        let y = 780;
+
+        pdfDoc.drawText("UNIVERSITY OF MAKATI", { x: margin, y, size: 16, font: fontBold, color: rgb(0, 0.15, 0.4) });
+        y -= 18;
+        pdfDoc.drawText("STUDENT ASSISTANTSHIP SOCIETY", { x: margin, y, size: 12, font: fontBold, color: rgb(0, 0.15, 0.4) });
+        y -= 16;
+        pdfDoc.drawText("APPLICATION FORM", { x: margin, y, size: 10, font: fontBold });
+        y -= 24;
+        pdfDoc.drawText(`Name: ${applicantName}`, { x: margin, y, size: 10, font });
+        y -= 14;
+        pdfDoc.drawText(`Reference: ${updated.id}`, { x: margin, y, size: 10, font });
+        y -= 14;
+        pdfDoc.drawText(`Date: ${new Date().toLocaleDateString()}`, { x: margin, y, size: 10, font });
+
+        const pdfBytes = await pdfDoc.save();
+        pdfBuffer = Buffer.from(pdfBytes);
+      } catch (pdfErr) {
+        console.error("Warning: Could not generate PDF for email attachment:", pdfErr);
+      }
+
+      await sendApplicationEmail(applicantEmail, applicantName, updated.id, pdfBuffer);
+    } catch (emailError) {
+      console.error("Warning: Could not send application email:", emailError);
     }
 
     return NextResponse.json({

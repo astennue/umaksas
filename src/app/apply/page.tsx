@@ -19,6 +19,9 @@ import {
   ShieldAlert,
   X,
   LogIn,
+  Search,
+  FileEdit,
+  GraduationCap,
 } from "lucide-react";
 import { PublicLayout } from "@/components/public/public-layout";
 import { StepIndicator } from "@/components/apply/step-indicator";
@@ -95,6 +98,8 @@ const slideVariants = {
 
 export default function ApplyPage() {
   const { data: session, status: authStatus } = useSession();
+  const [showForm, setShowForm] = useState(false);
+  const [trackRef, setTrackRef] = useState("");
   const [currentStep, setCurrentStep] = useState(1);
   const [direction, setDirection] = useState(1);
   const [completedSteps, setCompletedSteps] = useState<number[]>([]);
@@ -478,7 +483,120 @@ export default function ApplyPage() {
     setLastSavedForm("");
   };
 
-  // Auth gate: require login before filling application
+  // ====== PRELIMINARY LANDING SCREEN ======
+  if (!showForm) {
+    return (
+      <PublicLayout>
+        <div className="relative overflow-hidden mx-auto max-w-4xl px-4 py-16 sm:px-6 lg:px-8">
+          {/* Gradient orbs */}
+          <div className="pointer-events-none absolute inset-0">
+            <motion.div
+              className="absolute -top-20 -left-20 h-[300px] w-[300px] rounded-full bg-blue-500/[0.04] dark:bg-blue-500/[0.06] blur-3xl"
+              animate={{ x: [0, 20, -15, 0], y: [0, -20, 15, 0], scale: [1, 1.06, 0.94, 1] }}
+              transition={{ duration: 24, repeat: Infinity, ease: "easeInOut" }}
+            />
+            <motion.div
+              className="absolute -bottom-32 -right-20 h-[350px] w-[350px] rounded-full bg-yellow-500/[0.04] dark:bg-yellow-500/[0.06] blur-3xl"
+              animate={{ x: [0, -18, 22, 0], y: [0, 18, -12, 0], scale: [1, 0.94, 1.08, 1] }}
+              transition={{ duration: 28, repeat: Infinity, ease: "easeInOut" }}
+            />
+          </div>
+
+          <div className="relative text-center mb-12">
+            <div className="flex justify-center mb-6">
+              <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-gradient-to-br from-[#1e3a8a] to-[#0f2567] shadow-xl">
+                <GraduationCap className="h-10 w-10 text-white" />
+              </div>
+            </div>
+            <h1 className="text-3xl sm:text-4xl font-bold tracking-tight text-gray-900 dark:text-white">
+              UMAK Student Assistantship Society
+            </h1>
+            <p className="mt-3 text-base text-muted-foreground max-w-lg mx-auto">
+              Apply to become a Student Assistant or track your existing application status.
+            </p>
+          </div>
+
+          <div className="relative grid gap-6 sm:grid-cols-2">
+            {/* Track Application Card */}
+            <Card className="border-0 shadow-lg hover:shadow-xl transition-shadow">
+              <CardContent className="p-6 sm:p-8">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-blue-100 dark:bg-blue-900/30">
+                    <Search className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+                  </div>
+                  <div className="text-left">
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Track Application</h3>
+                    <p className="text-xs text-muted-foreground">Check your application status</p>
+                  </div>
+                </div>
+                <div className="space-y-3">
+                  <div className="flex gap-2">
+                    <Input
+                      placeholder="Enter reference number"
+                      value={trackRef}
+                      onChange={(e) => setTrackRef(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" && trackRef.trim()) {
+                          window.location.href = `/track?ref=${encodeURIComponent(trackRef.trim())}`;
+                        }
+                      }}
+                      className="h-10"
+                    />
+                    <Button
+                      variant="outline"
+                      onClick={() => {
+                        if (trackRef.trim()) {
+                          window.location.href = `/track?ref=${encodeURIComponent(trackRef.trim())}`;
+                        } else {
+                          window.location.href = "/track";
+                        }
+                      }}
+                      className="h-10 px-4 shrink-0"
+                    >
+                      Track
+                    </Button>
+                  </div>
+                  <Button variant="link" className="h-auto p-0 text-sm" onClick={() => { window.location.href = "/track"; }}>
+                    Go to tracking page &rarr;
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Apply Card */}
+            <Card className="border-0 shadow-lg hover:shadow-xl transition-shadow">
+              <CardContent className="p-6 sm:p-8 flex flex-col h-full">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-100 dark:bg-emerald-900/30">
+                    <FileEdit className="h-6 w-6 text-emerald-600 dark:text-emerald-400" />
+                  </div>
+                  <div className="text-left">
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Apply as Student Assistant</h3>
+                    <p className="text-xs text-muted-foreground">Start a new application</p>
+                  </div>
+                </div>
+                <p className="text-sm text-muted-foreground mb-6 flex-1">
+                  Begin your application to the UMAK Student Assistant Program. The form consists of 12 steps and typically takes 15-20 minutes to complete.
+                </p>
+                <Button
+                  onClick={() => setShowForm(true)}
+                  className="w-full h-11 bg-emerald-600 text-white hover:bg-emerald-700 gap-2 text-sm font-semibold"
+                >
+                  <FileEdit className="h-4 w-4" />
+                  Start Application
+                </Button>
+                <p className="text-[11px] text-muted-foreground mt-2 text-center">
+                  You will need to sign in with your UMak account to apply.
+                </p>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      </PublicLayout>
+    );
+  }
+
+  // Auth gate: require login before filling application (shown after "Start Application" is clicked)
   if (authStatus === "loading") {
     return (
       <PublicLayout>
@@ -553,6 +671,16 @@ export default function ApplyPage() {
             transition={{ duration: 22, repeat: Infinity, ease: "easeInOut" }}
           />
         </div>
+        {/* Back to landing link */}
+        <button
+          type="button"
+          onClick={() => setShowForm(false)}
+          className="mb-4 inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-gray-900 dark:hover:text-white transition-colors"
+        >
+          <ArrowLeft className="h-3.5 w-3.5" />
+          Back to options
+        </button>
+
         {/* Header */}
         <div className="mb-6 text-center">
           <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
@@ -1238,7 +1366,8 @@ function Step4Education({ formData, updateField, errors }: StepProps) {
             <Input
               placeholder="e.g., 2018"
               value={formData.elementaryYear}
-              onChange={(e) => updateField("elementaryYear", e.target.value)}
+              onChange={(e) => updateField("elementaryYear", e.target.value.replace(/[^\d]/g, "").slice(0, 4))}
+              maxLength={4}
             />
           </FormField>
         </div>
@@ -1263,7 +1392,8 @@ function Step4Education({ formData, updateField, errors }: StepProps) {
             <Input
               placeholder="e.g., 2022"
               value={formData.highSchoolYear}
-              onChange={(e) => updateField("highSchoolYear", e.target.value)}
+              onChange={(e) => updateField("highSchoolYear", e.target.value.replace(/[^\d]/g, "").slice(0, 4))}
+              maxLength={4}
             />
           </FormField>
         </div>
@@ -1288,7 +1418,8 @@ function Step4Education({ formData, updateField, errors }: StepProps) {
             <Input
               placeholder="e.g., 2024"
               value={formData.seniorHighYear}
-              onChange={(e) => updateField("seniorHighYear", e.target.value)}
+              onChange={(e) => updateField("seniorHighYear", e.target.value.replace(/[^\d]/g, "").slice(0, 4))}
+              maxLength={4}
             />
           </FormField>
           <FormField label="Strand/Track" error={errors.seniorHighTrack}>

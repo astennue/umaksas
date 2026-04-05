@@ -283,7 +283,7 @@ export default function ProfilePage() {
       toast.success("Profile photo updated successfully");
       fetchProfile();
     } catch (error: unknown) {
-      toast.error(error instanceof Error ? error.message : "Failed to upload photo");
+      toast.error(error instanceof Error ? error.message : "Failed to upload photo", { duration: 5000 });
     } finally {
       setIsUploadingPhoto(false);
       if (fileInputRef.current) fileInputRef.current.value = "";
@@ -519,32 +519,38 @@ export default function ProfilePage() {
                 )}
               </div>
 
-              {/* Photo action overlay */}
-              <div className="absolute inset-0 rounded-full border-4 border-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200 -m-4">
-                <div className="absolute inset-0 rounded-full bg-black/40 flex items-center justify-center gap-1">
-                  <button
-                    onClick={() => fileInputRef.current?.click()}
-                    className="h-8 w-8 rounded-full bg-white/90 flex items-center justify-center hover:bg-white transition-colors"
-                    title="Change Photo"
-                    disabled={isUploadingPhoto}
-                  >
-                    {isUploadingPhoto ? (
-                      <Loader2 className="h-4 w-4 animate-spin text-[#1e3a8a]" />
-                    ) : (
-                      <Camera className="h-4 w-4 text-[#1e3a8a]" />
-                    )}
-                  </button>
-                  {profile.photoUrl && (
-                    <button
-                      onClick={() => setRemovePhotoDialogOpen(true)}
-                      className="h-8 w-8 rounded-full bg-white/90 flex items-center justify-center hover:bg-white transition-colors"
-                      title="Remove Photo"
-                    >
-                      <Trash2 className="h-4 w-4 text-red-500" />
-                    </button>
-                  )}
+              {/* Persistent loading overlay during upload (always visible) */}
+              {isUploadingPhoto && (
+                <div className="absolute inset-0 rounded-full bg-black/50 flex items-center justify-center -m-4 z-10">
+                  <div className="h-12 w-12 rounded-full bg-white/90 flex items-center justify-center">
+                    <Loader2 className="h-6 w-6 animate-spin text-[#1e3a8a]" />
+                  </div>
                 </div>
-              </div>
+              )}
+
+              {/* Photo action overlay (visible on hover, hidden during upload) */}
+              {!isUploadingPhoto && (
+                <div className="absolute inset-0 rounded-full border-4 border-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200 -m-4">
+                  <div className="absolute inset-0 rounded-full bg-black/40 flex items-center justify-center gap-1">
+                    <button
+                      onClick={() => fileInputRef.current?.click()}
+                      className="h-8 w-8 rounded-full bg-white/90 flex items-center justify-center hover:bg-white transition-colors"
+                      title="Change Photo"
+                    >
+                      <Camera className="h-4 w-4 text-[#1e3a8a]" />
+                    </button>
+                    {profile.photoUrl && (
+                      <button
+                        onClick={() => setRemovePhotoDialogOpen(true)}
+                        className="h-8 w-8 rounded-full bg-white/90 flex items-center justify-center hover:bg-white transition-colors"
+                        title="Remove Photo"
+                      >
+                        <Trash2 className="h-4 w-4 text-red-500" />
+                      </button>
+                    )}
+                  </div>
+                </div>
+              )}
 
               {/* Online indicator */}
               {isSA && profile.profile?.isOnDuty && (
