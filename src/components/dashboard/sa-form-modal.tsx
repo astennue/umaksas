@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useSession } from "next-auth/react";
 import {
   Dialog,
   DialogContent,
@@ -12,6 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { SelectItem } from "@/components/ui/select";
 import { BetterSelect } from "@/components/ui/better-select";
+import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
 import { COLLEGES } from "@/lib/colleges";
 import { toast } from "sonner";
@@ -19,6 +21,8 @@ import {
   User,
   GraduationCap,
   Building2,
+  Shield,
+  Briefcase,
 } from "lucide-react";
 
 interface SAFormModalProps {
@@ -33,6 +37,8 @@ interface SAFormModalProps {
     yearLevel?: string | null;
     officeId?: string | null;
     status?: string;
+    isCommitteeOfficer?: boolean;
+    committeePosition?: string | null;
   } | null;
   offices: { id: string; name: string; code: string | null }[];
   open: boolean;
@@ -49,6 +55,15 @@ export function SAFormModal({
   onSaved,
   mode = "add",
 }: SAFormModalProps) {
+  const { data: session } = useSession();
+  const user = session?.user as { role?: string; officerPosition?: string | null } | undefined;
+  const userRole = user?.role || "";
+  const officerPosition = user?.officerPosition || null;
+  const isPresident = userRole === "OFFICER" && officerPosition === "PRESIDENT";
+
+  // Check if current user can manage committee officer designation
+  const canManageCommitteeOfficer = userRole === "SUPER_ADMIN" || userRole === "ADVISER" || isPresident;
+
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
@@ -60,6 +75,8 @@ export function SAFormModal({
   const [officeId, setOfficeId] = useState("");
   const [customOffice, setCustomOffice] = useState("");
   const [status, setStatus] = useState("ACTIVE");
+  const [isCommitteeOfficer, setIsCommitteeOfficer] = useState(false);
+  const [committeePosition, setCommitteePosition] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
@@ -91,6 +108,8 @@ export function SAFormModal({
         setCustomOffice("");
       }
       setStatus(sa.status || "ACTIVE");
+      setIsCommitteeOfficer(sa.isCommitteeOfficer || false);
+      setCommitteePosition(sa.committeePosition || "");
     } else if (!sa && open) {
       // Reset form for add mode
       setFirstName("");
@@ -104,6 +123,8 @@ export function SAFormModal({
       setOfficeId("");
       setCustomOffice("");
       setStatus("ACTIVE");
+      setIsCommitteeOfficer(false);
+      setCommitteePosition("");
     }
   }, [sa, open, offices]);
 
@@ -115,6 +136,12 @@ export function SAFormModal({
 
     if (mode === "add" && !email.trim()) {
       toast.error("Email is required for new student assistants");
+      return;
+    }
+
+    // If committee officer is toggled on, position is required
+    if (isCommitteeOfficer && !committeePosition.trim()) {
+      toast.error("Please specify the Officer/Committee position");
       return;
     }
 
@@ -158,6 +185,11 @@ export function SAFormModal({
         body.program = program.trim() || undefined;
         body.yearLevel = yearLevel || undefined;
         body.status = status;
+        // Committee officer designation (only for authorized users)
+        if (canManageCommitteeOfficer) {
+          body.isCommitteeOfficer = isCommitteeOfficer;
+          body.committeePosition = isCommitteeOfficer ? committeePosition.trim() : null;
+        }
       }
 
       const res = await fetch(url, {
@@ -383,6 +415,71 @@ export function SAFormModal({
               </div>
             )}
           </div>
+
+          {/* ── Section: Officer / Committee Designation ──────────────────── */}
+          {mode === "edit" && canManageCommitteeOfficer && (
+            <>
+              <Separator />
+              <div className="space-y-4">
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2">
+                    <Shield className="h-4 w-4 text-amber-600" />
+                    <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+                      Officer / Committee
+                    </h3>
+                  </div>
+                  <span className="text-[10px] text-muted-foreground bg-muted rounded-full px-2 py-0.5">
+                    Admin Only
+                  </span>
+                </div>
+
+                <div className="flex items-center justify-between gap-4 rounded-lg border p-3.5 bg-amber-50/50 border-amber-200/60">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg transition-colors ${
+                      isCommitteeOfficer
+                        ? "bg-amber-100 text-amber-600"
+                        : "bg-gray-100 text-gray-400"
+                    }`}>
+                      <Briefcase className="h-4 w-4" />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium text-gray-900 dark:text-white">
+                        Officer / Committee Member
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        Mark if this SA holds an officer or committee position
+                      </p>
+                    </div>
+                  </div>
+                  <Switch
+                    checked={isCommitteeOfficer}
+                    onCheckedChange={(checked) => {
+                      setIsCommitteeOfficer(checked);
+                      if (!checked) setCommitteePosition("");
+                    }}
+                  />
+                </div>
+
+                {isCommitteeOfficer && (
+                  <div className="space-y-1.5 pl-1">
+                    <Label htmlFor="committeePosition" className="text-amber-700 dark:text-amber-300">
+                      Position / Role *
+                    </Label>
+                    <Input
+                      id="committeePosition"
+                      value={committeePosition}
+                      onChange={(e) => setCommitteePosition(e.target.value)}
+                      placeholder="e.g., Committee Head, Secretary, Treasurer, etc."
+                      className="rounded-lg border-amber-200 focus-visible:ring-amber-400/30"
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Specify the officer or committee position held by this SA
+                    </p>
+                  </div>
+                )}
+              </div>
+            </>
+          )}
 
           <Separator />
 

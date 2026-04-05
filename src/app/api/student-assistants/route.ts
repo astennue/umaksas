@@ -164,6 +164,8 @@ export async function GET(request: NextRequest) {
       dateHired: profile.dateHired?.toISOString() || null,
       isOfficer: profile.user.role === UserRole.OFFICER,
       officerPosition: profile.user.role === UserRole.OFFICER ? (profile.user.officerProfile?.position || null) : null,
+      isCommitteeOfficer: profile.isCommitteeOfficer || false,
+      committeePosition: profile.committeePosition || null,
     });
 
     const formatOfficer = (officer: typeof officersWithoutProfiles[0]) => ({
@@ -191,6 +193,8 @@ export async function GET(request: NextRequest) {
       dateHired: null,
       isOfficer: true,
       officerPosition: officer.officerProfile?.position || null,
+      isCommitteeOfficer: false,
+      committeePosition: null,
     });
 
     const allResults = [

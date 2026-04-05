@@ -124,6 +124,10 @@ export async function GET(
           officerPosition: officerUser.officerProfile?.position || null,
           officerEmail: officerUser.officerProfile?.email || null,
 
+          // Committee officer designation (officers don't have SA profiles)
+          isCommitteeOfficer: false,
+          committeePosition: null,
+
           // Empty collections for officer (they don't have SA data)
           attendance: { totalRecords: 0, totalHours: 0, recentRecords: [], monthlyBreakdown: {}, monthlyHours: 0, attendanceRate: 0 },
           evaluation: null,
@@ -383,6 +387,10 @@ export async function GET(
       officerPosition: null,
       officerEmail: null,
 
+      // Committee officer designation
+      isCommitteeOfficer: profile.isCommitteeOfficer || false,
+      committeePosition: profile.committeePosition || null,
+
       // Attendance summary
       attendance: {
         totalRecords: attendanceCount,
@@ -462,6 +470,8 @@ export async function PUT(
       officeId,
       status,
       customOffice,
+      isCommitteeOfficer,
+      committeePosition,
     } = body;
 
     // Check SA exists
@@ -516,6 +526,8 @@ export async function PUT(
           yearLevel: yearLevel !== undefined ? yearLevel : undefined,
           officeId: resolvedOfficeId,
           status: status !== undefined ? (status as SAStatus) : undefined,
+          ...(isCommitteeOfficer !== undefined && { isCommitteeOfficer: Boolean(isCommitteeOfficer) }),
+          ...(committeePosition !== undefined && { committeePosition: committeePosition || null }),
         },
         include: {
           user: {

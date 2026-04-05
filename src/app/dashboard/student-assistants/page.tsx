@@ -43,6 +43,7 @@ import {
   XCircle,
   Loader2,
   Award,
+  Shield,
 } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "sonner";
@@ -80,6 +81,8 @@ interface StudentAssistant {
   dateHired: string | null;
   isOfficer?: boolean;
   officerPosition?: string | null;
+  isCommitteeOfficer?: boolean;
+  committeePosition?: string | null;
 }
 
 interface ImportResult {
@@ -376,6 +379,15 @@ export default function StudentAssistantsPage() {
                           >
                             <Award className="w-2.5 h-2.5 mr-0.5" />
                             UMAK SAS Officer — {sa.officerPosition.replace(/_/g, " ")}
+                          </Badge>
+                        )}
+                        {!sa.isOfficer && sa.isCommitteeOfficer && sa.committeePosition && (
+                          <Badge
+                            variant="secondary"
+                            className="mt-0.5 bg-violet-100 text-violet-700 dark:bg-violet-500/20 dark:text-violet-300 text-[10px] font-medium border border-violet-200 dark:border-violet-400/30"
+                          >
+                            <Shield className="w-2.5 h-2.5 mr-0.5" />
+                            {sa.committeePosition}
                           </Badge>
                         )}
                         <p className="text-xs text-muted-foreground truncate">{sa.email}</p>
@@ -726,6 +738,8 @@ export default function StudentAssistantsPage() {
           yearLevel: editSA.yearLevel,
           officeId: editSA.officeId,
           status: editSA.status,
+          isCommitteeOfficer: editSA.isCommitteeOfficer,
+          committeePosition: editSA.committeePosition,
         } : null}
         offices={offices}
         open={formOpen}

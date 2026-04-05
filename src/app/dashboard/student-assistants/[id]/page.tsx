@@ -39,6 +39,7 @@ import {
   File,
   Download,
   Pencil,
+  Shield,
 } from "lucide-react";
 import { EmptyState } from "@/components/ui/empty-state";
 import { safeJsonParse } from "@/lib/utils";
@@ -87,6 +88,9 @@ interface SAData {
   isOfficer?: boolean;
   officerPosition?: string | null;
   officerEmail?: string | null;
+  // Committee officer designation
+  isCommitteeOfficer?: boolean;
+  committeePosition?: string | null;
   attendance: {
     totalRecords: number;
     totalHours: number;
@@ -408,6 +412,12 @@ export default function SAProfilePage() {
                   <Badge className="bg-amber-500/20 text-amber-300 border-amber-500/30 text-xs">
                     <Award className="mr-1 h-3 w-3" />
                     UMAK SAS Officer — {data.officerPosition.replace(/_/g, " ")}
+                  </Badge>
+                )}
+                {!data.isOfficer && data.isCommitteeOfficer && data.committeePosition && (
+                  <Badge className="bg-violet-500/20 text-violet-300 border-violet-500/30 text-xs">
+                    <Shield className="mr-1 h-3 w-3" />
+                    {data.committeePosition}
                   </Badge>
                 )}
               </div>

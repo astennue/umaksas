@@ -146,6 +146,10 @@ model SAProfile {
   lastClockIn       DateTime?
   lastClockOut      DateTime?
 
+  // Committee / Officer Designation (set by President/Adviser/SuperAdmin)
+  isCommitteeOfficer Boolean  @default(false)
+  committeePosition   String?
+
   // Timestamps
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
