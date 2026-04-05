@@ -106,8 +106,8 @@ const navItems: NavItem[] = [
   // Manage Users - Super Admin, Adviser, President
   { label: "Manage Users", href: "/dashboard/users", icon: UserCog, roles: ["SUPER_ADMIN", "ADVISER", "OFFICER"], presidentOnly: true },
 
-  // CMS / Content - Super Admin only
-  { label: "CMS / Content", href: "/dashboard/content", icon: PenSquare, roles: ["SUPER_ADMIN"] },
+  // CMS / Content - Super Admin, Adviser, President only
+  { label: "CMS / Content", href: "/dashboard/content", icon: PenSquare, roles: ["SUPER_ADMIN", "ADVISER", "OFFICER"], presidentOnly: true },
 
   // Renewals Management - Super Admin, Adviser, Officer
   { label: "Renewals", href: "/dashboard/renewals", icon: RefreshCw, roles: ["SUPER_ADMIN", "ADVISER", "OFFICER"] },

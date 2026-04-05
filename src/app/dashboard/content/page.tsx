@@ -82,6 +82,7 @@ import { toast } from "sonner";
 import { EmptyState } from "@/components/ui/empty-state";
 import { useKeyboardShortcuts } from "@/hooks/use-keyboard-shortcuts";
 import { SavingIndicator } from "@/components/ui/saving-indicator";
+import { RoleGuard } from "@/components/auth/role-guard";
 
 // ============================================
 // Types
@@ -207,8 +208,11 @@ function PageContentTab() {
   const [formOrder, setFormOrder] = useState(0);
   const [formIsActive, setFormIsActive] = useState(true);
 
-  const userRole = (session?.user as { role?: string })?.role;
-  const canManage = userRole === "SUPER_ADMIN";
+  const user = session?.user as { role?: string; officerPosition?: string | null } | undefined;
+  const userRole = user?.role || "";
+  const officerPosition = user?.officerPosition || null;
+  const isPresident = userRole === "OFFICER" && officerPosition === "PRESIDENT";
+  const canManage = userRole === "SUPER_ADMIN" || userRole === "ADVISER" || isPresident;
 
   // ─── Keyboard Shortcuts ──────────────────────────────────────────────────
   useKeyboardShortcuts({
@@ -776,8 +780,11 @@ function FormBuilderTab() {
   const [formOptions, setFormOptions] = useState("");
   const [formConfig, setFormConfig] = useState("");
 
-  const userRole = (session?.user as { role?: string })?.role;
-  const canManage = userRole === "SUPER_ADMIN";
+  const user = session?.user as { role?: string; officerPosition?: string | null } | undefined;
+  const userRole = user?.role || "";
+  const officerPosition = user?.officerPosition || null;
+  const isPresident = userRole === "OFFICER" && officerPosition === "PRESIDENT";
+  const canManage = userRole === "SUPER_ADMIN" || userRole === "ADVISER" || isPresident;
 
   const fetchFields = useCallback(async () => {
     try {
@@ -1671,26 +1678,11 @@ function SystemSettingsTab() {
 // ============================================
 
 export default function CMSContentPage() {
-  const { data: session } = useSession();
   const [activeTab, setActiveTab] = useState("content");
 
-  const userRole = (session?.user as { role?: string })?.role;
-
-  // Only SUPER_ADMIN can access this page
-  if (userRole !== "SUPER_ADMIN") {
-    return (
-      <div className="flex flex-col items-center justify-center rounded-lg border border-dashed py-16 text-center">
-        <Settings className="mb-4 h-12 w-12 text-muted-foreground/40" />
-        <h2 className="text-lg font-semibold text-muted-foreground">Access Denied</h2>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Only Super Admin can access CMS settings
-        </p>
-      </div>
-    );
-  }
-
   return (
-    <div className="space-y-6">
+    <RoleGuard allowedRoles={["SUPER_ADMIN", "ADVISER", "OFFICER"]} presidentOnly>
+  <div className="space-y-6">
       {/* Page Header */}
       <div>
         <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
