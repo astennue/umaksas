@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireRole } from "@/lib/auth-helpers";
 import { db } from "@/lib/db";
-import { CollectionStatus, PaymentStatus } from "@prisma/client";
+import { CollectionStatus, PaymentStatus, UserRole } from "@prisma/client";
+
+export const dynamic = "force-dynamic";
 
 // GET /api/collections - List all collections
 export async function GET(req: NextRequest) {
@@ -21,10 +23,8 @@ export async function GET(req: NextRequest) {
       where.status = status;
     }
 
-    // OFFICER can only see ACTIVE collections
-    if (user.role === "OFFICER") {
-      where.status = "ACTIVE";
-    }
+    // OFFICER can see all statuses (PRESIDENT/TREASURER get full CRUD, others view-only)
+    // The frontend handles what actions are available per role
 
     const [collections, total] = await Promise.all([
       db.paymentCollection.findMany({
@@ -64,12 +64,14 @@ export async function GET(req: NextRequest) {
           .reduce((sum, p) => sum + (p.amountPaid || p.amount), 0);
         const pendingCount = payments.filter((p) => p.status === "PENDING").length;
         const paidCount = payments.filter((p) => p.status === "PAID").length;
+        const unpaidCount = payments.filter((p) => p.status === "UNPAID").length;
 
         return {
           ...col,
           totalCollected,
           pendingCount,
           paidCount,
+          unpaidCount,
         };
       })
     );
@@ -99,11 +101,12 @@ export async function POST(req: NextRequest) {
       title,
       description,
       amount,
+      deadline,
+      target,
+      individualUserIds,
       paymentMethod,
-      targetRoles,
-      startDate,
-      endDate,
       gcashNumber,
+      gcashQrUrl,
       paymentInstructions,
     } = body;
 
@@ -115,18 +118,33 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Amount must be greater than 0" }, { status: 400 });
     }
 
+    if (!deadline) {
+      return NextResponse.json({ error: "Deadline is required" }, { status: 400 });
+    }
+
+    const validTargets = ["ALL_SAS", "ALL_OFFICERS", "ALL", "INDIVIDUAL"];
+    if (!target || !validTargets.includes(target)) {
+      return NextResponse.json({ error: "Valid target is required" }, { status: 400 });
+    }
+
+    if (target === "INDIVIDUAL" && (!individualUserIds || !Array.isArray(individualUserIds) || individualUserIds.length === 0)) {
+      return NextResponse.json({ error: "At least one user must be selected for Individual target" }, { status: 400 });
+    }
+
     if (!paymentMethod || !["GCASH", "MANUAL", "BOTH"].includes(paymentMethod)) {
       return NextResponse.json({ error: "Valid payment method is required" }, { status: 400 });
     }
 
-    if (!targetRoles || !Array.isArray(targetRoles) || targetRoles.length === 0) {
-      return NextResponse.json({ error: "At least one target role is required" }, { status: 400 });
+    if ((paymentMethod === "GCASH" || paymentMethod === "BOTH") && (!gcashNumber || !gcashNumber.trim())) {
+      return NextResponse.json({ error: "GCash number is required for GCash/BOTH payment method" }, { status: 400 });
     }
 
-    if (paymentMethod === "GCASH" || paymentMethod === "BOTH") {
-      if (!gcashNumber || !gcashNumber.trim()) {
-        return NextResponse.json({ error: "GCash number is required for GCash/BOTH payment method" }, { status: 400 });
-      }
+    // Build targetRoles JSON - supports both new object format and legacy array format
+    let targetRolesJson: string;
+    if (target === "INDIVIDUAL") {
+      targetRolesJson = JSON.stringify({ mode: "INDIVIDUAL", userIds: individualUserIds });
+    } else {
+      targetRolesJson = JSON.stringify({ mode: target });
     }
 
     const collection = await db.paymentCollection.create({
@@ -134,12 +152,12 @@ export async function POST(req: NextRequest) {
         title: title.trim(),
         description: description?.trim() || null,
         amount: parseFloat(amount),
+        endDate: new Date(deadline),
+        targetRoles: targetRolesJson,
         paymentMethod,
-        targetRoles: JSON.stringify(targetRoles),
-        startDate: startDate ? new Date(startDate) : null,
-        endDate: endDate ? new Date(endDate) : null,
-        gcashNumber: gcashNumber?.trim() || null,
-        paymentInstructions: paymentInstructions?.trim() || null,
+        gcashNumber: (paymentMethod === "GCASH" || paymentMethod === "BOTH") ? gcashNumber.trim() : null,
+        gcashQrUrl: gcashQrUrl || null,
+        paymentInstructions: (paymentMethod === "GCASH" || paymentMethod === "BOTH") ? (paymentInstructions?.trim() || null) : null,
         status: CollectionStatus.DRAFT,
         createdBy: user.id,
       },

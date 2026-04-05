@@ -8,6 +8,12 @@
     },
     "src/app/api/system-settings/gcash-qr/route.ts": {
       "maxDuration": 60
+    },
+    "src/app/api/user/photo/route.ts": {
+      "maxDuration": 60
+    },
+    "src/app/api/collections/route.ts": {
+      "maxDuration": 60
     }
   }
 }

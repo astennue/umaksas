@@ -1,7 +1,72 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireRole } from "@/lib/auth-helpers";
 import { db } from "@/lib/db";
-import { CollectionStatus, PaymentStatus, UserRole } from "@prisma/client";
+import { CollectionStatus, PaymentStatus } from "@prisma/client";
+
+export const dynamic = "force-dynamic";
+
+// Helper: parse targetRoles field (supports both old array format and new object format)
+function parseTargetRoles(targetRolesStr: string): { mode: string; userIds?: string[]; legacyRoles?: string[] } {
+  try {
+    const parsed = JSON.parse(targetRolesStr);
+    if (Array.isArray(parsed)) {
+      // Legacy format: ["STUDENT_ASSISTANT", "OFFICER"]
+      return { mode: "LEGACY", legacyRoles: parsed };
+    }
+    // New format: { mode: "ALL_SAS" } or { mode: "INDIVIDUAL", userIds: [...] }
+    return parsed;
+  } catch {
+    return { mode: "LEGACY", legacyRoles: ["STUDENT_ASSISTANT"] };
+  }
+}
+
+// Helper: get target user IDs based on targetRoles
+export async function getTargetUserIds(targetRolesStr: string): Promise<string[]> {
+  const parsed = parseTargetRoles(targetRolesStr);
+  const userIds: string[] = [];
+
+  if (parsed.mode === "LEGACY" && parsed.legacyRoles) {
+    // Legacy: use role-based query
+    const users = await db.user.findMany({
+      where: { role: { in: parsed.legacyRoles }, isActive: true },
+      select: { id: true },
+    });
+    userIds.push(...users.map((u) => u.id));
+  } else if (parsed.mode === "ALL_SAS") {
+    const users = await db.user.findMany({
+      where: { role: "STUDENT_ASSISTANT", isActive: true },
+      select: { id: true },
+    });
+    userIds.push(...users.map((u) => u.id));
+  } else if (parsed.mode === "ALL_OFFICERS") {
+    const users = await db.user.findMany({
+      where: {
+        OR: [
+          { role: "OFFICER", isActive: true },
+          { role: "ADVISER", isActive: true },
+        ],
+      },
+      select: { id: true },
+    });
+    userIds.push(...users.map((u) => u.id));
+  } else if (parsed.mode === "ALL") {
+    const users = await db.user.findMany({
+      where: {
+        OR: [
+          { role: "STUDENT_ASSISTANT", isActive: true },
+          { role: "OFFICER", isActive: true },
+          { role: "ADVISER", isActive: true },
+        ],
+      },
+      select: { id: true },
+    });
+    userIds.push(...users.map((u) => u.id));
+  } else if (parsed.mode === "INDIVIDUAL" && parsed.userIds) {
+    userIds.push(...parsed.userIds);
+  }
+
+  return [...new Set(userIds)];
+}
 
 // GET /api/collections/[id] - Get single collection with payments
 export async function GET(
@@ -58,11 +123,6 @@ export async function GET(
       return NextResponse.json({ error: "Collection not found" }, { status: 404 });
     }
 
-    // OFFICER can only view ACTIVE collections
-    if (user.role === "OFFICER" && collection.status !== "ACTIVE") {
-      return NextResponse.json({ error: "Collection not found" }, { status: 404 });
-    }
-
     // Compute stats
     const payments = collection.collectionPayments;
     const totalCollected = payments
@@ -70,12 +130,14 @@ export async function GET(
       .reduce((sum, p) => sum + (p.amountPaid || p.amount), 0);
     const pendingCount = payments.filter((p) => p.status === "PENDING").length;
     const paidCount = payments.filter((p) => p.status === "PAID").length;
+    const unpaidCount = payments.filter((p) => p.status === "UNPAID").length;
 
     return NextResponse.json({
       ...collection,
       totalCollected,
       pendingCount,
       paidCount,
+      unpaidCount,
     });
   } catch (error) {
     console.error("Error fetching collection:", error);
@@ -109,13 +171,13 @@ export async function PUT(
       title,
       description,
       amount,
+      deadline,
+      target,
+      individualUserIds,
       paymentMethod,
-      targetRoles,
-      startDate,
-      endDate,
       gcashNumber,
+      gcashQrUrl,
       paymentInstructions,
-      status,
     } = body;
 
     // Validate fields
@@ -123,7 +185,7 @@ export async function PUT(
       return NextResponse.json({ error: "Title is required" }, { status: 400 });
     }
 
-    if (amount !== undefined && (parseFloat(amount) <= 0)) {
+    if (amount !== undefined && parseFloat(amount) <= 0) {
       return NextResponse.json({ error: "Amount must be greater than 0" }, { status: 400 });
     }
 
@@ -137,17 +199,31 @@ export async function PUT(
     if (title !== undefined) updateData.title = title.trim();
     if (description !== undefined) updateData.description = description?.trim() || null;
     if (amount !== undefined) updateData.amount = parseFloat(amount);
-    if (paymentMethod !== undefined) updateData.paymentMethod = paymentMethod;
-    if (targetRoles !== undefined) updateData.targetRoles = JSON.stringify(targetRoles);
-    if (startDate !== undefined) updateData.startDate = startDate ? new Date(startDate) : null;
-    if (endDate !== undefined) updateData.endDate = endDate ? new Date(endDate) : null;
-    if (gcashNumber !== undefined) updateData.gcashNumber = gcashNumber?.trim() || null;
-    if (paymentInstructions !== undefined) updateData.paymentInstructions = paymentInstructions?.trim() || null;
+    if (deadline !== undefined) updateData.endDate = deadline ? new Date(deadline) : null;
 
-    // Allow status change to ACTIVE or DRAFT
-    if (status !== undefined && ["ACTIVE", "DRAFT"].includes(status)) {
-      updateData.status = status;
+    // Handle target update
+    if (target !== undefined) {
+      const validTargets = ["ALL_SAS", "ALL_OFFICERS", "ALL", "INDIVIDUAL"];
+      if (!validTargets.includes(target)) {
+        return NextResponse.json({ error: "Valid target is required" }, { status: 400 });
+      }
+      if (target === "INDIVIDUAL" && (!individualUserIds || !Array.isArray(individualUserIds) || individualUserIds.length === 0)) {
+        return NextResponse.json({ error: "At least one user must be selected for Individual target" }, { status: 400 });
+      }
+
+      let targetRolesJson: string;
+      if (target === "INDIVIDUAL") {
+        targetRolesJson = JSON.stringify({ mode: "INDIVIDUAL", userIds: individualUserIds });
+      } else {
+        targetRolesJson = JSON.stringify({ mode: target });
+      }
+      updateData.targetRoles = targetRolesJson;
     }
+
+    if (paymentMethod !== undefined) updateData.paymentMethod = paymentMethod;
+    if (gcashNumber !== undefined) updateData.gcashNumber = gcashNumber?.trim() || null;
+    if (gcashQrUrl !== undefined) updateData.gcashQrUrl = gcashQrUrl || null;
+    if (paymentInstructions !== undefined) updateData.paymentInstructions = paymentInstructions?.trim() || null;
 
     const collection = await db.paymentCollection.update({
       where: { id },
@@ -176,8 +252,8 @@ export async function PUT(
   }
 }
 
-// POST /api/collections/[id]/generate - Generate payments for target SAs
-export async function POST(
+// DELETE /api/collections/[id] - Hard delete a collection and all its payments
+export async function DELETE(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
@@ -185,68 +261,33 @@ export async function POST(
     const authResult = await requireRole(["SUPER_ADMIN", "ADVISER"]);
     if (authResult instanceof NextResponse) return authResult;
 
-    const { user } = authResult;
     const { id } = await params;
 
-    const collection = await db.paymentCollection.findUnique({ where: { id } });
-    if (!collection) {
-      return NextResponse.json({ error: "Collection not found" }, { status: 404 });
-    }
-
-    if (collection.status !== "ACTIVE") {
-      return NextResponse.json({ error: "Collection must be active to generate payments" }, { status: 400 });
-    }
-
-    const targetRoles: string[] = JSON.parse(collection.targetRoles);
-
-    // Fetch target users based on target roles
-    const targetUsers = await db.user.findMany({
-      where: {
-        role: { in: targetRoles as UserRole[] },
-        isActive: true,
-      },
-      select: {
-        id: true,
+    const existing = await db.paymentCollection.findUnique({
+      where: { id },
+      include: {
+        _count: {
+          select: { collectionPayments: true },
+        },
       },
     });
 
-    let created = 0;
-    let skipped = 0;
-
-    for (const targetUser of targetUsers) {
-      // Check if payment already exists
-      const existing = await db.collectionPayment.findUnique({
-        where: {
-          collectionId_userId: {
-            collectionId: id,
-            userId: targetUser.id,
-          },
-        },
-      });
-
-      if (existing) {
-        skipped++;
-        continue;
-      }
-
-      // Generate tracking number
-      const trackingNum = `CP-${id.slice(-6).toUpperCase()}-${Date.now().toString(36).toUpperCase()}-${targetUser.id.slice(-4).toUpperCase()}`;
-
-      await db.collectionPayment.create({
-        data: {
-          collectionId: id,
-          userId: targetUser.id,
-          amount: collection.amount,
-          status: PaymentStatus.UNPAID,
-          trackingNumber: trackingNum,
-        },
-      });
-      created++;
+    if (!existing) {
+      return NextResponse.json({ error: "Collection not found" }, { status: 404 });
     }
 
-    return NextResponse.json({ created, skipped });
+    // Delete all associated payments first, then the collection
+    await db.$transaction([
+      db.collectionPayment.deleteMany({ where: { collectionId: id } }),
+      db.paymentCollection.delete({ where: { id } }),
+    ]);
+
+    return NextResponse.json({
+      message: "Collection deleted successfully",
+      deletedPayments: existing._count.collectionPayments,
+    });
   } catch (error) {
-    console.error("Error generating payments:", error);
-    return NextResponse.json({ error: "Failed to generate payments" }, { status: 500 });
+    console.error("Error deleting collection:", error);
+    return NextResponse.json({ error: "Failed to delete collection" }, { status: 500 });
   }
 }
