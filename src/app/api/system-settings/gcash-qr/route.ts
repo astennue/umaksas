@@ -66,7 +66,32 @@ export async function POST(request: NextRequest) {
     const dataUrl = `data:${file.type};base64,${base64}`;
 
     // Upsert system settings with the new QR URL
-    let settings = await db.systemSettings.findFirst();
+    let settings;
+    try {
+      settings = await db.systemSettings.findFirst();
+    } catch (findErr) {
+      console.error("Error finding system settings, attempting create:", findErr);
+      // If the table doesn't exist or columns are missing, try creating
+      try {
+        settings = await db.systemSettings.create({
+          data: {
+            siteName: "UMAK Student Assistant Management System",
+            applicationOpen: false,
+            renewalOpen: false,
+            maxWorkHoursPerDay: 4,
+            monthlyPaymentFee: 20.0,
+            gcashQrUrl: dataUrl,
+          },
+        });
+        return NextResponse.json({ gcashQrUrl: settings.gcashQrUrl });
+      } catch (createErr) {
+        console.error("Error creating system settings:", createErr);
+        return NextResponse.json(
+          { error: "Database error: Could not save QR code. The system settings table may need to be synced. Please run 'prisma db push' to update the database schema." },
+          { status: 500 },
+        );
+      }
+    }
 
     if (!settings) {
       settings = await db.systemSettings.create({

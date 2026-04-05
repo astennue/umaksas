@@ -41,99 +41,111 @@ export async function GET(request: NextRequest) {
       ];
     }
 
-    const [applications, total] = await Promise.all([
-      db.application.findMany({
-        where,
-        orderBy: { createdAt: "desc" },
-        skip: (page - 1) * limit,
-        take: limit,
-        select: {
-          id: true,
-          applicantEmail: true,
-          userId: true,
-          status: true,
-          currentStep: true,
-          submittedAt: true,
-          reviewedAt: true,
-          createdAt: true,
-          updatedAt: true,
-          // Personal Information
-          firstName: true,
-          middleName: true,
-          lastName: true,
-          suffix: true,
-          dateOfBirth: true,
-          placeOfBirth: true,
-          gender: true,
-          civilStatus: true,
-          religion: true,
-          citizenship: true,
-          // Contact Information
-          email: true,
-          phone: true,
-          alternatePhone: true,
-          // Residence
-          residenceAddress: true,
-          residenceCity: true,
-          residenceZip: true,
-          // Family Background
-          fatherName: true,
-          fatherOccupation: true,
-          fatherContact: true,
-          motherName: true,
-          motherMaidenName: true,
-          motherOccupation: true,
-          motherContact: true,
-          guardianName: true,
-          guardianRelation: true,
-          guardianContact: true,
-          siblingsCount: true,
-          // Educational Background
-          elementarySchool: true,
-          elementaryYear: true,
-          highSchool: true,
-          highSchoolYear: true,
-          seniorHigh: true,
-          seniorHighYear: true,
-          seniorHighTrack: true,
-          // Current Education
-          studentNumber: true,
-          college: true,
-          program: true,
-          yearLevel: true,
-          section: true,
-          gwa: true,
-          // Employment & Skills
-          employmentJson: true,
-          // Availability
-          availabilityJson: true,
-          // Trainings
-          trainingsJson: true,
-          // References
-          referencesJson: true,
-          // Essays
-          essayWhyApply: true,
-          essayGoals: true,
-          essaySkills: true,
-          essayChallenges: true,
-          // Upload fields
-          photoUrl: true,
-          resumeUrl: true,
-          gradeReportUrl: true,
-          registrationUrl: true,
-          residenceImageUrl: true,
-          // Review
-          reviewNotes: true,
-          interviewStatus: true,
-          interviewScore: true,
-          interviewDate: true,
-          interviewNotes: true,
-          totalScore: true,
-          rank: true,
-        },
-      }),
-      db.application.count({ where }),
-    ]);
+    // Fetch applications — use findMany without explicit select so Prisma returns
+    // all scalar fields automatically. This avoids errors if the DB schema is
+    // slightly out of sync (e.g. reviewNotes column missing on an old deploy).
+    let applications;
+    let total;
+    try {
+      [applications, total] = await Promise.all([
+        db.application.findMany({
+          where,
+          orderBy: { createdAt: "desc" },
+          skip: (page - 1) * limit,
+          take: limit,
+        }),
+        db.application.count({ where }),
+      ]);
+    } catch (dbError: unknown) {
+      // If the error mentions a missing column (e.g. reviewNotes), log helpful info
+      const msg = dbError instanceof Error ? dbError.message : String(dbError);
+      console.error("Database query failed — schema may be out of sync:", msg);
+      // Attempt a plain select with only core fields as fallback
+      try {
+        [applications, total] = await Promise.all([
+          db.application.findMany({
+            where,
+            orderBy: { createdAt: "desc" },
+            skip: (page - 1) * limit,
+            take: limit,
+            select: {
+              id: true,
+              applicantEmail: true,
+              userId: true,
+              status: true,
+              currentStep: true,
+              submittedAt: true,
+              reviewedAt: true,
+              createdAt: true,
+              updatedAt: true,
+              firstName: true,
+              middleName: true,
+              lastName: true,
+              suffix: true,
+              dateOfBirth: true,
+              placeOfBirth: true,
+              gender: true,
+              civilStatus: true,
+              religion: true,
+              citizenship: true,
+              email: true,
+              phone: true,
+              alternatePhone: true,
+              residenceAddress: true,
+              residenceCity: true,
+              residenceZip: true,
+              fatherName: true,
+              fatherOccupation: true,
+              fatherContact: true,
+              motherName: true,
+              motherMaidenName: true,
+              motherOccupation: true,
+              motherContact: true,
+              guardianName: true,
+              guardianRelation: true,
+              guardianContact: true,
+              siblingsCount: true,
+              elementarySchool: true,
+              elementaryYear: true,
+              highSchool: true,
+              highSchoolYear: true,
+              seniorHigh: true,
+              seniorHighYear: true,
+              seniorHighTrack: true,
+              studentNumber: true,
+              college: true,
+              program: true,
+              yearLevel: true,
+              section: true,
+              gwa: true,
+              employmentJson: true,
+              availabilityJson: true,
+              trainingsJson: true,
+              referencesJson: true,
+              essayWhyApply: true,
+              essayGoals: true,
+              essaySkills: true,
+              essayChallenges: true,
+              photoUrl: true,
+              resumeUrl: true,
+              gradeReportUrl: true,
+              registrationUrl: true,
+              residenceImageUrl: true,
+              interviewStatus: true,
+              interviewScore: true,
+              interviewDate: true,
+              interviewNotes: true,
+              totalScore: true,
+              rank: true,
+            },
+          }),
+          db.application.count({ where }),
+        ]);
+      } catch (fallbackError: unknown) {
+        console.error("Fallback query also failed:", fallbackError);
+        throw dbError;
+      }
+    }
 
     return NextResponse.json({
       applications,
