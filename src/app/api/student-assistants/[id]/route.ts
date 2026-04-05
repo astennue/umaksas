@@ -61,6 +61,79 @@ export async function GET(
     });
 
     if (!profile) {
+      // User doesn't have an SAProfile — check if they're an officer
+      const officerUser = await db.user.findUnique({
+        where: { id },
+        include: {
+          officerProfile: {
+            select: {
+              position: true,
+              email: true,
+              phone: true,
+            },
+          },
+          documents: {
+            select: {
+              id: true,
+              type: true,
+              title: true,
+              fileUrl: true,
+              createdAt: true,
+            },
+            take: 10,
+            orderBy: { createdAt: "desc" },
+          },
+        },
+      });
+
+      if (officerUser && officerUser.role === "OFFICER") {
+        // Return officer info in a compatible shape so the frontend can render it
+        return NextResponse.json({
+          id: officerUser.id,
+          profileId: null,
+          firstName: officerUser.firstName || "",
+          lastName: officerUser.lastName || "",
+          middleName: officerUser.middleName || "",
+          suffix: officerUser.suffix || "",
+          email: officerUser.email,
+          phone: officerUser.phone || officerUser.officerProfile?.phone || null,
+          photoUrl: officerUser.photoUrl,
+          isActive: officerUser.isActive,
+          createdAt: officerUser.createdAt,
+          studentNumber: null,
+          college: null,
+          program: null,
+          yearLevel: null,
+          academicYear: null,
+          semester: null,
+          employeeId: null,
+          status: "ACTIVE",
+          archiveReason: null,
+          archiveDate: null,
+          totalHoursWorked: 0,
+          hoursThisSemester: 0,
+          officeId: null,
+          office: null,
+          isOnDuty: false,
+          lastClockIn: null,
+          lastClockOut: null,
+          dateHired: null,
+
+          // Officer-specific fields
+          isOfficer: true,
+          officerPosition: officerUser.officerProfile?.position || null,
+          officerEmail: officerUser.officerProfile?.email || null,
+
+          // Empty collections for officer (they don't have SA data)
+          attendance: { totalRecords: 0, totalHours: 0, recentRecords: [], monthlyBreakdown: {}, monthlyHours: 0, attendanceRate: 0 },
+          evaluation: null,
+          application: null,
+          payments: { records: [], totalPaid: 0, paidCount: 0 },
+          schedules: [],
+          documents: officerUser.documents || [],
+        });
+      }
+
       return NextResponse.json(
         { error: "Student assistant not found" },
         { status: 404 }
@@ -271,6 +344,9 @@ export async function GET(
       ratingDistribution[rating] = (ratingDistribution[rating] || 0) + 1;
     });
 
+    // Get latest evaluation for the detail view
+    const latestEvaluation = submittedEvaluations.length > 0 ? submittedEvaluations[0] : null;
+
     return NextResponse.json({
       id: profile.userId,
       profileId: profile.id,
@@ -302,6 +378,11 @@ export async function GET(
       lastClockOut: profile.lastClockOut,
       dateHired: profile.dateHired,
 
+      // Not an officer — this is an SA
+      isOfficer: false,
+      officerPosition: null,
+      officerEmail: null,
+
       // Attendance summary
       attendance: {
         totalRecords: attendanceCount,
@@ -312,18 +393,16 @@ export async function GET(
         attendanceRate,
       },
 
-      // Evaluations
-      evaluations: {
-        records: allEvaluations.map((e) => ({
-          ...e,
-          evaluatorName: e.evaluator
-            ? `${e.evaluator.firstName} ${e.evaluator.lastName}`
-            : "N/A",
-          officeName: e.office?.name || "N/A",
-        })),
-        averageScore,
-        ratingDistribution,
-      },
+      // Evaluations — include latest for the detail view
+      evaluation: latestEvaluation
+        ? {
+            ...latestEvaluation,
+            evaluatorName: latestEvaluation.evaluator
+              ? `${latestEvaluation.evaluator.firstName} ${latestEvaluation.evaluator.lastName}`
+              : "N/A",
+            officeName: latestEvaluation.office?.name || "N/A",
+          }
+        : null,
 
       // Application info
       application: application || null,

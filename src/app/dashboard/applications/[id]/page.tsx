@@ -24,13 +24,17 @@ import {
   BookOpen,
   IdCard,
   Building2,
+  CalendarClock,
+  Eye,
 } from "lucide-react";
+import { ScheduleInterviewDialog } from "@/components/interviews/schedule-interview-dialog";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 
 interface ApplicationData {
   id: string;
@@ -187,6 +191,8 @@ export default function ApplicationDetailPage() {
   const [app, setApp] = useState<ApplicationData | null>(null);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const [scheduleOpen, setScheduleOpen] = useState(false);
+  const [documentPreview, setDocumentPreview] = useState<{url: string; label: string; type: string} | null>(null);
 
   const userRole = (session?.user as { role?: string })?.role;
   const isAdmin = ["SUPER_ADMIN", "ADVISER", "OFFICER", "HRMO"].includes(userRole || "");
@@ -231,6 +237,40 @@ export default function ApplicationDetailPage() {
       URL.revokeObjectURL(url);
     } catch (error: unknown) {
       toast.error(error instanceof Error ? error.message : "Failed to download PDF");
+    }
+  };
+
+  const handleViewDocument = (url: string, label: string) => {
+    if (!url) return;
+
+    if (url.startsWith('data:')) {
+      const mimeType = url.substring(url.indexOf(':') + 1, url.indexOf(';'));
+      const isImage = mimeType.startsWith('image/');
+
+      if (isImage) {
+        // Show in preview dialog
+        setDocumentPreview({ url, label, type: mimeType });
+      } else {
+        // Download document
+        const extension = mimeType.includes('pdf') ? 'pdf' : mimeType.includes('word') || mimeType.includes('document') ? 'docx' : 'bin';
+        const byteString = atob(url.split(',')[1]);
+        const ab = new ArrayBuffer(byteString.length);
+        const ia = new Uint8Array(ab);
+        for (let i = 0; i < byteString.length; i++) {
+          ia[i] = byteString.charCodeAt(i);
+        }
+        const blob = new Blob([ab], { type: mimeType });
+        const blobUrl = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = blobUrl;
+        a.download = `${label.replace(/\s+/g, '_')}.${extension}`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(blobUrl);
+      }
+    } else {
+      window.open(url, '_blank');
     }
   };
 
@@ -293,13 +333,18 @@ export default function ApplicationDetailPage() {
           </Link>
         </Button>
         <div className="flex-1">
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Application Details</h1>
-          <p className="text-sm text-muted-foreground">{app.applicantEmail}</p>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Application Details | {app.lastName?.toUpperCase() || 'UNKNOWN'}</h1>
+          <p className="text-sm text-muted-foreground">{fullName} &middot; {app.applicantEmail}</p>
         </div>
         <div className="flex items-center gap-2">
           {isAdmin && (
             <Button variant="outline" size="sm" onClick={handleDownloadPdf} className="gap-1.5">
               <Download className="h-4 w-4" /> PDF
+            </Button>
+          )}
+          {isAdmin && !["APPROVED", "REJECTED", "WITHDRAWN"].includes(app.status) && (
+            <Button variant="outline" size="sm" onClick={() => setScheduleOpen(true)} className="gap-1.5">
+              <CalendarClock className="h-4 w-4" /> Interview
             </Button>
           )}
           {canReview && !["APPROVED", "REJECTED", "WITHDRAWN"].includes(app.status) && (
@@ -572,37 +617,57 @@ export default function ApplicationDetailPage() {
                   <div className={`h-10 w-10 rounded-lg flex items-center justify-center ${app.photoUrl ? "bg-green-100 text-green-600" : "bg-gray-100 text-gray-400"}`}>
                     <User className="h-5 w-5" />
                   </div>
-                  <div>
+                  <div className="flex-1">
                     <p className="text-sm font-medium">2x2 ID Photo</p>
                     <p className="text-xs text-muted-foreground">{app.photoUrl ? "Submitted" : "Not submitted"}</p>
                   </div>
+                  {app.photoUrl && (
+                    <Button variant="outline" size="sm" className="h-7 text-xs gap-1" onClick={() => handleViewDocument(app.photoUrl!, "2x2_ID_Photo")}>
+                      <Eye className="h-3 w-3" /> View
+                    </Button>
+                  )}
                 </div>
                 <div className="flex items-center gap-3 rounded-lg border p-3">
                   <div className={`h-10 w-10 rounded-lg flex items-center justify-center ${app.resumeUrl ? "bg-green-100 text-green-600" : "bg-gray-100 text-gray-400"}`}>
                     <FileText className="h-5 w-5" />
                   </div>
-                  <div>
+                  <div className="flex-1">
                     <p className="text-sm font-medium">Resume/CV</p>
                     <p className="text-xs text-muted-foreground">{app.resumeUrl ? "Submitted" : "Not submitted"}</p>
                   </div>
+                  {app.resumeUrl && (
+                    <Button variant="outline" size="sm" className="h-7 text-xs gap-1" onClick={() => handleViewDocument(app.resumeUrl!, "Resume_CV")}>
+                      <Download className="h-3 w-3" /> Download
+                    </Button>
+                  )}
                 </div>
                 <div className="flex items-center gap-3 rounded-lg border p-3">
                   <div className={`h-10 w-10 rounded-lg flex items-center justify-center ${app.gradeReportUrl ? "bg-green-100 text-green-600" : "bg-gray-100 text-gray-400"}`}>
                     <BookOpen className="h-5 w-5" />
                   </div>
-                  <div>
+                  <div className="flex-1">
                     <p className="text-sm font-medium">Grade Report</p>
                     <p className="text-xs text-muted-foreground">{app.gradeReportUrl ? "Submitted" : "Not submitted"}</p>
                   </div>
+                  {app.gradeReportUrl && (
+                    <Button variant="outline" size="sm" className="h-7 text-xs gap-1" onClick={() => handleViewDocument(app.gradeReportUrl!, "Grade_Report")}>
+                      <Download className="h-3 w-3" /> Download
+                    </Button>
+                  )}
                 </div>
                 <div className="flex items-center gap-3 rounded-lg border p-3">
                   <div className={`h-10 w-10 rounded-lg flex items-center justify-center ${app.registrationUrl ? "bg-green-100 text-green-600" : "bg-gray-100 text-gray-400"}`}>
                     <FileText className="h-5 w-5" />
                   </div>
-                  <div>
+                  <div className="flex-1">
                     <p className="text-sm font-medium">Registration Form</p>
                     <p className="text-xs text-muted-foreground">{app.registrationUrl ? "Submitted" : "Not submitted"}</p>
                   </div>
+                  {app.registrationUrl && (
+                    <Button variant="outline" size="sm" className="h-7 text-xs gap-1" onClick={() => handleViewDocument(app.registrationUrl!, "Registration_Form")}>
+                      <Download className="h-3 w-3" /> Download
+                    </Button>
+                  )}
                 </div>
               </div>
               {app.referencesJson && (
@@ -614,6 +679,35 @@ export default function ApplicationDetailPage() {
           </Card>
         </TabsContent>
       </Tabs>
+
+      <ScheduleInterviewDialog
+        open={scheduleOpen}
+        onOpenChange={setScheduleOpen}
+        applicationId={app.id}
+        applicantName={fullName}
+        onScheduled={fetchApplication}
+      />
+
+      {/* Document Preview Dialog */}
+      <Dialog open={!!documentPreview} onOpenChange={(open) => { if (!open) setDocumentPreview(null); }}>
+        <DialogContent className="max-w-3xl border-0 shadow-2xl">
+          <DialogHeader>
+            <DialogTitle>{documentPreview?.label || 'Document Preview'}</DialogTitle>
+          </DialogHeader>
+          <div className="py-4">
+            {documentPreview && documentPreview.type.startsWith('image/') && (
+              <img
+                src={documentPreview.url}
+                alt={documentPreview.label}
+                className="w-full h-auto max-h-[70vh] object-contain rounded-lg"
+              />
+            )}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDocumentPreview(null)}>Close</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

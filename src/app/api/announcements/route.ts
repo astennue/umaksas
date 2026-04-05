@@ -264,8 +264,33 @@ export async function POST(request: NextRequest) {
 
     const { user } = authResult;
 
-    const body = await request.json();
-    const { title, content, excerpt, priority, imageUrl, isPublished, isPinned, visibility } = body;
+    let title, content, excerpt, priority, imageUrl, isPublished, isPinned, visibility;
+
+    const contentType = request.headers.get('content-type') || '';
+
+    if (contentType.includes('multipart/form-data')) {
+      const formData = await request.formData();
+      title = formData.get('title') as string;
+      content = formData.get('content') as string;
+      excerpt = formData.get('excerpt') as string | null;
+      priority = (formData.get('priority') as string) || 'NORMAL';
+      const imageFile = formData.get('image') as File | null;
+
+      if (imageFile && imageFile.size > 0) {
+        const arrayBuffer = await imageFile.arrayBuffer();
+        const base64 = Buffer.from(arrayBuffer).toString('base64');
+        imageUrl = `data:${imageFile.type};base64,${base64}`;
+      } else {
+        imageUrl = formData.get('imageUrl') as string | null;
+      }
+
+      isPublished = formData.get('isPublished') === 'true';
+      isPinned = formData.get('isPinned') === 'true';
+      visibility = (formData.get('visibility') as string) || 'all';
+    } else {
+      const body = await request.json();
+      ({ title, content, excerpt, priority, imageUrl, isPublished, isPinned, visibility } = body);
+    }
 
     if (!title || !content) {
       return NextResponse.json(

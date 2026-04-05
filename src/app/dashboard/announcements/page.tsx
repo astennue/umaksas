@@ -216,8 +216,8 @@ export default function DashboardAnnouncementsPage() {
       toast.error("Please upload an image file");
       return;
     }
-    if (file.size > 5 * 1024 * 1024) {
-      toast.error("Image must be less than 5MB");
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error("Image must be less than 10MB");
       return;
     }
 
@@ -231,6 +231,7 @@ export default function DashboardAnnouncementsPage() {
     try {
       const fd = new FormData();
       fd.append("file", file);
+      fd.append("type", "photo");
       const res = await fetch("/api/upload", { method: "POST", body: fd });
       if (!res.ok) {
         const data = await res.json();
@@ -319,30 +320,57 @@ export default function DashboardAnnouncementsPage() {
 
     setFormLoading(true);
     try {
-      const body = {
-        title: formData.title.trim(),
-        content: formData.content.trim(),
-        excerpt: formData.excerpt.trim() || undefined,
-        priority: formData.priority,
-        imageUrl: formData.imageUrl.trim() || undefined,
-        isPublished: formData.isPublished,
-        isPinned: formData.isPinned,
-        visibility: formData.visibility,
-      };
-
       let res: Response;
-      if (formMode === "create") {
-        res = await fetch("/api/announcements", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(body),
-        });
+
+      // Use FormData for large payloads (when image is included)
+      if (formData.imageUrl && formData.imageUrl.length > 100000) {
+        // Large base64 - send as FormData with file
+        const fd = new FormData();
+        fd.append('title', formData.title.trim());
+        fd.append('content', formData.content.trim());
+        if (formData.excerpt.trim()) fd.append('excerpt', formData.excerpt.trim());
+        fd.append('priority', formData.priority);
+        fd.append('isPublished', String(formData.isPublished));
+        fd.append('isPinned', String(formData.isPinned));
+        fd.append('visibility', formData.visibility);
+
+        // Convert data URL back to File
+        const res_upload = await fetch(formData.imageUrl);
+        const blob = await res_upload.blob();
+        const ext = formData.imageUrl.includes('png') ? 'png' : formData.imageUrl.includes('gif') ? 'gif' : 'jpg';
+        const file = new File([blob], `cover.${ext}`, { type: blob.type });
+        fd.append('image', file);
+
+        if (formMode === "create") {
+          res = await fetch("/api/announcements", { method: "POST", body: fd });
+        } else {
+          res = await fetch(`/api/announcements/${editingId}`, { method: "PUT", body: fd });
+        }
       } else {
-        res = await fetch(`/api/announcements/${editingId}`, {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(body),
-        });
+        // Small or no image - use JSON
+        const body = {
+          title: formData.title.trim(),
+          content: formData.content.trim(),
+          excerpt: formData.excerpt.trim() || undefined,
+          priority: formData.priority,
+          imageUrl: formData.imageUrl.trim() || undefined,
+          isPublished: formData.isPublished,
+          isPinned: formData.isPinned,
+          visibility: formData.visibility,
+        };
+        if (formMode === "create") {
+          res = await fetch("/api/announcements", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(body),
+          });
+        } else {
+          res = await fetch(`/api/announcements/${editingId}`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(body),
+          });
+        }
       }
 
       if (!res.ok) {
@@ -836,7 +864,7 @@ export default function DashboardAnnouncementsPage() {
                         Click or drag to upload
                       </p>
                       <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                        PNG, JPG, GIF, WebP (max 5MB)
+                        PNG, JPG, GIF, WebP (max 10MB)
                       </p>
                     </>
                   )}

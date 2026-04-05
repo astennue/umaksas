@@ -88,8 +88,36 @@ export async function PUT(
     }
 
     const { id } = await params;
-    const body = await request.json();
-    const { title, content, excerpt, priority, imageUrl, isPublished, isPinned, visibility } = body;
+
+    let title, content, excerpt, priority, imageUrl, isPublished, isPinned, visibility;
+
+    const contentType = request.headers.get('content-type') || '';
+
+    if (contentType.includes('multipart/form-data')) {
+      const formData = await request.formData();
+      title = formData.get('title') as string | null;
+      content = formData.get('content') as string | null;
+      excerpt = formData.get('excerpt') as string | null;
+      priority = formData.get('priority') as string | null;
+      const imageFile = formData.get('image') as File | null;
+
+      if (imageFile && imageFile.size > 0) {
+        const arrayBuffer = await imageFile.arrayBuffer();
+        const base64 = Buffer.from(arrayBuffer).toString('base64');
+        imageUrl = `data:${imageFile.type};base64,${base64}`;
+      } else {
+        imageUrl = formData.get('imageUrl') as string | null;
+      }
+
+      const pubStr = formData.get('isPublished') as string | null;
+      isPublished = pubStr === 'true';
+      const pinStr = formData.get('isPinned') as string | null;
+      isPinned = pinStr === 'true';
+      visibility = formData.get('visibility') as string | null;
+    } else {
+      const body = await request.json();
+      ({ title, content, excerpt, priority, imageUrl, isPublished, isPinned, visibility } = body);
+    }
 
     const existing = await db.announcement.findUnique({ where: { id } });
     if (!existing) {

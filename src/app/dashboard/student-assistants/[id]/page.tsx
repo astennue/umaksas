@@ -45,7 +45,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 // --- Types ---
 interface SAData {
   id: string;
-  profileId: string;
+  profileId: string | null;
   firstName: string;
   lastName: string;
   middleName: string;
@@ -82,6 +82,10 @@ interface SAData {
   lastClockIn: string | null;
   lastClockOut: string | null;
   dateHired: string | null;
+  // Officer-specific fields
+  isOfficer?: boolean;
+  officerPosition?: string | null;
+  officerEmail?: string | null;
   attendance: {
     totalRecords: number;
     totalHours: number;
@@ -386,7 +390,7 @@ export default function SAProfilePage() {
               <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2 mt-2">
                 <Badge className="bg-white/20 text-white hover:bg-white/30 border-0 text-xs">
                   <User className="mr-1 h-3 w-3" />
-                  Student Assistant
+                  {data.isOfficer ? "Officer" : "Student Assistant"}
                 </Badge>
                 <Badge className={`${statusConf.className} border text-xs`}>
                   {data.isOnDuty && (
@@ -399,12 +403,23 @@ export default function SAProfilePage() {
                     On Duty
                   </Badge>
                 )}
+                {data.isOfficer && data.officerPosition && (
+                  <Badge className="bg-amber-500/20 text-amber-300 border-amber-500/30 text-xs">
+                    {data.officerPosition.replace(/_/g, " ")}
+                  </Badge>
+                )}
               </div>
 
               {data.college && (
                 <p className="text-blue-200 text-sm mt-2 flex items-center justify-center sm:justify-start gap-1.5">
                   <GraduationCap className="h-3.5 w-3.5" />
                   {data.college}
+                </p>
+              )}
+              {data.isOfficer && data.officerEmail && (
+                <p className="text-blue-200 text-sm mt-2 flex items-center justify-center sm:justify-start gap-1.5">
+                  <Mail className="h-3.5 w-3.5" />
+                  {data.officerEmail}
                 </p>
               )}
             </div>

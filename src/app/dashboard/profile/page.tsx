@@ -240,44 +240,29 @@ export default function ProfilePage() {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    if (file.size > 5 * 1024 * 1024) {
-      toast.error("Photo must be less than 5MB");
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error("Photo must be less than 10MB");
       return;
     }
 
-    if (!["image/jpeg", "image/png", "image/webp"].includes(file.type)) {
-      toast.error("Only JPG, PNG, and WebP images are allowed");
+    if (!["image/jpeg", "image/png", "image/webp", "image/gif"].includes(file.type)) {
+      toast.error("Only JPG, PNG, WebP, and GIF images are allowed");
       return;
     }
 
     setIsUploadingPhoto(true);
     try {
-      // Upload file
       const formData = new FormData();
-      formData.append("file", file);
-      formData.append("type", "photo");
+      formData.append("photo", file);
 
-      const uploadRes = await fetch("/api/upload", {
+      const res = await fetch("/api/user/photo", {
         method: "POST",
         body: formData,
       });
 
-      if (!uploadRes.ok) {
-        const uploadData = await uploadRes.json();
-        throw new Error(uploadData.error || "Failed to upload photo");
-      }
-
-      const uploadData = await uploadRes.json();
-
-      // Update profile with new photo URL
-      const profileRes = await fetch("/api/user/profile", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ photoUrl: uploadData.url }),
-      });
-
-      if (!profileRes.ok) {
-        throw new Error("Failed to update profile photo");
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || "Failed to upload photo");
       }
 
       toast.success("Profile photo updated successfully");
@@ -293,16 +278,8 @@ export default function ProfilePage() {
   // Handle photo removal
   const handleRemovePhoto = async () => {
     try {
-      const res = await fetch("/api/user/profile", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ photoUrl: "" }),
-      });
-
-      if (!res.ok) {
-        throw new Error("Failed to remove photo");
-      }
-
+      const res = await fetch("/api/user/photo", { method: "DELETE" });
+      if (!res.ok) throw new Error("Failed to remove photo");
       toast.success("Profile photo removed");
       setRemovePhotoDialogOpen(false);
       fetchProfile();
@@ -564,7 +541,7 @@ export default function ProfilePage() {
             <input
               ref={fileInputRef}
               type="file"
-              accept="image/jpeg,image/png,image/webp"
+              accept="image/jpeg,image/png,image/webp,image/gif"
               className="hidden"
               onChange={handlePhotoUpload}
             />
