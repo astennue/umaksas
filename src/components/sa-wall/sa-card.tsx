@@ -9,6 +9,7 @@ import {
   CalendarDays,
   BookOpen,
   User,
+  Award,
 } from "lucide-react";
 import { OnDutyIndicator } from "./on-duty-indicator";
 import { getCollegeDisplay } from "@/lib/colleges";
@@ -40,6 +41,8 @@ export interface SACardData {
   personalEmail?: string | null;
   umakEmail?: string | null;
   photoUrl?: string | null;
+  isOfficer?: boolean;
+  officerPosition?: string | null;
 }
 
 interface SACardProps {
@@ -104,6 +107,19 @@ export function SACard({ sa, onClick, isAuthenticated, onViewFullProfile }: SACa
           <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100 group-hover:text-yellow-700 dark:group-hover:text-yellow-400 transition-colors duration-300 truncate max-w-[220px]">
             {fullName}
           </h3>
+
+          {/* UMAK SAS Officer badge */}
+          {sa.isOfficer && sa.officerPosition && (
+            <div className="mt-1.5">
+              <Badge
+                variant="secondary"
+                className="bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-300 text-xs font-medium border border-amber-200 dark:border-amber-400/30"
+              >
+                <Award className="w-3 h-3 mr-1" />
+                UMAK SAS Officer — {sa.officerPosition.replace(/_/g, " ")}
+              </Badge>
+            </div>
+          )}
 
           {/* College */}
           {sa.college && (

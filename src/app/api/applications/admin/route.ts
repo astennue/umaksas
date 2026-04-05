@@ -123,7 +123,6 @@ export async function GET(request: NextRequest) {
           registrationUrl: true,
           residenceImageUrl: true,
           // Review
-          reviewNotes: true,
           interviewStatus: true,
           interviewScore: true,
           interviewDate: true,
@@ -170,6 +169,8 @@ export async function PUT(request: NextRequest) {
 
     const body = await request.json();
     const { id, status, reviewNotes } = body;
+    // NOTE: reviewNotes is not stored in Application table yet.
+    // It is saved to the Notification record for the applicant.
 
     if (!id || !status) {
       return NextResponse.json(
@@ -224,7 +225,6 @@ export async function PUT(request: NextRequest) {
       data: {
         status,
         reviewedAt: new Date(),
-        ...(reviewNotes && { reviewNotes }),
       },
     });
 

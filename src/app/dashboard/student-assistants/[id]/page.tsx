@@ -405,7 +405,8 @@ export default function SAProfilePage() {
                 )}
                 {data.isOfficer && data.officerPosition && (
                   <Badge className="bg-amber-500/20 text-amber-300 border-amber-500/30 text-xs">
-                    {data.officerPosition.replace(/_/g, " ")}
+                    <Award className="mr-1 h-3 w-3" />
+                    UMAK SAS Officer — {data.officerPosition.replace(/_/g, " ")}
                   </Badge>
                 )}
               </div>

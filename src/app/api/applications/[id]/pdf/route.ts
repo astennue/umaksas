@@ -469,17 +469,8 @@ export async function GET(
       console.error("Error drawing references:", err);
     }
 
-    // ====== REVIEW NOTES ======
-    try {
-      if (app.reviewNotes) {
-        drawSectionTitle("XI. Review Notes");
-        drawTextSafe(app.reviewNotes, margin, y, font, fontSizeSmall, rgb(0.2, 0.2, 0.2), contentWidth);
-        y -= 13;
-        y -= 8;
-      }
-    } catch (err) {
-      console.error("Error drawing review notes:", err);
-    }
+    // REVIEW NOTES — stored in notifications, not in Application record
+    // (skipped here; review notes are sent to the applicant via notification)
 
     // ====== FOOTER ======
     try {

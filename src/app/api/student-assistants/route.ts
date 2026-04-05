@@ -73,6 +73,11 @@ export async function GET(request: NextRequest) {
             photoUrl: true,
             isActive: true,
             role: true,
+            officerProfile: {
+              select: {
+                position: true,
+              },
+            },
           },
         },
         office: {
@@ -158,7 +163,7 @@ export async function GET(request: NextRequest) {
       hoursThisSemester: profile.hoursThisSemester,
       dateHired: profile.dateHired?.toISOString() || null,
       isOfficer: profile.user.role === UserRole.OFFICER,
-      officerPosition: profile.user.role === UserRole.OFFICER ? "Student Assistant" : null,
+      officerPosition: profile.user.role === UserRole.OFFICER ? (profile.user.officerProfile?.position || null) : null,
     });
 
     const formatOfficer = (officer: typeof officersWithoutProfiles[0]) => ({

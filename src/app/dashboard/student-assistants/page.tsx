@@ -42,6 +42,7 @@ import {
   CheckCircle2,
   XCircle,
   Loader2,
+  Award,
 } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "sonner";
@@ -76,6 +77,8 @@ interface StudentAssistant {
   totalHoursWorked: number;
   hoursThisSemester: number;
   dateHired: string | null;
+  isOfficer?: boolean;
+  officerPosition?: string | null;
 }
 
 interface ImportResult {
@@ -365,6 +368,15 @@ export default function StudentAssistantsPage() {
                       )}
                       <div className="min-w-0">
                         <h3 className="text-sm font-semibold truncate">{fullName}</h3>
+                        {sa.isOfficer && sa.officerPosition && (
+                          <Badge
+                            variant="secondary"
+                            className="mt-0.5 bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-300 text-[10px] font-medium border border-amber-200 dark:border-amber-400/30"
+                          >
+                            <Award className="w-2.5 h-2.5 mr-0.5" />
+                            UMAK SAS Officer — {sa.officerPosition.replace(/_/g, " ")}
+                          </Badge>
+                        )}
                         <p className="text-xs text-muted-foreground truncate">{sa.email}</p>
                       </div>
                     </div>

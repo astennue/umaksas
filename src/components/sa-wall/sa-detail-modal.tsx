@@ -16,6 +16,7 @@ import {
   GraduationCap,
   Calendar,
   BookOpen,
+  Award,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import type { SACardData } from "./sa-card";
@@ -107,6 +108,16 @@ export function SADetailModal({
                 <h2 className="text-xl font-bold text-white relative z-10 break-words max-w-[280px]">
                   {fullName}
                 </h2>
+
+                {/* UMAK SAS Officer badge */}
+                {sa.isOfficer && sa.officerPosition && (
+                  <div className="flex justify-center mt-2 relative z-10">
+                    <Badge className="bg-amber-500/20 text-amber-300 border-amber-400/30 text-xs font-medium px-3 py-1">
+                      <Award className="w-3 h-3 mr-1" />
+                      UMAK SAS Officer — {sa.officerPosition.replace(/_/g, " ")}
+                    </Badge>
+                  </div>
+                )}
 
                 {/* Office */}
                 {sa.officeName && (

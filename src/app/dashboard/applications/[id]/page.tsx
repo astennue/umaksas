@@ -109,7 +109,6 @@ interface ApplicationData {
   registrationUrl: string | null;
   residenceImageUrl: string | null;
   // Review
-  reviewNotes: string | null;
   interviewStatus: string;
   interviewScore: number | null;
   interviewDate: string | null;
@@ -532,15 +531,6 @@ export default function ApplicationDetailPage() {
                   <InfoRow label="Zip" value={app.residenceZip} />
                 </div>
               </div>
-              {app.reviewNotes && (
-                <>
-                  <Separator />
-                  <div>
-                    <h4 className="text-sm font-semibold mb-1 text-amber-700">Review Notes</h4>
-                    <p className="text-sm text-muted-foreground">{app.reviewNotes}</p>
-                  </div>
-                </>
-              )}
             </CardContent>
           </Card>
         </TabsContent>

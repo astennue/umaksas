@@ -560,9 +560,9 @@ export default function ProfilePage() {
                   {roleInfo.label}
                 </Badge>
                 {isOfficer && profile.officerProfile && (
-                  <Badge className="bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 font-medium" variant="secondary">
+                  <Badge className="bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-400 font-medium border border-amber-200 dark:border-amber-400/30" variant="secondary">
                     <Award className="mr-1.5 h-3 w-3" />
-                    {officerPositionLabels[profile.officerProfile.position] || profile.officerProfile.position}
+                    UMAK SAS Officer — {officerPositionLabels[profile.officerProfile.position] || profile.officerProfile.position.replace(/_/g, " ")}
                   </Badge>
                 )}
               </div>

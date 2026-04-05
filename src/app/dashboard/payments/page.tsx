@@ -44,6 +44,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Wallet,
   Search,
@@ -151,6 +152,8 @@ interface SystemSettings {
   gcashNumber: string | null;
   paymentInstructions: string | null;
   monthlyPaymentFee: number;
+  collectionTitle: string | null;
+  collectionDescription: string | null;
 }
 
 interface OfficerData {
@@ -215,6 +218,8 @@ export default function PaymentsPage() {
   const isPresident = isOfficer && officer?.position === "PRESIDENT";
   const canVerify = isAdmin || isTreasurer || isPresident;
   const isSAOrOfficer = userRole === "STUDENT_ASSISTANT" || userRole === "OFFICER";
+  const isVerifyOfficer = isTreasurer || isPresident;
+  const isViewOnlyOfficer = isOfficer && !isTreasurer && !isPresident;
   const showPaymentCollection = systemSettings?.paymentCollectionEnabled === true;
 
   // Data state
@@ -230,6 +235,7 @@ export default function PaymentsPage() {
   const [yearFilter, setYearFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
   const [page, setPage] = useState(1);
+  const [paymentTab, setPaymentTab] = useState<"all" | "mine">("all");
 
   // Dialog states
   const [detailOpen, setDetailOpen] = useState(false);
@@ -312,6 +318,8 @@ export default function PaymentsPage() {
           gcashNumber: data.gcashNumber || null,
           paymentInstructions: data.paymentInstructions || null,
           monthlyPaymentFee: data.monthlyPaymentFee || 20,
+          collectionTitle: data.collectionTitle || null,
+          collectionDescription: data.collectionDescription || null,
         });
       }
     } catch {
@@ -322,9 +330,10 @@ export default function PaymentsPage() {
   const fetchPayments = useCallback(async () => {
     try {
       setLoading(true);
+      const isMineTab = paymentTab === "mine" && isOfficer;
       const params = new URLSearchParams({
-        page: page.toString(),
-        limit: limit.toString(),
+        page: isMineTab ? "1" : page.toString(),
+        limit: isMineTab ? "1000" : limit.toString(),
       });
       if (search) params.set("search", search);
       if (monthFilter !== "all") params.set("month", monthFilter);
@@ -334,18 +343,26 @@ export default function PaymentsPage() {
       const res = await fetch(`/api/payments?${params.toString()}`);
       if (!res.ok) throw new Error("Failed to fetch payments");
       const data = await res.json();
-      setPayments(data.payments || []);
-      setTotal(data.total || 0);
+      let fetchedPayments = data.payments || [];
+
+      // Client-side filter for "mine" tab since API doesn't support userId for officers
+      if (isMineTab && currentUserId) {
+        fetchedPayments = fetchedPayments.filter((p: Payment) => p.userId === currentUserId);
+      }
+
+      setPayments(fetchedPayments);
+      setTotal(isMineTab ? fetchedPayments.length : (data.total || 0));
     } catch (error) {
       console.error("Error fetching payments:", error);
       toast.error("Failed to load payments");
     } finally {
       setLoading(false);
     }
-  }, [page, search, monthFilter, yearFilter, statusFilter]);
+  }, [page, search, monthFilter, yearFilter, statusFilter, paymentTab, isOfficer, currentUserId]);
 
   const fetchStats = useCallback(async () => {
     try {
+      const isMineTab = paymentTab === "mine" && isOfficer;
       const params = new URLSearchParams({ page: "1", limit: "1000" });
       if (search) params.set("search", search);
       if (monthFilter !== "all") params.set("month", monthFilter);
@@ -354,10 +371,15 @@ export default function PaymentsPage() {
       const res = await fetch(`/api/payments?${params.toString()}`);
       if (!res.ok) return;
       const data = await res.json();
-      const allPayments = data.payments || [];
+      let allPayments = data.payments || [];
+
+      // Client-side filter for "mine" tab
+      if (isMineTab && currentUserId) {
+        allPayments = allPayments.filter((p: Payment) => p.userId === currentUserId);
+      }
 
       const computedStats: PaymentStats = {
-        total: data.total || 0,
+        total: allPayments.length,
         paid: allPayments.filter((p: Payment) => p.status === "PAID").length,
         pending: allPayments.filter((p: Payment) => p.status === "PENDING").length,
         unpaid: allPayments.filter((p: Payment) => p.status === "UNPAID").length,
@@ -368,7 +390,7 @@ export default function PaymentsPage() {
     } catch {
       // Ignore
     }
-  }, [search, monthFilter, yearFilter]);
+  }, [search, monthFilter, yearFilter, paymentTab, isOfficer, currentUserId]);
 
   useEffect(() => {
     fetchOfficer();
@@ -383,6 +405,11 @@ export default function PaymentsPage() {
   useEffect(() => {
     setPage(1);
   }, [search, monthFilter, yearFilter, statusFilter]);
+
+  useEffect(() => {
+    setPage(1);
+    setSearch("");
+  }, [paymentTab]);
 
   // Handle proof upload (basic, from existing flow)
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -698,9 +725,13 @@ export default function PaymentsPage() {
             Payments
           </h1>
           <p className="text-sm text-muted-foreground">
-            {(isAdmin || canVerify)
+            {isAdmin
               ? "Manage student assistant monthly payments and verification"
-              : "View and manage your monthly payment records"}
+              : isVerifyOfficer
+                ? "Manage payments, verify submissions, and pay your own fees"
+                : isViewOnlyOfficer
+                  ? "View all payments and manage your own monthly fees"
+                  : "View and manage your monthly payment records"}
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -735,9 +766,9 @@ export default function PaymentsPage() {
               <Smartphone className="h-5 w-5" />
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-semibold">Organizational Fee Payment Required</p>
+              <p className="text-sm font-semibold">{systemSettings?.collectionTitle || "Organizational Fee Payment Required"}</p>
               <p className="text-xs text-blue-100">
-                Payment collection is active. Please settle your monthly organizational fee via GCash.
+                {systemSettings?.collectionDescription || "Payment collection is active. Please settle your monthly organizational fee via GCash."}
               </p>
             </div>
           </div>
@@ -763,10 +794,29 @@ export default function PaymentsPage() {
         ))}
       </div>
 
+      {/* Officer Tabs: All Payments / My Payments */}
+      {isOfficer && (
+        <Tabs value={paymentTab} onValueChange={(v) => setPaymentTab(v as "all" | "mine")}>
+          <TabsList>
+            <TabsTrigger value="all" className="gap-1.5">
+              <Wallet className="h-3.5 w-3.5" />
+              All Payments
+            </TabsTrigger>
+            <TabsTrigger value="mine" className="gap-1.5">
+              <Banknote className="h-3.5 w-3.5" />
+              My Payments
+              <Badge className="bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 text-[10px] px-1.5 py-0" variant="secondary">
+                Officer
+              </Badge>
+            </TabsTrigger>
+          </TabsList>
+        </Tabs>
+      )}
+
       {/* Filters */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
         <div className="flex flex-1 flex-wrap items-center gap-2">
-          {(isAdmin || canVerify) && (
+          {(isAdmin || canVerify) && paymentTab !== "mine" && (
             <div className="relative min-w-[200px] flex-1 sm:max-w-xs">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
@@ -900,7 +950,7 @@ export default function PaymentsPage() {
                               <StatusIcon className="h-3 w-3" />
                               {config.label}
                             </Badge>
-                            {isSAOrOfficer && payment.status === "UNPAID" && showPaymentCollection && (
+                            {isSAOrOfficer && payment.status === "UNPAID" && showPaymentCollection && (!isOfficer || paymentTab === "mine" || payment.userId === currentUserId) && (
                               <Badge className="bg-[#004EE0] text-white gap-1 animate-pulse" variant="secondary">
                                 <Banknote className="h-3 w-3" />
                                 To Pay
@@ -920,7 +970,7 @@ export default function PaymentsPage() {
                               View
                             </Button>
                             {/* Pay Now button for SA with GCash flow */}
-                            {isSAOrOfficer && (payment.status === "UNPAID" || payment.status === "REJECTED") && showPaymentCollection && (
+                            {isSAOrOfficer && (payment.status === "UNPAID" || payment.status === "REJECTED") && showPaymentCollection && (!isOfficer || paymentTab === "mine" || payment.userId === currentUserId) && (
                               <Button
                                 size="sm"
                                 className="h-7 text-xs bg-[#004EE0] hover:bg-[#004EE0]/90 text-white"
@@ -931,7 +981,7 @@ export default function PaymentsPage() {
                               </Button>
                             )}
                             {/* Basic upload for SA without GCash flow */}
-                            {isSAOrOfficer && (payment.status === "UNPAID" || payment.status === "REJECTED") && !showPaymentCollection && (
+                            {isSAOrOfficer && (payment.status === "UNPAID" || payment.status === "REJECTED") && !showPaymentCollection && (!isOfficer || paymentTab === "mine" || payment.userId === currentUserId) && (
                               <Button
                                 variant="ghost"
                                 size="sm"
@@ -943,7 +993,7 @@ export default function PaymentsPage() {
                               </Button>
                             )}
                             {/* Verify/Reject buttons */}
-                            {canVerify && payment.status === "PENDING" && (
+                            {canVerify && !isViewOnlyOfficer && payment.status === "PENDING" && (isAdmin || payment.userId !== currentUserId) && paymentTab !== "mine" && (
                               <>
                                 <Button
                                   variant="ghost"
@@ -1043,7 +1093,7 @@ export default function PaymentsPage() {
                           <StatusIcon className="h-3 w-3" />
                           {config.label}
                         </Badge>
-                        {isSAOrOfficer && payment.status === "UNPAID" && showPaymentCollection && (
+                        {isSAOrOfficer && payment.status === "UNPAID" && showPaymentCollection && (!isOfficer || paymentTab === "mine" || payment.userId === currentUserId) && (
                           <Badge className="bg-[#004EE0] text-white gap-1 animate-pulse" variant="secondary">
                             <Banknote className="h-2.5 w-2.5" />
                             To Pay
@@ -1074,7 +1124,7 @@ export default function PaymentsPage() {
                         <Eye className="mr-1 h-3 w-3" />
                         View
                       </Button>
-                      {isSAOrOfficer && (payment.status === "UNPAID" || payment.status === "REJECTED") && showPaymentCollection && (
+                      {isSAOrOfficer && (payment.status === "UNPAID" || payment.status === "REJECTED") && showPaymentCollection && (!isOfficer || paymentTab === "mine" || payment.userId === currentUserId) && (
                         <Button
                           size="sm"
                           className="h-7 text-xs bg-[#004EE0] hover:bg-[#004EE0]/90 text-white"
@@ -1084,7 +1134,7 @@ export default function PaymentsPage() {
                           Pay Now
                         </Button>
                       )}
-                      {isSAOrOfficer && (payment.status === "UNPAID" || payment.status === "REJECTED") && !showPaymentCollection && (
+                      {isSAOrOfficer && (payment.status === "UNPAID" || payment.status === "REJECTED") && !showPaymentCollection && (!isOfficer || paymentTab === "mine" || payment.userId === currentUserId) && (
                         <Button
                           variant="ghost"
                           size="sm"
@@ -1095,7 +1145,7 @@ export default function PaymentsPage() {
                           Upload
                         </Button>
                       )}
-                      {canVerify && payment.status === "PENDING" && (
+                      {canVerify && !isViewOnlyOfficer && payment.status === "PENDING" && (isAdmin || payment.userId !== currentUserId) && paymentTab !== "mine" && (
                         <>
                           <Button
                             variant="ghost"
@@ -1315,7 +1365,7 @@ export default function PaymentsPage() {
 
                 <Separator />
                 <div className="flex items-center gap-2 flex-wrap">
-                  {isSAOrOfficer && (detailPayment.status === "UNPAID" || detailPayment.status === "REJECTED") && showPaymentCollection && (
+                  {isSAOrOfficer && (detailPayment.status === "UNPAID" || detailPayment.status === "REJECTED") && showPaymentCollection && (!isOfficer || paymentTab === "mine" || detailPayment.userId === currentUserId) && (
                     <Button
                       className="bg-[#004EE0] hover:bg-[#004EE0]/90 text-white"
                       size="sm"
@@ -1328,7 +1378,7 @@ export default function PaymentsPage() {
                       Pay Now
                     </Button>
                   )}
-                  {isSAOrOfficer && (detailPayment.status === "UNPAID" || detailPayment.status === "REJECTED") && !showPaymentCollection && (
+                  {isSAOrOfficer && (detailPayment.status === "UNPAID" || detailPayment.status === "REJECTED") && !showPaymentCollection && (!isOfficer || paymentTab === "mine" || detailPayment.userId === currentUserId) && (
                     <Button
                       className="bg-[#1e3a8a] hover:bg-[#1e3a8a]/90"
                       size="sm"
@@ -1342,7 +1392,7 @@ export default function PaymentsPage() {
                       Upload Proof
                     </Button>
                   )}
-                  {canVerify && detailPayment.status === "PENDING" && (
+                  {canVerify && !isViewOnlyOfficer && detailPayment.status === "PENDING" && (isAdmin || detailPayment.userId !== currentUserId) && paymentTab !== "mine" && (
                     <>
                       <Button
                         size="sm"
@@ -1446,7 +1496,7 @@ export default function PaymentsPage() {
                   {formatCurrency(payNowPayment.amount)}
                 </p>
                 <p className="text-xs text-muted-foreground mt-1">
-                  {getMonthName(payNowPayment.month)} {payNowPayment.year} — Organizational Fee
+                  {getMonthName(payNowPayment.month)} {payNowPayment.year} — {systemSettings?.collectionTitle || "Organizational Fee"}
                 </p>
               </div>
 

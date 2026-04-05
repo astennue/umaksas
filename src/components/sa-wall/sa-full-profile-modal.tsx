@@ -15,6 +15,7 @@ import {
   GraduationCap,
   BookOpen,
   Mail,
+  Award,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import type { SACardData } from "./sa-card";
@@ -94,11 +95,12 @@ export function SAFullProfileModal({ sa, open, onOpenChange }: SAFullProfileModa
                   {fullName}
                 </h2>
 
-                {/* Officer position badge */}
+                {/* UMAK SAS Officer badge */}
                 {sa.isOfficer && sa.officerPosition && (
                   <div className="flex justify-center mt-2 relative z-10">
                     <Badge className="bg-amber-500/20 text-amber-300 border-amber-400/30 text-xs font-medium px-3 py-1">
-                      {sa.officerPosition.replace(/_/g, " ")}
+                      <Award className="w-3 h-3 mr-1" />
+                      UMAK SAS Officer — {sa.officerPosition.replace(/_/g, " ")}
                     </Badge>
                   </div>
                 )}

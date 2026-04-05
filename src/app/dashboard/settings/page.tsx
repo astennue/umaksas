@@ -172,7 +172,7 @@ export default function SettingsPage() {
     reader.readAsDataURL(file);
   };
 
-  // Upload GCash QR code (after preview)
+  // Upload GCash QR code (after preview) — uploads & saves to DB in one step
   const handleQrUpload = async () => {
     if (!qrSelectedFile) return;
 
@@ -180,25 +180,58 @@ export default function SettingsPage() {
     try {
       const formData = new FormData();
       formData.append("file", qrSelectedFile);
-      formData.append("type", "photo");
 
-      const uploadRes = await fetch("/api/upload", {
+      const res = await fetch("/api/system-settings/gcash-qr", {
         method: "POST",
         body: formData,
       });
 
-      const uploadData = await uploadRes.json();
+      const data = await res.json();
 
-      if (!uploadRes.ok) {
-        throw new Error(uploadData.error || "Failed to upload file");
+      if (!res.ok) {
+        throw new Error(data.error || "Failed to upload QR code");
       }
 
-      setGcashQrUrl(uploadData.url);
+      setGcashQrUrl(data.gcashQrUrl);
+      // Update settings state so dirty detection doesn't flag the QR as unsaved
+      setSettings((prev) => prev ? { ...prev, gcashQrUrl: data.gcashQrUrl } : prev);
       setQrPreview(null);
       setQrSelectedFile(null);
-      toast.success("GCash QR code uploaded successfully");
+      toast.success("GCash QR code uploaded and saved successfully");
     } catch (error: unknown) {
       toast.error(error instanceof Error ? error.message : "Failed to upload QR code");
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  // Delete GCash QR code
+  const handleQrDelete = async () => {
+    const confirmed = await confirm({
+      title: "Remove QR Code?",
+      description: "This will permanently remove the GCash QR code from the system settings.",
+      confirmText: "Remove",
+      variant: "destructive",
+    });
+    if (!confirmed) return;
+
+    setIsSaving(true);
+    try {
+      const res = await fetch("/api/system-settings/gcash-qr", {
+        method: "DELETE",
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || "Failed to delete QR code");
+      }
+
+      setGcashQrUrl("");
+      // Update settings state so dirty detection stays clean
+      setSettings((prev) => prev ? { ...prev, gcashQrUrl: null } : prev);
+      toast.success("GCash QR code removed");
+    } catch (error: unknown) {
+      toast.error(error instanceof Error ? error.message : "Failed to delete QR code");
     } finally {
       setIsSaving(false);
     }
@@ -213,7 +246,6 @@ export default function SettingsPage() {
       maxWorkHours !== settings.maxWorkHoursPerDay ||
       monthlyPayment !== settings.monthlyPaymentFee ||
       paymentCollectionEnabled !== (settings.paymentCollectionEnabled || false) ||
-      gcashQrUrl !== (settings.gcashQrUrl || "") ||
       gcashNumber !== (settings.gcashNumber || "") ||
       paymentInstructions !== (settings.paymentInstructions || "")
     : false;
@@ -241,7 +273,7 @@ export default function SettingsPage() {
       // Only include payment settings if user has permission
       if (canModifyPaymentSettings) {
         payload.paymentCollectionEnabled = paymentCollectionEnabled;
-        payload.gcashQrUrl = gcashQrUrl || null;
+        // gcashQrUrl is saved separately via /api/system-settings/gcash-qr
         payload.gcashNumber = gcashNumber || null;
         payload.paymentInstructions = paymentInstructions || null;
       }
@@ -449,7 +481,7 @@ export default function SettingsPage() {
                             variant="destructive"
                             size="icon"
                             className="absolute -top-2 -right-2 h-6 w-6 rounded-full"
-                            onClick={() => setGcashQrUrl("")}
+                            onClick={handleQrDelete}
                           >
                             <X className="h-3 w-3" />
                           </Button>
