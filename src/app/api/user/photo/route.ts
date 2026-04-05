@@ -7,6 +7,7 @@ export const maxDuration = 60;
 
 const MAX_PHOTO_SIZE = 10 * 1024 * 1024; // 10MB
 const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif"];
+const MAX_DIMENSION = 800; // Max width/height for compression
 
 export async function POST(request: NextRequest) {
   try {
@@ -16,7 +17,14 @@ export async function POST(request: NextRequest) {
     }
 
     const userId = (session.user as { id: string }).id;
-    const formData = await request.formData();
+
+    let formData: FormData;
+    try {
+      formData = await request.formData();
+    } catch {
+      return NextResponse.json({ error: "File too large or malformed. Try a smaller image (max 10MB)." }, { status: 413 });
+    }
+
     const file = formData.get("photo") as File | null;
 
     if (!file) {
@@ -31,9 +39,42 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Only JPG, PNG, WebP, and GIF images are allowed" }, { status: 400 });
     }
 
-    const arrayBuffer = await file.arrayBuffer();
-    const base64 = Buffer.from(arrayBuffer).toString("base64");
-    const dataUrl = `data:${file.type};base64,${base64}`;
+    let dataUrl: string;
+
+    // Try to compress with sharp, fallback to raw base64
+    try {
+      const arrayBuffer = await file.arrayBuffer();
+      const buffer = Buffer.from(arrayBuffer);
+
+      // Dynamic import of sharp (reduces cold start bundle)
+      const sharp = (await import("sharp")).default;
+
+      const metadata = await sharp(buffer).metadata();
+      const needsResize = (metadata.width && metadata.width > MAX_DIMENSION) || (metadata.height && metadata.height > MAX_DIMENSION);
+
+      let processedBuffer: Buffer;
+      if (needsResize) {
+        processedBuffer = await sharp(buffer)
+          .resize(MAX_DIMENSION, MAX_DIMENSION, { fit: "inside", withoutEnlargement: true })
+          .jpeg({ quality: 80 })
+          .toBuffer();
+      } else if (file.type === "image/png" || file.type === "image/webp") {
+        // Convert PNG/WebP to JPEG for smaller size
+        processedBuffer = await sharp(buffer)
+          .jpeg({ quality: 85 })
+          .toBuffer();
+      } else {
+        processedBuffer = buffer;
+      }
+
+      const base64 = processedBuffer.toString("base64");
+      dataUrl = `data:image/jpeg;base64,${base64}`;
+    } catch {
+      // Sharp not available or failed, use raw base64
+      const arrayBuffer = await file.arrayBuffer();
+      const base64 = Buffer.from(arrayBuffer).toString("base64");
+      dataUrl = `data:${file.type};base64,${base64}`;
+    }
 
     const updatedUser = await db.user.update({
       where: { id: userId },

@@ -9,7 +9,7 @@ import { cn } from "@/lib/utils";
 const navItems = [
   { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard, roles: [] },
   { label: "Attendance", href: "/dashboard/attendance", icon: CheckCircle, roles: ["SUPER_ADMIN", "ADVISER", "OFFICER", "OFFICE_SUPERVISOR", "STUDENT_ASSISTANT"] },
-  { label: "Payments", href: "/dashboard/payments", icon: DollarSign, roles: ["SUPER_ADMIN", "ADVISER", "OFFICER", "STUDENT_ASSISTANT"] },
+  { label: "My Payments", href: "/dashboard/payments", icon: DollarSign, roles: ["STUDENT_ASSISTANT"] },
   { label: "SAs", href: "/dashboard/student-assistants", icon: Users, roles: ["SUPER_ADMIN", "ADVISER", "OFFICER", "OFFICE_SUPERVISOR"] },
   { label: "Renewal", href: "/dashboard/renewal", icon: RefreshCw, roles: ["STUDENT_ASSISTANT"] },
   { label: "Alerts", href: "/dashboard/notifications", icon: Bell, roles: [] },
