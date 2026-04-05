@@ -100,6 +100,7 @@ export async function GET(
         registrationUrl: true,
         residenceImageUrl: true,
         // Review
+        reviewNotes: true,
         interviewStatus: true,
         interviewScore: true,
         interviewDate: true,

@@ -123,6 +123,7 @@ export async function GET(request: NextRequest) {
           registrationUrl: true,
           residenceImageUrl: true,
           // Review
+          reviewNotes: true,
           interviewStatus: true,
           interviewScore: true,
           interviewDate: true,

@@ -126,6 +126,7 @@ const statusConfig: Record<string, { label: string; color: string }> = {
   INTERVIEWED: { label: "Interviewed", color: "bg-amber-100 text-amber-700" },
   APPROVED: { label: "Approved", color: "bg-green-100 text-green-700" },
   REJECTED: { label: "Rejected", color: "bg-red-100 text-red-700" },
+  WITHDRAWN: { label: "Withdrawn", color: "bg-gray-100 text-gray-500" },
 };
 
 function InfoRow({ label, value }: { label: string; value: string | null | undefined }) {
@@ -380,34 +381,30 @@ export default function ApplicationDetailPage() {
     }
   };
 
+  // Safe status check helper
+  const isFinalized = ["APPROVED", "REJECTED", "WITHDRAWN"].includes(app.status || "");
+
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center gap-3">
+      {/* Header Row 1: Back button + Action buttons */}
+      <div className="flex items-center justify-between gap-3">
         <Button variant="ghost" size="sm" asChild>
           <Link href="/dashboard/applications">
-            <ArrowLeft className="mr-1.5 h-4 w-4" /> Back to Application
+            <ArrowLeft className="mr-1.5 h-4 w-4" /> Back to Applications
           </Link>
         </Button>
-        <div className="flex-1">
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Application Details | {app.lastName?.toUpperCase() || "UNKNOWN"}</h1>
-          <div className="flex items-center gap-3 mt-1">
-            <span className="text-xs text-muted-foreground">{fullName} &middot; {app.applicantEmail}</span>
-            <span className="text-xs text-muted-foreground bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded font-mono">Ref: {trackingRef}</span>
-          </div>
-        </div>
         <div className="flex items-center gap-2">
           {isAdmin && (
             <Button variant="outline" size="sm" onClick={handleDownloadPdf} className="gap-1.5">
               <Download className="h-4 w-4" /> PDF
             </Button>
           )}
-          {isAdmin && !["APPROVED", "REJECTED", "WITHDRAWN"].includes(app.status) && (
+          {isAdmin && !isFinalized && (
             <Button variant="outline" size="sm" onClick={() => setScheduleOpen(true)} className="gap-1.5">
               <CalendarClock className="h-4 w-4" /> Interview
             </Button>
           )}
-          {canReview && !["APPROVED", "REJECTED", "WITHDRAWN"].includes(app.status) && (
+          {canReview && !isFinalized && (
             <>
               <Button
                 size="sm"
@@ -445,6 +442,31 @@ export default function ApplicationDetailPage() {
         </div>
       </div>
 
+      {/* Header Row 2: Title + Meta info + Tracking Code */}
+      <div className="space-y-2">
+        <div className="flex items-center gap-3">
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Application Details | {app.lastName?.toUpperCase() || "UNKNOWN"}</h1>
+          <Badge className={statusInfo.color} variant="secondary">{statusInfo.label}</Badge>
+        </div>
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
+          <span className="text-sm text-muted-foreground">{fullName}</span>
+          <span className="text-xs text-muted-foreground">&middot;</span>
+          <span className="text-sm text-muted-foreground">{app.applicantEmail}</span>
+          <span className="text-xs text-muted-foreground">&middot;</span>
+          <span className="text-sm text-muted-foreground">Submitted: {app.submittedAt ? new Date(app.submittedAt).toLocaleDateString() : "N/A"}</span>
+          {app.reviewedAt && (
+            <>
+              <span className="text-xs text-muted-foreground">&middot;</span>
+              <span className="text-sm text-muted-foreground">Reviewed: {new Date(app.reviewedAt).toLocaleDateString()}</span>
+            </>
+          )}
+        </div>
+        <div className="flex items-center gap-2 bg-slate-100 dark:bg-slate-800 rounded-md px-3 py-1.5 w-fit">
+          <span className="text-xs text-muted-foreground font-medium">Tracking Code:</span>
+          <span className="text-sm font-mono font-semibold text-gray-900 dark:text-white">{trackingRef}</span>
+        </div>
+      </div>
+
       {/* Applicant Card */}
       <Card className="border-0 shadow-lg">
         <CardContent className="p-6">
@@ -461,7 +483,6 @@ export default function ApplicationDetailPage() {
             <div className="flex-1 min-w-0">
               <h2 className="text-lg font-bold text-gray-900 dark:text-white break-words">{fullName}</h2>
               <div className="flex flex-wrap items-center gap-2 mt-1.5">
-                <Badge className={statusInfo.color} variant="secondary">{statusInfo.label}</Badge>
                 {app.studentNumber && <Badge variant="outline" className="text-xs"><IdCard className="mr-1 h-3 w-3" />{app.studentNumber}</Badge>}
                 {app.college && <Badge variant="outline" className="text-xs"><GraduationCap className="mr-1 h-3 w-3" />{app.college}</Badge>}
                 {app.program && <Badge variant="outline" className="text-xs">{app.program}</Badge>}
@@ -469,7 +490,6 @@ export default function ApplicationDetailPage() {
               <div className="flex flex-wrap gap-x-4 gap-y-1 mt-2 text-xs text-muted-foreground">
                 <span className="flex items-center gap-1"><Mail className="h-3 w-3" />{app.email || app.applicantEmail}</span>
                 {app.phone && <span className="flex items-center gap-1"><Phone className="h-3 w-3" />{app.phone}</span>}
-                <span>Submitted: {app.submittedAt ? new Date(app.submittedAt).toLocaleDateString() : "N/A"}</span>
               </div>
             </div>
           </div>

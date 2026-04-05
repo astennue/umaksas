@@ -147,8 +147,12 @@ export default function SettingsPage() {
     fetchSettings();
   }, [user?.id]);
 
-  // Upload GCash QR code
-  const handleQrUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  // QR preview state
+  const [qrPreview, setQrPreview] = useState<string | null>(null);
+  const [qrSelectedFile, setQrSelectedFile] = useState<File | null>(null);
+
+  // Preview QR before upload
+  const handleQrFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
@@ -157,10 +161,25 @@ export default function SettingsPage() {
       return;
     }
 
+    if (!["image/jpeg", "image/png", "image/webp"].includes(file.type)) {
+      toast.error("Only JPG, PNG, and WebP images are allowed");
+      return;
+    }
+
+    setQrSelectedFile(file);
+    const reader = new FileReader();
+    reader.onload = (ev) => setQrPreview(ev.target?.result as string);
+    reader.readAsDataURL(file);
+  };
+
+  // Upload GCash QR code (after preview)
+  const handleQrUpload = async () => {
+    if (!qrSelectedFile) return;
+
     setIsSaving(true);
     try {
       const formData = new FormData();
-      formData.append("file", file);
+      formData.append("file", qrSelectedFile);
       formData.append("type", "photo");
 
       const uploadRes = await fetch("/api/upload", {
@@ -175,7 +194,9 @@ export default function SettingsPage() {
       }
 
       setGcashQrUrl(uploadData.url);
-      toast.success("GCash QR code uploaded");
+      setQrPreview(null);
+      setQrSelectedFile(null);
+      toast.success("GCash QR code uploaded successfully");
     } catch (error: unknown) {
       toast.error(error instanceof Error ? error.message : "Failed to upload QR code");
     } finally {
@@ -410,10 +431,11 @@ export default function SettingsPage() {
                     GCash Configuration
                   </h3>
 
-                  {/* QR Code Upload */}
+                  {/* QR Code Upload with Preview */}
                   <div className="space-y-2">
                     <Label>GCash QR Code</Label>
-                    {gcashQrUrl ? (
+                    {/* Saved QR preview */}
+                    {gcashQrUrl && !qrPreview ? (
                       <div className="relative inline-block">
                         <div className="rounded-lg border p-2 bg-white">
                           <img
@@ -433,7 +455,9 @@ export default function SettingsPage() {
                           </Button>
                         )}
                       </div>
-                    ) : (
+                    ) : null}
+                    {/* File select area */}
+                    {!gcashQrUrl && !qrPreview ? (
                       <div
                         className="flex flex-col items-center justify-center rounded-lg border-2 border-dashed p-6 cursor-pointer hover:border-[#004EE0]/50 hover:bg-[#004EE0]/5 transition-colors max-w-xs"
                         onClick={() => qrInputRef.current?.click()}
@@ -443,15 +467,55 @@ export default function SettingsPage() {
                           type="file"
                           accept=".jpg,.jpeg,.png,.webp"
                           className="hidden"
-                          onChange={handleQrUpload}
+                          onChange={handleQrFileSelect}
                         />
                         <Upload className="mb-2 h-8 w-8 text-muted-foreground" />
                         <p className="text-sm text-muted-foreground text-center">
-                          {isSaving ? "Uploading..." : "Click to upload GCash QR code"}
+                          Click to upload GCash QR code
                         </p>
                         <p className="text-xs text-muted-foreground mt-1">
                           JPG, PNG, or WebP (max 10MB)
                         </p>
+                      </div>
+                    ) : null}
+                    {/* Upload preview */}
+                    {qrPreview && (
+                      <div className="space-y-3">
+                        <div className="relative inline-block">
+                          <div className="rounded-lg border-2 border-[#004EE0]/30 bg-white p-2">
+                            <img
+                              src={qrPreview}
+                              alt="QR Code Preview"
+                              className="h-40 w-40 object-contain"
+                            />
+                          </div>
+                          <Button
+                            variant="destructive"
+                            size="icon"
+                            className="absolute -top-2 -right-2 h-6 w-6 rounded-full"
+                            onClick={() => { setQrPreview(null); setQrSelectedFile(null); }}
+                          >
+                            <X className="h-3 w-3" />
+                          </Button>
+                        </div>
+                        <div className="flex gap-2">
+                          <Button
+                            size="sm"
+                            onClick={handleQrUpload}
+                            disabled={isSaving}
+                            className="bg-[#004EE0] hover:bg-[#004EE0]/90 text-white"
+                          >
+                            {isSaving ? <Loader2 className="mr-1.5 h-4 w-4 animate-spin" /> : <QrCode className="mr-1.5 h-4 w-4" />}
+                            {isSaving ? "Uploading..." : "Confirm Upload"}
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => { setQrPreview(null); setQrSelectedFile(null); }}
+                          >
+                            Cancel
+                          </Button>
+                        </div>
                       </div>
                     )}
                   </div>

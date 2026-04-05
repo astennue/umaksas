@@ -152,10 +152,22 @@ export async function GET(
         y -= 12;
       }
 
-      // Summary row 3: Status, Submitted Date
+      // Summary row 3: Address, Civil Status, Gender
+      const detailParts: string[] = [];
+      if (app.gender) detailParts.push(app.gender);
+      if (app.civilStatus) detailParts.push(app.civilStatus);
+      if (app.citizenship) detailParts.push(app.citizenship);
+      if (app.placeOfBirth) detailParts.push(`Born in ${app.placeOfBirth}`);
+      if (detailParts.length > 0) {
+        drawTextSafe(detailParts.join("  |  "), margin, y, font, fontSizeSmall, rgb(0.3, 0.3, 0.3));
+        y -= 12;
+      }
+
+      // Summary row 4: Status, Submitted Date, Tracking Ref
       const statusLabel = app.status.replace(/_/g, " ");
       const submittedLabel = app.submittedAt ? `Submitted: ${new Date(app.submittedAt).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" })}` : "Not yet submitted";
-      drawTextSafe(`Status: ${statusLabel}  |  ${submittedLabel}`, margin, y, font, fontSizeSmall, rgb(0.3, 0.3, 0.3));
+      const trackingRef = app.id.slice(0, 8).toUpperCase();
+      drawTextSafe(`Status: ${statusLabel}  |  ${submittedLabel}  |  Ref: ${trackingRef}`, margin, y, font, fontSizeSmall, rgb(0.3, 0.3, 0.3));
       y -= 8;
       drawLine(margin, y, contentWidth);
       y -= 10;
@@ -365,7 +377,7 @@ export async function GET(
       if (app.essayWhyApply) {
         drawTextSafe("Why do you want to become a Student Assistant?", margin, y, fontBold, fontSizeSmall, rgb(0.2, 0.2, 0.2));
         y -= 12;
-        const lines1 = wrapText(sanitizeText(app.essayWhyApply), contentWidth, font, fontSizeSmall);
+        const lines1 = wrapTextSafe(sanitizeText(app.essayWhyApply), contentWidth, font, fontSizeSmall);
         lines1.forEach((line) => {
           checkPageBreak(12);
           drawTextSafe(line, margin, y, font, fontSizeSmall);
@@ -376,7 +388,7 @@ export async function GET(
       if (app.essayGoals) {
         drawTextSafe("What are your goals as a Student Assistant?", margin, y, fontBold, fontSizeSmall, rgb(0.2, 0.2, 0.2));
         y -= 12;
-        const lines2 = wrapText(sanitizeText(app.essayGoals), contentWidth, font, fontSizeSmall);
+        const lines2 = wrapTextSafe(sanitizeText(app.essayGoals), contentWidth, font, fontSizeSmall);
         lines2.forEach((line) => {
           checkPageBreak(12);
           drawTextSafe(line, margin, y, font, fontSizeSmall);
@@ -387,7 +399,7 @@ export async function GET(
       if (app.essaySkills) {
         drawTextSafe("What skills can you contribute?", margin, y, fontBold, fontSizeSmall, rgb(0.2, 0.2, 0.2));
         y -= 12;
-        const lines3 = wrapText(sanitizeText(app.essaySkills), contentWidth, font, fontSizeSmall);
+        const lines3 = wrapTextSafe(sanitizeText(app.essaySkills), contentWidth, font, fontSizeSmall);
         lines3.forEach((line) => {
           checkPageBreak(12);
           drawTextSafe(line, margin, y, font, fontSizeSmall);
@@ -398,7 +410,7 @@ export async function GET(
       if (app.essayChallenges) {
         drawTextSafe("How do you plan to balance academics and SA duties?", margin, y, fontBold, fontSizeSmall, rgb(0.2, 0.2, 0.2));
         y -= 12;
-        const lines4 = wrapText(sanitizeText(app.essayChallenges), contentWidth, font, fontSizeSmall);
+        const lines4 = wrapTextSafe(sanitizeText(app.essayChallenges), contentWidth, font, fontSizeSmall);
         lines4.forEach((line) => {
           checkPageBreak(12);
           drawTextSafe(line, margin, y, font, fontSizeSmall);
@@ -455,6 +467,18 @@ export async function GET(
       }
     } catch (err) {
       console.error("Error drawing references:", err);
+    }
+
+    // ====== REVIEW NOTES ======
+    try {
+      if (app.reviewNotes) {
+        drawSectionTitle("XI. Review Notes");
+        drawTextSafe(app.reviewNotes, margin, y, font, fontSizeSmall, rgb(0.2, 0.2, 0.2), contentWidth);
+        y -= 13;
+        y -= 8;
+      }
+    } catch (err) {
+      console.error("Error drawing review notes:", err);
     }
 
     // ====== FOOTER ======
