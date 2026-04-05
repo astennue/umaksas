@@ -38,6 +38,7 @@ import {
   PenSquare,
   RefreshCw,
   UserCog,
+  Network,
   type LucideIcon,
 } from "lucide-react";
 import { useState } from "react";
@@ -50,6 +51,7 @@ interface NavItem {
   href: string;
   icon: LucideIcon;
   roles: string[]; // Empty array = visible to all authenticated roles
+  presidentOnly?: boolean; // If true, OFFICER role must also be PRESIDENT position
 }
 
 const navItems: NavItem[] = [
@@ -65,22 +67,22 @@ const navItems: NavItem[] = [
   // Interviews - Super Admin, Adviser only
   { label: "Interviews", href: "/dashboard/interviews", icon: Calendar, roles: ["SUPER_ADMIN", "ADVISER"] },
 
-  // Student Assistants - Super Admin, Adviser, Officer, Office Supervisor (NOT HRMO, NOT SA)
+  // Student Assistants - Super Admin, Adviser, Officer, Office Supervisor
   { label: "Student Assistants", href: "/dashboard/student-assistants", icon: Users, roles: ["SUPER_ADMIN", "ADVISER", "OFFICER", "OFFICE_SUPERVISOR"] },
 
   // Schedules - Super Admin, Adviser, Officer, Office Supervisor, SA
   { label: "Schedules", href: "/dashboard/schedules", icon: Clock, roles: ["SUPER_ADMIN", "ADVISER", "OFFICER", "OFFICE_SUPERVISOR", "STUDENT_ASSISTANT"] },
 
-  // Attendance - Super Admin, Adviser, Officer, Office Supervisor, SA (NOT HRMO)
+  // Attendance - Super Admin, Adviser, Officer, Office Supervisor, SA
   { label: "Attendance", href: "/dashboard/attendance", icon: CheckCircle, roles: ["SUPER_ADMIN", "ADVISER", "OFFICER", "OFFICE_SUPERVISOR", "STUDENT_ASSISTANT"] },
 
-  // Evaluations - Super Admin, Adviser, Officer, Office Supervisor (NOT SA)
+  // Evaluations - Super Admin, Adviser, Officer, Office Supervisor
   { label: "Evaluations", href: "/dashboard/evaluations", icon: ClipboardCheck, roles: ["SUPER_ADMIN", "ADVISER", "OFFICER", "OFFICE_SUPERVISOR"] },
 
-  // My Payments - Student Assistant & Officer (SA monthly dues + Officer combined duties)
+  // My Payments - Student Assistant & Officer
   { label: "My Payments", href: "/dashboard/payments", icon: DollarSign, roles: ["STUDENT_ASSISTANT", "OFFICER"] },
 
-  // Collections - Super Admin, Adviser, Officer (manage + view own payments)
+  // Collections - Super Admin, Adviser, Officer
   { label: "Collections", href: "/dashboard/payment-collections", icon: Wallet, roles: ["SUPER_ADMIN", "ADVISER", "OFFICER"] },
 
   // Events - Super Admin, Adviser, Officer, Student Assistant
@@ -98,8 +100,11 @@ const navItems: NavItem[] = [
   // Notifications - visible to all authenticated
   { label: "Notifications", href: "/dashboard/notifications", icon: Bell, roles: [] },
 
-  // Manage Users - Super Admin, Adviser
-  { label: "Manage Users", href: "/dashboard/users", icon: UserCog, roles: ["SUPER_ADMIN", "ADVISER"] },
+  // Org Chart CMS - Super Admin, Adviser, President
+  { label: "Org Chart", href: "/dashboard/org-chart", icon: Network, roles: ["SUPER_ADMIN", "ADVISER", "OFFICER"], presidentOnly: true },
+
+  // Manage Users - Super Admin, Adviser, President
+  { label: "Manage Users", href: "/dashboard/users", icon: UserCog, roles: ["SUPER_ADMIN", "ADVISER", "OFFICER"], presidentOnly: true },
 
   // CMS / Content - Super Admin only
   { label: "CMS / Content", href: "/dashboard/content", icon: PenSquare, roles: ["SUPER_ADMIN"] },
@@ -110,8 +115,8 @@ const navItems: NavItem[] = [
   // SA Renewal Form - Student Assistant only
   { label: "My Renewal", href: "/dashboard/renewal", icon: RefreshCw, roles: ["STUDENT_ASSISTANT"] },
 
-  // Settings - Super Admin, Adviser, and Officer (for payment settings)
-  { label: "Settings", href: "/dashboard/settings", icon: Settings, roles: ["SUPER_ADMIN", "ADVISER", "OFFICER"] },
+  // Settings - Super Admin, Adviser, President only
+  { label: "Settings", href: "/dashboard/settings", icon: Settings, roles: ["SUPER_ADMIN", "ADVISER", "OFFICER"], presidentOnly: true },
 ];
 
 const roleLabels: Record<string, string> = {
@@ -129,11 +134,23 @@ function SidebarNav({ collapsed, onNavigate }: { collapsed: boolean; onNavigate?
   const pathname = usePathname();
   const { data: session } = useSession();
   const userPhotoUrl = useUserPhoto();
-  const userRole = (session?.user as { role?: string })?.role || "";
+  const user = session?.user as { role?: string; officerPosition?: string | null } | undefined;
+  const userRole = user?.role || "";
+  const officerPosition = user?.officerPosition || null;
+  const isPresident = userRole === "OFFICER" && officerPosition === "PRESIDENT";
 
-  const filteredItems = navItems.filter(
-    (item) => item.roles.length === 0 || item.roles.includes(userRole)
-  );
+  const filteredItems = navItems.filter((item) => {
+    // Empty roles = visible to all
+    if (item.roles.length === 0) return true;
+
+    // Check if user has the required role
+    if (!item.roles.includes(userRole)) return false;
+
+    // If presidentOnly, OFFICER must be PRESIDENT position
+    if (item.presidentOnly && userRole === "OFFICER" && !isPresident) return false;
+
+    return true;
+  });
 
   return (
     <div className="flex h-full flex-col">
@@ -155,8 +172,8 @@ function SidebarNav({ collapsed, onNavigate }: { collapsed: boolean; onNavigate?
         </div>
         {!collapsed && (
           <div className="min-w-0">
-            <h2 className="text-base font-bold text-white tracking-tight">UMAK S.A.S.</h2>
-            <p className="text-[10px] text-blue-300/70 tracking-wide uppercase">Management Portal</p>
+            <h2 className="text-base font-bold text-white tracking-tight">UMak SAS</h2>
+            <p className="text-[10px] text-blue-300/70 tracking-wide uppercase">Student Assistantship Society</p>
           </div>
         )}
       </div>
@@ -218,7 +235,7 @@ function SidebarNav({ collapsed, onNavigate }: { collapsed: boolean; onNavigate?
                   {userRole === "HRMO" ? "HRMO" : session.user.name}
                 </p>
                 <p className="text-[10px] text-blue-300/60 truncate">
-                  {roleLabels[userRole] || userRole}
+                  {isPresident ? "SAS President" : roleLabels[userRole] || userRole}
                 </p>
               </div>
             </div>

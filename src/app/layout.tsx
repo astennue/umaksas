@@ -17,13 +17,14 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "UMAK S.A.S.",
+  title: "UMak Student Assistantship Society",
   description:
-    "The official Student Assistant Management System of Universidad Makati. Apply, manage schedules, track attendance, and more.",
+    "The official Student Assistantship Society of Universidad Makati. Apply, manage schedules, track attendance, and more.",
   keywords: [
     "UMAK",
     "UMAK SAS",
-    "UMAK S.A.S.",
+    "UMak SAS",
+    "UMak Student Assistantship Society",
     "Universidad Makati",
     "Student Assistant",
     "SAS",
@@ -36,10 +37,10 @@ export const metadata: Metadata = {
     apple: "/logo/umak-sas-logo.png",
   },
   openGraph: {
-    title: "UMAK S.A.S.",
+    title: "UMak Student Assistantship Society",
     description:
-      "The official Student Assistant Society of Universidad Makati.",
-    siteName: "UMAK S.A.S.",
+      "The official Student Assistantship Society of Universidad Makati.",
+    siteName: "UMak Student Assistantship Society",
     type: "website",
   },
 };

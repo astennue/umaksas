@@ -145,7 +145,7 @@ export default function ManageUsersPage() {
   const totalInactive = users.filter((u) => !u.isActive).length;
 
   return (
-    <RoleGuard allowedRoles={["SUPER_ADMIN", "ADVISER"]}>
+    <RoleGuard allowedRoles={["SUPER_ADMIN", "ADVISER", "OFFICER"]} presidentOnly>
       <div className="space-y-6">
         {/* Header */}
         <CRUDToolbar

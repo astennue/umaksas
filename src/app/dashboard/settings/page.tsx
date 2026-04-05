@@ -64,10 +64,33 @@ interface SystemSettingsData {
   paymentInstructions: string | null;
 }
 
-export default function SettingsPage() {
+// Custom hook to check if user has admin-level access (SUPER_ADMIN, ADVISER, or PRESIDENT)
+function useAdminAccess() {
   const { data: session, status: authStatus } = useSession();
+  const user = session?.user as { id: string; role: string; officerPosition?: string | null } | undefined;
+  const userRole = user?.role || "";
+  const officerPosition = user?.officerPosition || null;
+  const isSuperAdmin = userRole === "SUPER_ADMIN";
+  const isAdviser = userRole === "ADVISER";
+  const isPresident = userRole === "OFFICER" && officerPosition === "PRESIDENT";
+  const hasAccess = isSuperAdmin || isAdviser || isPresident;
+
+  const roleLabel = isSuperAdmin
+    ? "Super Administrator Access"
+    : isAdviser
+      ? "Adviser Access"
+      : isPresident
+        ? "President Access"
+        : "Officer Access";
+
+  const RoleIcon = isSuperAdmin ? Shield : isAdviser ? GraduationCap : Shield;
+
+  return { hasAccess, isSuperAdmin, isAdviser, isPresident, userRole, officerPosition, roleLabel, RoleIcon, user, authStatus };
+}
+
+export default function SettingsPage() {
+  const { hasAccess, isSuperAdmin, isAdviser, isPresident, user, authStatus, roleLabel, RoleIcon } = useAdminAccess();
   const router = useRouter();
-  const user = session?.user as { id: string; role: string } | undefined;
 
   const [settings, setSettings] = useState<SystemSettingsData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -99,14 +122,6 @@ export default function SettingsPage() {
   const [gcashQrUrl, setGcashQrUrl] = useState("");
   const [gcashNumber, setGcashNumber] = useState("");
   const [paymentInstructions, setPaymentInstructions] = useState("");
-
-  const userRole = user?.role;
-  const isSuperAdmin = userRole === "SUPER_ADMIN";
-  const isAdviser = userRole === "ADVISER";
-  const isOfficer = userRole === "OFFICER";
-  const canModifyPaymentSettings = isSuperAdmin || isOfficer;
-  const canViewPaymentSettings = isSuperAdmin || isAdviser || isOfficer;
-  const canModifyAcademicSettings = isSuperAdmin || isAdviser;
 
   // Auth check
   useEffect(() => {
@@ -172,7 +187,7 @@ export default function SettingsPage() {
     reader.readAsDataURL(file);
   };
 
-  // Upload GCash QR code (after preview) — uploads & saves to DB in one step
+  // Upload GCash QR code
   const handleQrUpload = async () => {
     if (!qrSelectedFile) return;
 
@@ -186,12 +201,10 @@ export default function SettingsPage() {
         body: formData,
       });
 
-      // Check if response is JSON before parsing
       const contentType = res.headers.get("content-type") || "";
       if (!contentType.includes("application/json")) {
         const text = await res.text().catch(() => "");
-        console.error("QR upload returned non-JSON response:", res.status, contentType, text.slice(0, 500));
-        throw new Error(`Server error (${res.status}). The upload may have been blocked by a server configuration (e.g., Nginx body size limit). Please try with a smaller image or contact your administrator.`);
+        throw new Error(`Server error (${res.status}). Please try with a smaller image or contact your administrator.`);
       }
 
       const data = await safeJsonParse<any>(res);
@@ -201,7 +214,6 @@ export default function SettingsPage() {
       }
 
       setGcashQrUrl(data.gcashQrUrl);
-      // Update settings state so dirty detection doesn't flag the QR as unsaved
       setSettings((prev) => prev ? { ...prev, gcashQrUrl: data.gcashQrUrl } : prev);
       setQrPreview(null);
       setQrSelectedFile(null);
@@ -235,7 +247,6 @@ export default function SettingsPage() {
       }
 
       setGcashQrUrl("");
-      // Update settings state so dirty detection stays clean
       setSettings((prev) => prev ? { ...prev, gcashQrUrl: null } : prev);
       toast.success("GCash QR code removed");
     } catch (error: unknown) {
@@ -276,15 +287,10 @@ export default function SettingsPage() {
         renewalOpen,
         maxWorkHoursPerDay: maxWorkHours,
         monthlyPaymentFee: monthlyPayment,
+        paymentCollectionEnabled,
+        gcashNumber: gcashNumber || null,
+        paymentInstructions: paymentInstructions || null,
       };
-
-      // Only include payment settings if user has permission
-      if (canModifyPaymentSettings) {
-        payload.paymentCollectionEnabled = paymentCollectionEnabled;
-        // gcashQrUrl is saved separately via /api/system-settings/gcash-qr
-        payload.gcashNumber = gcashNumber || null;
-        payload.paymentInstructions = paymentInstructions || null;
-      }
 
       const res = await fetch("/api/system-settings", {
         method: "PUT",
@@ -294,17 +300,6 @@ export default function SettingsPage() {
 
       const data = await safeJsonParse<any>(res);
       if (!res.ok) throw new Error(data.error || "Failed to save settings");
-
-      // Verify the response reflects the changes
-      console.log("[Settings] Save response:", data);
-      if (canModifyPaymentSettings) {
-        console.log("[Settings] Payment fields in response:", {
-          paymentCollectionEnabled: data.paymentCollectionEnabled,
-          gcashQrUrl: data.gcashQrUrl,
-          gcashNumber: data.gcashNumber,
-          paymentInstructions: data.paymentInstructions,
-        });
-      }
 
       toast.success("Settings saved successfully");
       setSettings(data);
@@ -329,26 +324,17 @@ export default function SettingsPage() {
     );
   }
 
-  if (!session || (userRole !== "SUPER_ADMIN" && userRole !== "ADVISER" && userRole !== "OFFICER")) {
-    return null;
+  if (!hasAccess) {
+    return (
+      <div className="flex flex-col items-center justify-center py-20 text-center">
+        <Shield className="h-12 w-12 text-muted-foreground mb-4" />
+        <p className="text-lg font-semibold text-muted-foreground">Access Denied</p>
+        <p className="text-sm text-muted-foreground mt-1">Only Super Admin, Adviser, and SAS President can access Settings.</p>
+      </div>
+    );
   }
 
-  const roleLabel = isSuperAdmin
-    ? "Super Administrator Access"
-    : isAdviser
-      ? "Adviser Access"
-      : "Officer Access";
-
-  const roleIcon = isSuperAdmin
-    ? Shield
-    : isAdviser
-      ? GraduationCap
-      : DollarSign;
-
-  const RoleIcon = roleIcon;
-
   return (
-    <RoleGuard allowedRoles={["SUPER_ADMIN", "ADVISER", "OFFICER"]}>
     <div className="max-w-4xl mx-auto space-y-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -392,224 +378,209 @@ export default function SettingsPage() {
       </Badge>
 
       {/* Payment Collection Section - Full width */}
-      {canViewPaymentSettings && (
-        <Card className="border-0 shadow-lg rounded-xl">
-          <CardHeader className="pb-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#004EE0]/10">
-                    <Smartphone className="h-5 w-5 text-[#004EE0]" />
-                  </div>
-                  Payment Collection
-                </CardTitle>
-                <CardDescription className="mt-1.5">
-                  {canModifyPaymentSettings
-                    ? "Enable GCash payment collection for organizational fees and configure payment settings"
-                    : "View current payment collection settings and GCash payment details"}
-                </CardDescription>
-              </div>
-              {canModifyPaymentSettings && (
-                <div className="flex items-center gap-3">
-                  <span className="text-xs text-muted-foreground">
-                    {paymentCollectionEnabled ? "Active" : "Inactive"}
-                  </span>
-                  <Switch
-                    checked={paymentCollectionEnabled}
-                    onCheckedChange={setPaymentCollectionEnabled}
-                  />
+      <Card className="border-0 shadow-lg rounded-xl">
+        <CardHeader className="pb-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className="text-lg flex items-center gap-2">
+                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#004EE0]/10">
+                  <Smartphone className="h-5 w-5 text-[#004EE0]" />
                 </div>
-              )}
+                Payment Collection
+              </CardTitle>
+              <CardDescription className="mt-1.5">
+                Enable GCash payment collection for organizational fees and configure payment settings
+              </CardDescription>
             </div>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            {/* Toggle Banner */}
-            <div className={cn(
-              "flex items-center justify-between gap-4 rounded-lg border p-4 transition-colors",
-              paymentCollectionEnabled
-                ? "bg-green-50 border-green-200 dark:bg-green-950/20 dark:border-green-800"
-                : "bg-gray-50 border-gray-200 dark:bg-gray-900 dark:border-gray-800"
-            )}>
-              <div className="flex items-center gap-3 min-w-0">
-                <div className={cn(
-                  "flex h-10 w-10 shrink-0 items-center justify-center rounded-xl transition-colors",
-                  paymentCollectionEnabled
-                    ? "bg-green-100 text-green-600 dark:bg-green-900/20 dark:text-green-400"
-                    : "bg-gray-100 text-gray-400 dark:bg-gray-800 dark:text-gray-500"
-                )}>
+            <div className="flex items-center gap-3">
+              <span className="text-xs text-muted-foreground">
+                {paymentCollectionEnabled ? "Active" : "Inactive"}
+              </span>
+              <Switch
+                checked={paymentCollectionEnabled}
+                onCheckedChange={setPaymentCollectionEnabled}
+              />
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          {/* Toggle Banner */}
+          <div className={cn(
+            "flex items-center justify-between gap-4 rounded-lg border p-4 transition-colors",
+            paymentCollectionEnabled
+              ? "bg-green-50 border-green-200 dark:bg-green-950/20 dark:border-green-800"
+              : "bg-gray-50 border-gray-200 dark:bg-gray-900 dark:border-gray-800"
+          )}>
+            <div className="flex items-center gap-3 min-w-0">
+              <div className={cn(
+                "flex h-10 w-10 shrink-0 items-center justify-center rounded-xl transition-colors",
+                paymentCollectionEnabled
+                  ? "bg-green-100 text-green-600 dark:bg-green-900/20 dark:text-green-400"
+                  : "bg-gray-100 text-gray-400 dark:bg-gray-800 dark:text-gray-500"
+              )}>
+                {paymentCollectionEnabled
+                  ? <ToggleRight className="h-5 w-5" />
+                  : <ToggleLeft className="h-5 w-5" />}
+              </div>
+              <div className="min-w-0">
+                <p className="text-sm font-semibold text-gray-900 dark:text-white">
+                  Organizational Fee Collection
+                </p>
+                <p className="text-xs text-muted-foreground">
                   {paymentCollectionEnabled
-                    ? <ToggleRight className="h-5 w-5" />
-                    : <ToggleLeft className="h-5 w-5" />}
-                </div>
-                <div className="min-w-0">
-                  <p className="text-sm font-semibold text-gray-900 dark:text-white">
-                    Organizational Fee Collection
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    {paymentCollectionEnabled
-                      ? "Active — Student assistants will see payment prompts"
-                      : "Inactive — Payment collection is currently disabled"}
-                  </p>
-                </div>
-              </div>
-              {canModifyPaymentSettings && (
-                <Switch
-                  checked={paymentCollectionEnabled}
-                  onCheckedChange={setPaymentCollectionEnabled}
-                />
-              )}
-            </div>
-
-            {/* GCash Configuration */}
-            {canModifyPaymentSettings && (
-              <>
-                <Separator />
-
-                <div className="space-y-4">
-                  <h3 className="text-sm font-semibold flex items-center gap-2">
-                    <QrCode className="h-4 w-4 text-[#004EE0]" />
-                    GCash Configuration
-                  </h3>
-
-                  {/* QR Code Upload with Preview */}
-                  <div className="space-y-2">
-                    <Label>GCash QR Code</Label>
-                    {/* Saved QR preview */}
-                    {gcashQrUrl && !qrPreview ? (
-                      <div className="relative inline-block">
-                        <div className="rounded-lg border p-2 bg-white">
-                          <img
-                            src={gcashQrUrl}
-                            alt="GCash QR Code"
-                            className="h-40 w-40 object-contain"
-                          />
-                        </div>
-                        {canModifyPaymentSettings && (
-                          <Button
-                            variant="destructive"
-                            size="icon"
-                            className="absolute -top-2 -right-2 h-6 w-6 rounded-full"
-                            onClick={handleQrDelete}
-                          >
-                            <X className="h-3 w-3" />
-                          </Button>
-                        )}
-                      </div>
-                    ) : null}
-                    {/* File select area */}
-                    {!gcashQrUrl && !qrPreview ? (
-                      <div
-                        className="flex flex-col items-center justify-center rounded-lg border-2 border-dashed p-6 cursor-pointer hover:border-[#004EE0]/50 hover:bg-[#004EE0]/5 transition-colors max-w-xs"
-                        onClick={() => qrInputRef.current?.click()}
-                      >
-                        <input
-                          ref={qrInputRef}
-                          type="file"
-                          accept=".jpg,.jpeg,.png,.webp"
-                          className="hidden"
-                          onChange={handleQrFileSelect}
-                        />
-                        <Upload className="mb-2 h-8 w-8 text-muted-foreground" />
-                        <p className="text-sm text-muted-foreground text-center">
-                          Click to upload GCash QR code
-                        </p>
-                        <p className="text-xs text-muted-foreground mt-1">
-                          JPG, PNG, or WebP (max 10MB)
-                        </p>
-                      </div>
-                    ) : null}
-                    {/* Upload preview */}
-                    {qrPreview && (
-                      <div className="space-y-3">
-                        <div className="relative inline-block">
-                          <div className="rounded-lg border-2 border-[#004EE0]/30 bg-white p-2">
-                            <img
-                              src={qrPreview}
-                              alt="QR Code Preview"
-                              className="h-40 w-40 object-contain"
-                            />
-                          </div>
-                          <Button
-                            variant="destructive"
-                            size="icon"
-                            className="absolute -top-2 -right-2 h-6 w-6 rounded-full"
-                            onClick={() => { setQrPreview(null); setQrSelectedFile(null); }}
-                          >
-                            <X className="h-3 w-3" />
-                          </Button>
-                        </div>
-                        <div className="flex gap-2">
-                          <Button
-                            size="sm"
-                            onClick={handleQrUpload}
-                            disabled={isSaving}
-                            className="bg-[#004EE0] hover:bg-[#004EE0]/90 text-white"
-                          >
-                            {isSaving ? <Loader2 className="mr-1.5 h-4 w-4 animate-spin" /> : <QrCode className="mr-1.5 h-4 w-4" />}
-                            {isSaving ? "Uploading..." : "Confirm Upload"}
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => { setQrPreview(null); setQrSelectedFile(null); }}
-                          >
-                            Cancel
-                          </Button>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* GCash Number */}
-                  <div className="space-y-2">
-                    <Label htmlFor="gcashNumber" className="flex items-center gap-2">
-                      <Smartphone className="h-4 w-4 text-muted-foreground" />
-                      GCash Number
-                    </Label>
-                    <Input
-                      id="gcashNumber"
-                      value={gcashNumber}
-                      onChange={(e) => setGcashNumber(e.target.value)}
-                      placeholder="e.g., 0917 123 4567"
-                    />
-                    <p className="text-xs text-muted-foreground">
-                      The GCash number that student assistants will send their payments to
-                    </p>
-                  </div>
-
-                  {/* Payment Instructions */}
-                  <div className="space-y-2">
-                    <Label htmlFor="paymentInstructions" className="flex items-center gap-2">
-                      <FileText className="h-4 w-4 text-muted-foreground" />
-                      Payment Instructions
-                    </Label>
-                    <Textarea
-                      id="paymentInstructions"
-                      value={paymentInstructions}
-                      onChange={(e) => setPaymentInstructions(e.target.value)}
-                      placeholder={"Step-by-step instructions for student assistants:\n\n1. Open GCash app\n2. Scan the QR code or enter the GCash number\n3. Send the exact amount\n4. Take a screenshot of the receipt\n5. Upload the screenshot as proof of payment"}
-                      rows={6}
-                    />
-                    <p className="text-xs text-muted-foreground">
-                      These instructions will be shown to student assistants when they pay
-                    </p>
-                  </div>
-                </div>
-              </>
-            )}
-
-            {/* Warning */}
-            <div className="rounded-lg bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 p-3">
-              <div className="flex gap-2">
-                <AlertTriangle className="h-4 w-4 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
-                <p className="text-xs text-amber-800 dark:text-amber-300">
-                  <strong>Important:</strong> Turning ON payment collection will immediately show payment prompts to all active student assistants. Ensure the GCash QR code and number are correctly set before enabling.
+                    ? "Active — Student assistants will see payment prompts"
+                    : "Inactive — Payment collection is currently disabled"}
                 </p>
               </div>
             </div>
-          </CardContent>
-        </Card>
-      )}
+            <Switch
+              checked={paymentCollectionEnabled}
+              onCheckedChange={setPaymentCollectionEnabled}
+            />
+          </div>
+
+          {/* GCash Configuration */}
+          <>
+            <Separator />
+
+            <div className="space-y-4">
+              <h3 className="text-sm font-semibold flex items-center gap-2">
+                <QrCode className="h-4 w-4 text-[#004EE0]" />
+                GCash Configuration
+              </h3>
+
+              {/* QR Code Upload with Preview */}
+              <div className="space-y-2">
+                <Label>GCash QR Code</Label>
+                {gcashQrUrl && !qrPreview ? (
+                  <div className="relative inline-block">
+                    <div className="rounded-lg border p-2 bg-white">
+                      <img
+                        src={gcashQrUrl}
+                        alt="GCash QR Code"
+                        className="h-40 w-40 object-contain"
+                      />
+                    </div>
+                    <Button
+                      variant="destructive"
+                      size="icon"
+                      className="absolute -top-2 -right-2 h-6 w-6 rounded-full"
+                      onClick={handleQrDelete}
+                    >
+                      <X className="h-3 w-3" />
+                    </Button>
+                  </div>
+                ) : null}
+                {!gcashQrUrl && !qrPreview ? (
+                  <div
+                    className="flex flex-col items-center justify-center rounded-lg border-2 border-dashed p-6 cursor-pointer hover:border-[#004EE0]/50 hover:bg-[#004EE0]/5 transition-colors max-w-xs"
+                    onClick={() => qrInputRef.current?.click()}
+                  >
+                    <input
+                      ref={qrInputRef}
+                      type="file"
+                      accept=".jpg,.jpeg,.png,.webp"
+                      className="hidden"
+                      onChange={handleQrFileSelect}
+                    />
+                    <Upload className="mb-2 h-8 w-8 text-muted-foreground" />
+                    <p className="text-sm text-muted-foreground text-center">
+                      Click to upload GCash QR code
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      JPG, PNG, or WebP (max 10MB)
+                    </p>
+                  </div>
+                ) : null}
+                {qrPreview && (
+                  <div className="space-y-3">
+                    <div className="relative inline-block">
+                      <div className="rounded-lg border-2 border-[#004EE0]/30 bg-white p-2">
+                        <img
+                          src={qrPreview}
+                          alt="QR Code Preview"
+                          className="h-40 w-40 object-contain"
+                        />
+                      </div>
+                      <Button
+                        variant="destructive"
+                        size="icon"
+                        className="absolute -top-2 -right-2 h-6 w-6 rounded-full"
+                        onClick={() => { setQrPreview(null); setQrSelectedFile(null); }}
+                      >
+                        <X className="h-3 w-3" />
+                      </Button>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button
+                        size="sm"
+                        onClick={handleQrUpload}
+                        disabled={isSaving}
+                        className="bg-[#004EE0] hover:bg-[#004EE0]/90 text-white"
+                      >
+                        {isSaving ? <Loader2 className="mr-1.5 h-4 w-4 animate-spin" /> : <QrCode className="mr-1.5 h-4 w-4" />}
+                        {isSaving ? "Uploading..." : "Confirm Upload"}
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => { setQrPreview(null); setQrSelectedFile(null); }}
+                      >
+                        Cancel
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* GCash Number */}
+              <div className="space-y-2">
+                <Label htmlFor="gcashNumber" className="flex items-center gap-2">
+                  <Smartphone className="h-4 w-4 text-muted-foreground" />
+                  GCash Number
+                </Label>
+                <Input
+                  id="gcashNumber"
+                  value={gcashNumber}
+                  onChange={(e) => setGcashNumber(e.target.value)}
+                  placeholder="e.g., 0917 123 4567"
+                />
+                <p className="text-xs text-muted-foreground">
+                  The GCash number that student assistants will send their payments to
+                </p>
+              </div>
+
+              {/* Payment Instructions */}
+              <div className="space-y-2">
+                <Label htmlFor="paymentInstructions" className="flex items-center gap-2">
+                  <FileText className="h-4 w-4 text-muted-foreground" />
+                  Payment Instructions
+                </Label>
+                <Textarea
+                  id="paymentInstructions"
+                  value={paymentInstructions}
+                  onChange={(e) => setPaymentInstructions(e.target.value)}
+                  placeholder={"Step-by-step instructions for student assistants:\n\n1. Open GCash app\n2. Scan the QR code or enter the GCash number\n3. Send the exact amount\n4. Take a screenshot of the receipt\n5. Upload the screenshot as proof of payment"}
+                  rows={6}
+                />
+                <p className="text-xs text-muted-foreground">
+                  These instructions will be shown to student assistants when they pay
+                </p>
+              </div>
+            </div>
+          </>
+
+          {/* Warning */}
+          <div className="rounded-lg bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 p-3">
+            <div className="flex gap-2">
+              <AlertTriangle className="h-4 w-4 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
+              <p className="text-xs text-amber-800 dark:text-amber-300">
+                <strong>Important:</strong> Turning ON payment collection will immediately show payment prompts to all active student assistants. Ensure the GCash QR code and number are correctly set before enabling.
+              </p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       <div className="grid gap-6 lg:grid-cols-2">
         {/* Season Controls */}
@@ -696,8 +667,6 @@ export default function SettingsPage() {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            {canModifyAcademicSettings && (
-              <>
             <div className="space-y-2">
               <Label htmlFor="academicYear">Academic Year</Label>
               <Input
@@ -718,11 +687,8 @@ export default function SettingsPage() {
             </div>
 
             <Separator />
-              </>
-            )}
 
-            {canModifyAcademicSettings && (
-              <div className="space-y-2">
+            <div className="space-y-2">
               <Label htmlFor="maxWorkHours" className="flex items-center gap-2">
                 <Clock className="h-4 w-4 text-muted-foreground" />
                 Max Work Hours Per Day
@@ -739,7 +705,6 @@ export default function SettingsPage() {
                 Maximum hours a Student Assistant can work per day (recommended: 4)
               </p>
             </div>
-            )}
 
             <div className="space-y-2">
               <Label htmlFor="monthlyPayment" className="flex items-center gap-2">
@@ -797,29 +762,23 @@ export default function SettingsPage() {
                 {renewalOpen ? "Open" : "Closed"}
               </Badge>
             </div>
-            {canViewPaymentSettings && (
-              <>
-                <div className="rounded-lg border p-4 text-center sm:col-span-2">
-                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1">Payment Collection</p>
-                  <Badge variant="secondary" className={cn(
-                    paymentCollectionEnabled
-                      ? "bg-[#004EE0]/10 text-[#004EE0] dark:bg-[#004EE0]/20"
-                      : "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400"
-                  )}>
-                    {paymentCollectionEnabled ? "Active" : "Inactive"}
-                  </Badge>
-                </div>
-                <div className="rounded-lg border p-4 text-center sm:col-span-2">
-                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1">GCash Number</p>
-                  <p className="text-lg font-bold text-gray-900 dark:text-white">{gcashNumber || "Not set"}</p>
-                </div>
-              </>
-            )}
+            <div className="rounded-lg border p-4 text-center sm:col-span-2">
+              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1">Payment Collection</p>
+              <Badge variant="secondary" className={cn(
+                paymentCollectionEnabled
+                  ? "bg-[#004EE0]/10 text-[#004EE0] dark:bg-[#004EE0]/20"
+                  : "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400"
+              )}>
+                {paymentCollectionEnabled ? "Active" : "Inactive"}
+              </Badge>
+            </div>
+            <div className="rounded-lg border p-4 text-center sm:col-span-2">
+              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1">GCash Number</p>
+              <p className="text-lg font-bold text-gray-900 dark:text-white">{gcashNumber || "Not set"}</p>
+            </div>
           </div>
         </CardContent>
       </Card>
     </div>
-    <ConfirmDialog />
-    </RoleGuard>
   );
 }

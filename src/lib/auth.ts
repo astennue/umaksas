@@ -18,6 +18,9 @@ export const authOptions: NextAuthOptions = {
         try {
           const user = await db.user.findUnique({
             where: { email: credentials.email },
+            include: {
+              officerProfile: { select: { position: true } },
+            },
           });
 
           if (!user) {
@@ -45,6 +48,7 @@ export const authOptions: NextAuthOptions = {
             role: user.role,
             firstName: user.firstName || "",
             lastName: user.lastName || "",
+            officerPosition: user.officerProfile?.position || null,
           };
         } catch (error) {
           console.error("Authorization error:", error);
@@ -65,6 +69,7 @@ export const authOptions: NextAuthOptions = {
         token.role = (user as unknown as { role: string }).role;
         token.firstName = (user as unknown as { firstName: string }).firstName;
         token.lastName = (user as unknown as { lastName: string }).lastName;
+        token.officerPosition = (user as unknown as { officerPosition: string | null }).officerPosition;
       }
       return token;
     },
@@ -74,6 +79,7 @@ export const authOptions: NextAuthOptions = {
         (session.user as { role: string }).role = token.role as string;
         (session.user as { firstName: string }).firstName = token.firstName as string;
         (session.user as { lastName: string }).lastName = token.lastName as string;
+        (session.user as { officerPosition: string | null }).officerPosition = token.officerPosition as string | null;
       }
       return session;
     },

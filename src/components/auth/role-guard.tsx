@@ -8,9 +8,11 @@ interface RoleGuardProps {
   allowedRoles: string[]
   children: React.ReactNode
   fallback?: React.ReactNode
+  /** If true, OFFICER role must also have PRESIDENT position to pass */
+  presidentOnly?: boolean
 }
 
-export function RoleGuard({ allowedRoles, children, fallback }: RoleGuardProps) {
+export function RoleGuard({ allowedRoles, children, fallback, presidentOnly }: RoleGuardProps) {
   const { data: session, status } = useSession()
 
   if (status === "loading") {
@@ -25,14 +27,28 @@ export function RoleGuard({ allowedRoles, children, fallback }: RoleGuardProps) 
     redirect("/portal-login")
   }
 
-  const userRole = (session.user as { role?: string })?.role
+  const user = session.user as { role?: string; officerPosition?: string | null }
+  const userRole = user?.role
+  const officerPosition = user?.officerPosition || null
 
+  // Check role
   if (!userRole || !allowedRoles.includes(userRole)) {
     if (fallback) return <>{fallback}</>
     return (
       <div className="flex flex-col items-center justify-center py-20 text-center">
         <p className="text-lg font-semibold text-muted-foreground">Access Denied</p>
         <p className="text-sm text-muted-foreground mt-1">You do not have permission to view this page.</p>
+      </div>
+    )
+  }
+
+  // Check presidentOnly constraint for OFFICER role
+  if (presidentOnly && userRole === "OFFICER" && officerPosition !== "PRESIDENT") {
+    if (fallback) return <>{fallback}</>
+    return (
+      <div className="flex flex-col items-center justify-center py-20 text-center">
+        <p className="text-lg font-semibold text-muted-foreground">Access Denied</p>
+        <p className="text-sm text-muted-foreground mt-1">Only the SAS President can access this page.</p>
       </div>
     )
   }

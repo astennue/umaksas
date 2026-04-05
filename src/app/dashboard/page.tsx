@@ -155,8 +155,8 @@ export default function DashboardPage() {
     completedInterviews: 0,
     totalOffices: 0,
   });
-  const [recentInterviews, setRecentInterviews] = useState<RecentInterview[]>([]);
-  const [recentApplications, setRecentApplications] = useState<RecentApplication[]>([]);
+  const [recentInterviews] = useState<RecentInterview[]>([]);
+  const [recentApplications] = useState<RecentApplication[]>([]);
   const [announcements, setAnnouncements] = useState<Array<{id: string; title: string; excerpt: string | null; imageUrl: string | null; createdAt: string; priority: string; isPinned: boolean}>>([]);
   const [onDutyList, setOnDutyList] = useState<OnDutySA[]>([]);
   const [saSelfStatus, setSaSelfStatus] = useState<SASelfStatus | null>(null);
@@ -170,122 +170,49 @@ export default function DashboardPage() {
   useEffect(() => {
     const fetchDashboardData = async () => {
       try {
-        // Fetch SAs
-        const saRes = await fetch("/api/student-assistants?limit=1000");
-        if (saRes.ok) {
-          const saData = await saRes.json();
-          const sas = saData.studentAssistants || [];
-          const activeOffices = new Set(sas.map((sa: { officeName: string | null }) => sa.officeName).filter(Boolean));
+        // Single optimized API call for all dashboard stats
+        const res = await fetch("/api/dashboard/stats");
+        if (res.ok) {
+          const data = await res.json();
 
-          setStats((prev) => ({
-            ...prev,
-            totalSAs: saData.total || sas.length,
-            activeSAs: sas.filter((sa: { status: string }) => sa.status === "ACTIVE").length,
-            onDutySAs: sas.filter((sa: { isOnDuty: boolean }) => sa.isOnDuty).length,
-            totalOffices: activeOffices.size,
-          }));
-        }
+          // Core stats
+          if (data.stats) {
+            setStats(data.stats);
+          }
 
-        // Fetch Applications
-        const appRes = await fetch("/api/applications/admin?limit=1000");
-        if (appRes.ok) {
-          const appData = await appRes.json();
-          const apps = appData.applications || [];
-          setStats((prev) => ({
-            ...prev,
-            totalApplications: appData.total || apps.length,
-            pendingApplications: apps.filter((a: { status: string }) =>
-              ["SUBMITTED", "UNDER_REVIEW"].includes(a.status)
-            ).length,
-          }));
-          setRecentApplications(apps.slice(0, 5));
-        }
+          // On-duty SAs
+          if (data.onDutySAs) {
+            setOnDutyList(data.onDutySAs);
+          }
 
-        // Fetch Interviews
-        const intRes = await fetch("/api/interviews?limit=1000");
-        if (intRes.ok) {
-          const intData = await intRes.json();
-          const interviews = intData.interviews || [];
-          setStats((prev) => ({
-            ...prev,
-            scheduledInterviews: interviews.filter((i: { status: string }) =>
-              ["SCHEDULED", "ACCEPTED"].includes(i.status)
-            ).length,
-            completedInterviews: interviews.filter((i: { status: string }) =>
-              i.status === "COMPLETED"
-            ).length,
-          }));
-          const recent = interviews.slice(0, 5).map((i: {
-            id: string;
-            scheduledAt: string;
-            status: string;
-            application: { firstName: string | null; lastName: string | null; applicantEmail: string };
-          }) => ({
-            id: i.id,
-            scheduledAt: i.scheduledAt,
-            status: i.status,
-            applicantName: `${i.application.firstName || ""} ${i.application.lastName || ""}`.trim() || i.application.applicantEmail,
-            applicantEmail: i.application.applicantEmail,
-          }));
-          setRecentInterviews(recent);
-        }
+          // Announcements
+          if (data.recentAnnouncements) {
+            setAnnouncements(data.recentAnnouncements.map((a: { id: string; title: string; excerpt: string | null; imageUrl: string | null; createdAt: string; priority: string; isPinned: boolean }) => ({
+              id: a.id,
+              title: a.title,
+              excerpt: a.excerpt,
+              imageUrl: a.imageUrl,
+              createdAt: a.createdAt,
+              priority: a.priority,
+              isPinned: a.isPinned,
+            })));
+          }
 
-        // Fetch Announcements
-        const annRes = await fetch("/api/announcements?limit=5&sort=newest");
-        if (annRes.ok) {
-          const annData = await annRes.json();
-          setAnnouncements(annData.announcements || []);
-        }
+          // Collection stats
+          if (data.collectionStats) {
+            setCollectionStats(data.collectionStats);
+          }
 
-        // Fetch on-duty SAs for widget
-        const saWallRes = await fetch("/api/sa-wall?sort=name");
-        if (saWallRes.ok) {
-          const saWallData = await saWallRes.json();
-          const allSAs: OnDutySA[] = (saWallData || []).map((sa: OnDutySA) => ({
-            id: sa.id,
-            firstName: sa.firstName,
-            lastName: sa.lastName,
-            officeName: sa.officeName,
-            college: sa.college,
-            isOnDuty: sa.isOnDuty,
-            lastClockIn: sa.lastClockIn,
-          }));
-          setOnDutyList(allSAs.filter((sa: OnDutySA) => sa.isOnDuty));
-        }
-
-        // Fetch collection stats for admin/officer roles
-        const currentUserRole = (session?.user as { role?: string })?.role || "";
-        if (["SUPER_ADMIN", "ADVISER", "OFFICER"].includes(currentUserRole)) {
-          try {
-            const colRes = await fetch("/api/collections?limit=1000");
-            if (colRes.ok) {
-              const colData = await colRes.json();
-              const collections = colData.collections || [];
-              setCollectionStats({
-                activeCollections: collections.filter((c: { status: string }) => c.status === "ACTIVE").length,
-                totalCollected: collections.reduce((sum: number, c: { totalCollected?: number }) => sum + (c.totalCollected || 0), 0),
-                pendingVerification: collections.reduce((sum: number, c: { pendingCount?: number }) => sum + (c.pendingCount || 0), 0),
-              });
-            }
-          } catch { /* ignore */ }
-        }
-
-        // For SA role: fetch own status
-        if (currentUserRole === "STUDENT_ASSISTANT") {
-          const saRes = await fetch("/api/student-assistants?limit=1");
-          if (saRes.ok) {
-            const saData = await saRes.json();
-            const mySA = (saData.studentAssistants || [])[0];
-            if (mySA) {
-              setSaSelfStatus({
-                id: mySA.id,
-                isOnDuty: mySA.isOnDuty || false,
-                hoursThisSemester: mySA.hoursThisSemester || 0,
-                totalHoursWorked: mySA.totalHoursWorked || 0,
-                officeName: mySA.officeName || null,
-                lastClockIn: mySA.lastClockIn || null,
-              });
-            }
+          // SA self-status
+          if (data.saStatus) {
+            setSaSelfStatus({
+              id: "",
+              isOnDuty: data.saStatus.isOnDuty || false,
+              hoursThisSemester: data.saStatus.hoursThisSemester || 0,
+              totalHoursWorked: data.saStatus.totalHoursWorked || 0,
+              officeName: data.saStatus.officeName || null,
+              lastClockIn: data.saStatus.lastClockIn || null,
+            });
           }
         }
       } catch (error) {
