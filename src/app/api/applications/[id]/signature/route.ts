@@ -34,9 +34,12 @@ export async function POST(
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    // If no userId linked yet, verify by email
-    if (!application.userId && application.applicantEmail !== session.user.email) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    // If no userId linked yet, link it now and allow (don't block by email mismatch)
+    if (!application.userId) {
+      await db.application.update({
+        where: { id },
+        data: { userId },
+      });
     }
 
     const body = await request.json();

@@ -31,10 +31,14 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Get the user's ID from session
+    const userId = (session.user as any).id;
+
     // Create application
     const application = await db.application.create({
       data: {
         applicantEmail: email,
+        userId: userId || null,
         firstName: rest.firstName || firstName || "",
         middleName: rest.middleName || "",
         lastName: rest.lastName || lastName || "",
@@ -164,10 +168,15 @@ export async function PUT(request: NextRequest) {
       );
     }
 
+    // Get the user's ID from session to link ownership
+    const userId = (session.user as any).id;
+
     // Update application
     const application = await db.application.update({
       where: { id },
       data: {
+        // Link userId if not already set (ensures ownership for signature/submit)
+        ...(userId && !existing.userId ? { userId } : {}),
         firstName: rest.firstName ?? existing.firstName,
         middleName: rest.middleName ?? existing.middleName,
         lastName: rest.lastName ?? existing.lastName,

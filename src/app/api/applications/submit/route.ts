@@ -34,6 +34,17 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Verify ownership: only the applicant or an officer can submit
+    const userId = (session.user as any).id;
+    if (application.userId && application.userId !== userId) {
+      // Allow officers/advisers/admins to submit on behalf
+      const userRole = (session.user as any).role;
+      const allowedRoles = ["SUPER_ADMIN", "ADVISER", "OFFICER"];
+      if (!allowedRoles.includes(userRole)) {
+        return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      }
+    }
+
     if (application.status !== "DRAFT") {
       return NextResponse.json(
         { error: "Application has already been submitted" },
