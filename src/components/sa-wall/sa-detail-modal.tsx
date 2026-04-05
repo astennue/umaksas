@@ -26,7 +26,7 @@ interface SADetailModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   isAuthenticated?: boolean;
-  onViewFullProfile?: (saId: string) => void;
+  onViewFullProfile?: (sa: SACardData) => void;
 }
 
 function getInitials(firstName: string, lastName: string): string {
@@ -190,7 +190,7 @@ export function SADetailModal({
                       className="w-full bg-blue-900 hover:bg-blue-800 text-white h-10 gap-2"
                       onClick={() => {
                         onOpenChange(false);
-                        onViewFullProfile?.(sa.id);
+                        onViewFullProfile?.(sa);
                       }}
                     >
                       <User className="w-4 h-4" />

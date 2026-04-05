@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react"
 import Image from "next/image"
-import { motion, useInView } from "framer-motion"
+import { motion, useInView, AnimatePresence } from "framer-motion"
 import {
   Crown,
   Shield,
@@ -20,8 +20,19 @@ import {
   Building2,
   GraduationCap,
   UserCog,
+  BookOpen,
 } from "lucide-react"
 import Link from "next/link"
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog"
+import { Badge } from "@/components/ui/badge"
+import { Separator } from "@/components/ui/separator"
+import { getCollegeDisplay } from "@/lib/colleges"
 
 /* ══════════════════════════════════════════════════════════════════════
    Types
@@ -35,6 +46,10 @@ interface OrgChartNode {
   orderIndex: number
   email: string | null
   phone?: string | null
+  college?: string | null
+  program?: string | null
+  officeName?: string | null
+  officeEmail?: string | null
   user: {
     id: string
     firstName: string | null
@@ -141,6 +156,121 @@ function getPositionIcon(position: string) {
   }
 }
 
+/* ── Officer Profile Modal ── */
+function OfficerProfileDialog({
+  officer,
+  open,
+  onOpenChange,
+}: {
+  officer: OrgChartNode | null
+  open: boolean
+  onOpenChange: (open: boolean) => void
+}) {
+  if (!officer) return null
+  const fullName = officer.user.fullName
+  const colors = COLORS.l4
+  const icon = getPositionIcon(officer.position)
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-md w-full p-0 overflow-hidden">
+        <AnimatePresence>
+          {open && (
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 10 }}
+              transition={{ duration: 0.25, ease: "easeOut" }}
+              className="max-h-[85vh] overflow-y-auto"
+            >
+              <DialogHeader className="sr-only">
+                <DialogTitle>{fullName} - Officer Profile</DialogTitle>
+                <DialogDescription>Profile information for {fullName}</DialogDescription>
+              </DialogHeader>
+              <div className="relative bg-gradient-to-br from-[#0f1b4d] to-[#0d2247] px-6 pt-8 pb-10 text-center">
+                <div className="absolute top-4 right-4 w-20 h-20 rounded-full bg-yellow-500/10 blur-xl" />
+                <div className="absolute bottom-2 left-4 w-16 h-16 rounded-full bg-blue-500/10 blur-xl" />
+                <div className="flex justify-center mb-3 relative z-10">
+                  <div className="h-[120px] w-[120px] rounded-full overflow-hidden border-3 border-white/30 flex items-center justify-center shadow-lg">
+                    {officer.user.photoUrl ? (
+                      <img src={officer.user.photoUrl} alt={fullName} className="h-full w-full object-cover" />
+                    ) : (
+                      <div className="h-full w-full bg-gradient-to-br from-white/20 to-white/5 flex items-center justify-center text-white font-bold text-3xl">
+                        {getInitials(fullName)}
+                      </div>
+                    )}
+                  </div>
+                </div>
+                <h2 className="text-xl font-bold text-white relative z-10 break-words max-w-[280px] mx-auto">{fullName}</h2>
+                <div className="flex justify-center mt-2 relative z-10">
+                  <Badge className="bg-amber-500/20 text-amber-300 border-amber-400/30 text-xs font-medium px-3 py-1">
+                    {icon}
+                    <span className="ml-1.5">{officer.positionLabel}</span>
+                  </Badge>
+                </div>
+              </div>
+              <div className="px-6 pb-6">
+                <Separator className="-mx-6" />
+                <div className="mt-5 space-y-3.5">
+                  <h3 className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Profile Information</h3>
+                  {officer.college ? (
+                    <div className="flex items-center gap-3 text-sm">
+                      <div className="w-8 h-8 rounded-lg bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center flex-shrink-0 text-blue-600 dark:text-blue-400"><GraduationCap className="w-4 h-4" /></div>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-xs text-gray-400 dark:text-gray-500">College</p>
+                        <p className="text-sm font-medium text-gray-700 dark:text-gray-300 truncate">{getCollegeDisplay(officer.college, 'both')}</p>
+                      </div>
+                    </div>
+                  ) : null}
+                  {officer.program ? (
+                    <div className="flex items-center gap-3 text-sm">
+                      <div className="w-8 h-8 rounded-lg bg-violet-50 dark:bg-violet-900/30 flex items-center justify-center flex-shrink-0 text-violet-600 dark:text-violet-400"><BookOpen className="w-4 h-4" /></div>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-xs text-gray-400 dark:text-gray-500">Program</p>
+                        <p className="text-sm font-medium text-gray-700 dark:text-gray-300 truncate">{officer.program}</p>
+                      </div>
+                    </div>
+                  ) : null}
+                  {officer.officeName ? (
+                    <div className="flex items-center gap-3 text-sm">
+                      <div className="w-8 h-8 rounded-lg bg-amber-50 dark:bg-amber-900/30 flex items-center justify-center flex-shrink-0 text-amber-600 dark:text-amber-400"><Building2 className="w-4 h-4" /></div>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-xs text-gray-400 dark:text-gray-500">Office Assigned</p>
+                        <p className="text-sm font-medium text-gray-700 dark:text-gray-300 truncate">{officer.officeName}</p>
+                      </div>
+                    </div>
+                  ) : null}
+                  {officer.officeEmail ? (
+                    <div className="flex items-center gap-3 text-sm">
+                      <div className="w-8 h-8 rounded-lg bg-green-50 dark:bg-green-900/30 flex items-center justify-center flex-shrink-0 text-green-600 dark:text-green-400"><Mail className="w-4 h-4" /></div>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-xs text-gray-400 dark:text-gray-500">Office Email</p>
+                        <p className="text-sm font-medium text-gray-700 dark:text-gray-300 truncate">{officer.officeEmail}</p>
+                      </div>
+                    </div>
+                  ) : null}
+                  {officer.user.email ? (
+                    <div className="flex items-center gap-3 text-sm">
+                      <div className="w-8 h-8 rounded-lg bg-indigo-50 dark:bg-indigo-900/30 flex items-center justify-center flex-shrink-0 text-indigo-600 dark:text-indigo-400"><User className="w-4 h-4" /></div>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-xs text-gray-400 dark:text-gray-500">UMAK Email</p>
+                        <p className="text-sm font-medium text-gray-700 dark:text-gray-300 truncate">{officer.user.email}</p>
+                      </div>
+                    </div>
+                  ) : null}
+                  {!officer.college && !officer.program && !officer.officeName && !officer.officeEmail && !officer.user.email && (
+                    <div className="text-center py-4 text-sm text-gray-400 dark:text-gray-500">No profile information available yet.</div>
+                  )}
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </DialogContent>
+    </Dialog>
+  )
+}
+
 function sortOfficersByPosition(offs: OrgChartNode[]): OrgChartNode[] {
   return [...offs].sort((a, b) => {
     const orderA = POSITION_ORDER[a.position] ?? 99
@@ -193,6 +323,7 @@ function OrgCard({
   photoUrl,
   colors,
   icon,
+  onClick,
 }: {
   name: string
   title: string
@@ -201,10 +332,11 @@ function OrgCard({
   photoUrl?: string | null
   colors: { border: string; avatar: string; badge: string; text: string }
   icon: React.ReactNode
+  onClick?: () => void
 }) {
   return (
     <motion.div
-      className="relative bg-white rounded-2xl shadow-md flex flex-col"
+      className={`relative bg-white rounded-2xl shadow-md flex flex-col ${onClick ? "cursor-pointer" : ""}`}
       style={{
         width: CARD_W,
         minWidth: CARD_W,
@@ -212,6 +344,7 @@ function OrgCard({
         border: `2px solid ${colors.border}`,
         overflow: "hidden",
       }}
+      onClick={onClick}
       whileHover={{
         scale: 1.04,
         boxShadow: "0 12px 40px rgba(0,0,0,0.14)",
@@ -440,9 +573,11 @@ function SAWallLink() {
 function OfficerGrid({
   officers,
   gridClass,
+  onOfficerClick,
 }: {
   officers: OrgChartNode[]
   gridClass: string
+  onOfficerClick?: (officer: OrgChartNode) => void
 }) {
   return (
     <motion.div
@@ -462,6 +597,7 @@ function OfficerGrid({
             photoUrl={officer.user.photoUrl}
             colors={COLORS.l5}
             icon={getPositionIcon(officer.position)}
+            onClick={onOfficerClick ? () => onOfficerClick(officer) : undefined}
           />
         </motion.div>
       ))}
@@ -494,6 +630,7 @@ export function OrgChart() {
   const [orgChartData, setOrgChartData] = useState<OrgChartData | null>(null)
   const [allOfficers, setAllOfficers] = useState<OrgChartNode[]>([])
   const [loading, setLoading] = useState(true)
+  const [selectedOfficer, setSelectedOfficer] = useState<OrgChartNode | null>(null)
 
   useEffect(() => {
     async function fetchData() {
@@ -616,6 +753,7 @@ export function OrgChart() {
               photoUrl={sasPresident.user.photoUrl}
               colors={COLORS.l4}
               icon={<Crown className="w-4 h-4" />}
+              onClick={() => setSelectedOfficer(sasPresident)}
             />
           </LevelWrapper>
         ) : (
@@ -655,6 +793,7 @@ export function OrgChart() {
                     photoUrl={officer.user.photoUrl}
                     colors={COLORS.l5}
                     icon={getPositionIcon(officer.position)}
+                    onClick={() => setSelectedOfficer(officer)}
                   />
                 </motion.div>
               ))}
@@ -725,6 +864,7 @@ export function OrgChart() {
             photoUrl={sasPresident.user.photoUrl}
             colors={COLORS.l4}
             icon={<Crown className="w-4 h-4" />}
+            onClick={() => setSelectedOfficer(sasPresident)}
           />
         </LevelWrapper>
       ) : (
@@ -746,6 +886,7 @@ export function OrgChart() {
         <OfficerGrid
           officers={otherOfficers}
           gridClass="grid grid-cols-2 gap-5 w-full max-w-[520px]"
+          onOfficerClick={setSelectedOfficer}
         />
       )}
 
@@ -806,6 +947,7 @@ export function OrgChart() {
             photoUrl={sasPresident.user.photoUrl}
             colors={COLORS.l4}
             icon={<Crown className="w-4 h-4" />}
+            onClick={() => setSelectedOfficer(sasPresident)}
           />
         ) : (
           <div
@@ -825,6 +967,7 @@ export function OrgChart() {
           <OfficerGrid
             officers={otherOfficers}
             gridClass="grid grid-cols-2 gap-4 w-full"
+            onOfficerClick={setSelectedOfficer}
           />
         </LevelWrapper>
       )}
@@ -845,6 +988,11 @@ export function OrgChart() {
       {desktopTree}
       {tabletView}
       {mobileView}
+      <OfficerProfileDialog
+        officer={selectedOfficer}
+        open={!!selectedOfficer}
+        onOpenChange={(open) => { if (!open) setSelectedOfficer(null) }}
+      />
     </div>
   )
 }
