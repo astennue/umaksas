@@ -126,17 +126,18 @@ export async function POST(request: NextRequest) {
         const contentWidth = pageWidth - margin * 2;
         let y = 780;
 
-        pdfDoc.drawText("UNIVERSITY OF MAKATI", { x: margin, y, size: 16, font: fontBold, color: rgb(0, 0.15, 0.4) });
+        const page = pdfDoc.addPage([pageWidth, 841.89]);
+        page.drawText("UNIVERSITY OF MAKATI", { x: margin, y, size: 16, font: fontBold, color: rgb(0, 0.15, 0.4) });
         y -= 18;
-        pdfDoc.drawText("STUDENT ASSISTANTSHIP SOCIETY", { x: margin, y, size: 12, font: fontBold, color: rgb(0, 0.15, 0.4) });
+        page.drawText("STUDENT ASSISTANTSHIP SOCIETY", { x: margin, y, size: 12, font: fontBold, color: rgb(0, 0.15, 0.4) });
         y -= 16;
-        pdfDoc.drawText("APPLICATION FORM", { x: margin, y, size: 10, font: fontBold });
+        page.drawText("APPLICATION FORM", { x: margin, y, size: 10, font: fontBold });
         y -= 24;
-        pdfDoc.drawText(`Name: ${applicantName}`, { x: margin, y, size: 10, font });
+        page.drawText(`Name: ${applicantName}`, { x: margin, y, size: 10, font });
         y -= 14;
-        pdfDoc.drawText(`Reference: ${updated.id}`, { x: margin, y, size: 10, font });
+        page.drawText(`Reference: ${updated.id}`, { x: margin, y, size: 10, font });
         y -= 14;
-        pdfDoc.drawText(`Date: ${new Date().toLocaleDateString()}`, { x: margin, y, size: 10, font });
+        page.drawText(`Date: ${new Date().toLocaleDateString()}`, { x: margin, y, size: 10, font });
 
         const pdfBytes = await pdfDoc.save();
         pdfBuffer = Buffer.from(pdfBytes);

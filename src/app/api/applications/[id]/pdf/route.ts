@@ -3,7 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { PDFDocument, rgb, StandardFonts } from "pdf-lib";
-import type { PDFPage } from "pdf-lib";
+import type { PDFPage, Color } from "pdf-lib";
 
 export async function GET(
   request: NextRequest,
@@ -70,7 +70,7 @@ export async function GET(
       yPos: number,
       f: typeof font = font,
       s: number = fontSize,
-      color: [number, number, number] = rgb(0, 0, 0),
+      color: Color = rgb(0, 0, 0),
       maxWidth?: number
     ): number => {
       try {
@@ -173,11 +173,11 @@ export async function GET(
       }
     };
 
-    const drawFieldTwoCol = (label1: string, value1: string | null, label2: string, value2: string | null) => {
+    const drawFieldTwoCol = (label1: string, value1: string | null | undefined, label2: string, value2: string | null | undefined) => {
       checkPageBreak(16);
       const halfWidth = contentWidth / 2;
-      const safeValue1 = sanitizeText(value1 || "N/A").substring(0, 30);
-      const safeValue2 = sanitizeText(value2 || "N/A").substring(0, 30);
+      const safeValue1 = sanitizeText(value1 ?? "N/A").substring(0, 30);
+      const safeValue2 = sanitizeText(value2 ?? "N/A").substring(0, 30);
 
       try {
         const page = getCurrentPage();
@@ -414,7 +414,7 @@ export async function GET(
 
     const pdfBytes = await pdfDoc.save();
 
-    return new NextResponse(pdfBytes, {
+    return new NextResponse(Buffer.from(pdfBytes), {
       headers: {
         "Content-Type": "application/pdf",
         "Content-Disposition": `attachment; filename="application-${id}.pdf"`,

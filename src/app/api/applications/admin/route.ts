@@ -209,7 +209,6 @@ export async function PUT(request: NextRequest) {
       where: { id },
       data: {
         status,
-        reviewNotes: reviewNotes || undefined,
         reviewedAt: new Date(),
       },
     });
