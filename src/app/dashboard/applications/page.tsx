@@ -150,6 +150,7 @@ interface Application {
   registrationUrl: string | null;
   residenceImageUrl: string | null;
   // Review
+  reviewNotes: string | null;
   interviewStatus: string | null;
   interviewScore: number | null;
   interviewDate: string | null;
@@ -342,7 +343,18 @@ export default function ApplicationsPage() {
     <div className="space-y-6">
       {/* Page Header */}
       <div>
-        <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Applications</h1>
+        <div className="flex items-center gap-3">
+          <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Applications</h1>
+          {userRole === "OFFICER" && (
+            <Badge
+              variant="secondary"
+              className="bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-300 text-xs font-medium border border-amber-200 dark:border-amber-400/30"
+            >
+              <Award className="w-3 h-3 mr-1" />
+              UMAK SAS Officer
+            </Badge>
+          )}
+        </div>
         <p className="text-sm text-muted-foreground">
           Review and manage student assistant applications
         </p>
@@ -676,6 +688,21 @@ export default function ApplicationsPage() {
                     </p>
                   </div>
                 </div>
+
+                {/* Review Notes (shown for REJECTED or reverted applications) */}
+                {selectedApp.reviewNotes && (
+                  <div className="space-y-2">
+                    <h4 className="text-sm font-semibold flex items-center gap-2">
+                      <FileCheck className="h-4 w-4" />
+                      Review Notes
+                    </h4>
+                    <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 dark:border-amber-800 dark:bg-amber-950/30">
+                      <p className="text-sm text-amber-800 dark:text-amber-200 whitespace-pre-wrap break-words">
+                        {selectedApp.reviewNotes}
+                      </p>
+                    </div>
+                  </div>
+                )}
 
                 {/* Quick Essays */}
                 {selectedApp.essayWhyApply && (

@@ -39,7 +39,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { SelectItem } from "@/components/ui/select";
 import { BetterSelect } from "@/components/ui/better-select";
 import { Separator } from "@/components/ui/separator";
-import { cn } from "@/lib/utils";
+import { cn, safeJsonParse } from "@/lib/utils";
 import { RoleGuard } from "@/components/auth/role-guard";
 import { useConfirm } from "@/hooks/use-confirm";
 import { useKeyboardShortcuts } from "@/hooks/use-keyboard-shortcuts";
@@ -123,7 +123,7 @@ export default function SettingsPage() {
       try {
         const res = await fetch("/api/system-settings");
         if (res.ok) {
-          const data = await res.json();
+          const data = await safeJsonParse<any>(res);
           setSettings(data);
           setAcademicYear(data.academicYear || "");
           setCurrentSemester(data.currentSemester || "");
@@ -186,7 +186,7 @@ export default function SettingsPage() {
         body: formData,
       });
 
-      const data = await res.json();
+      const data = await safeJsonParse<any>(res);
 
       if (!res.ok) {
         throw new Error(data.error || "Failed to upload QR code");
@@ -222,7 +222,7 @@ export default function SettingsPage() {
       });
 
       if (!res.ok) {
-        const data = await res.json();
+        const data = await safeJsonParse<any>(res);
         throw new Error(data.error || "Failed to delete QR code");
       }
 
@@ -284,7 +284,7 @@ export default function SettingsPage() {
         body: JSON.stringify(payload),
       });
 
-      const data = await res.json();
+      const data = await safeJsonParse<any>(res);
       if (!res.ok) throw new Error(data.error || "Failed to save settings");
 
       // Verify the response reflects the changes

@@ -7,6 +7,14 @@ const nextConfig: NextConfig = {
   typescript: {
     ignoreBuildErrors: true,
   },
+  // Increase server body size limit for file uploads (QR codes, images, documents)
+  // Default is ~1MB which is too small for base64-encoded images
+  serverExternalPackages: ["sharp"],
+  experimental: {
+    serverActions: {
+      bodySizeLimit: "10mb",
+    },
+  },
 };
 
 export default nextConfig;

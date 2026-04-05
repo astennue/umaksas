@@ -79,6 +79,7 @@ import {
   Check,
   X,
   Ticket,
+  Award,
 } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "sonner";
@@ -721,8 +722,17 @@ export default function PaymentsPage() {
       {/* Page Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
+          <h1 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-3">
             Payments
+            {isOfficer && officer && (
+              <Badge
+                variant="secondary"
+                className="bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-300 text-xs font-medium border border-amber-200 dark:border-amber-400/30"
+              >
+                <Award className="w-3 h-3 mr-1" />
+                UMAK SAS Officer — {officer.position.replace(/_/g, " ")}
+              </Badge>
+            )}
           </h1>
           <p className="text-sm text-muted-foreground">
             {isAdmin
