@@ -34,6 +34,7 @@ import {
   LogIn,
   LogOut,
   Activity,
+  Wallet,
 } from "lucide-react";
 import Image from "next/image";
 import { format } from "date-fns";
@@ -159,6 +160,11 @@ export default function DashboardPage() {
   const [announcements, setAnnouncements] = useState<Array<{id: string; title: string; excerpt: string | null; imageUrl: string | null; createdAt: string; priority: string; isPinned: boolean}>>([]);
   const [onDutyList, setOnDutyList] = useState<OnDutySA[]>([]);
   const [saSelfStatus, setSaSelfStatus] = useState<SASelfStatus | null>(null);
+  const [collectionStats, setCollectionStats] = useState({
+    activeCollections: 0,
+    totalCollected: 0,
+    pendingVerification: 0,
+  });
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -247,8 +253,24 @@ export default function DashboardPage() {
           setOnDutyList(allSAs.filter((sa: OnDutySA) => sa.isOnDuty));
         }
 
-        // For SA role: fetch own status
+        // Fetch collection stats for admin/officer roles
         const currentUserRole = (session?.user as { role?: string })?.role || "";
+        if (["SUPER_ADMIN", "ADVISER", "OFFICER"].includes(currentUserRole)) {
+          try {
+            const colRes = await fetch("/api/collections?limit=1000");
+            if (colRes.ok) {
+              const colData = await colRes.json();
+              const collections = colData.collections || [];
+              setCollectionStats({
+                activeCollections: collections.filter((c: { status: string }) => c.status === "ACTIVE").length,
+                totalCollected: collections.reduce((sum: number, c: { totalCollected?: number }) => sum + (c.totalCollected || 0), 0),
+                pendingVerification: collections.reduce((sum: number, c: { pendingCount?: number }) => sum + (c.pendingCount || 0), 0),
+              });
+            }
+          } catch { /* ignore */ }
+        }
+
+        // For SA role: fetch own status
         if (currentUserRole === "STUDENT_ASSISTANT") {
           const saRes = await fetch("/api/student-assistants?limit=1");
           if (saRes.ok) {
@@ -353,7 +375,7 @@ export default function DashboardPage() {
     // Adviser + SuperAdmin Dashboard
     if (userRole === "SUPER_ADMIN" || userRole === "ADVISER") {
       return (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
           <QuickActionCard
             href="/dashboard/applications"
             icon={FileText}
@@ -376,6 +398,13 @@ export default function DashboardPage() {
             colorClass="bg-green-50 text-green-600 group-hover:bg-green-100 dark:bg-green-900/20 dark:text-green-400 dark:group-hover:bg-green-900/30"
           />
           <QuickActionCard
+            href="/dashboard/payment-collections"
+            icon={CreditCard}
+            title="Payment Collections"
+            subtitle="Manage fee collections"
+            colorClass="bg-emerald-50 text-emerald-600 group-hover:bg-emerald-100 dark:bg-emerald-900/20 dark:text-emerald-400 dark:group-hover:bg-emerald-900/30"
+          />
+          <QuickActionCard
             href="/dashboard/settings"
             icon={RefreshCw}
             title="Open Renewal Period"
@@ -389,7 +418,7 @@ export default function DashboardPage() {
     // Officer Dashboard (Treasurer + President + other officers)
     if (userRole === "OFFICER") {
       return (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           <QuickActionCard
             href="/dashboard/settings"
             icon={DollarSign}
@@ -410,6 +439,13 @@ export default function DashboardPage() {
             title="View Payments"
             subtitle="Track payment status"
             colorClass="bg-amber-50 text-amber-600 group-hover:bg-amber-100 dark:bg-amber-900/20 dark:text-amber-400 dark:group-hover:bg-amber-900/30"
+          />
+          <QuickActionCard
+            href="/dashboard/payment-collections"
+            icon={Wallet}
+            title="Payment Collections"
+            subtitle="Manage collections"
+            colorClass="bg-emerald-50 text-emerald-600 group-hover:bg-emerald-100 dark:bg-emerald-900/20 dark:text-emerald-400 dark:group-hover:bg-emerald-900/30"
           />
           <QuickActionCard
             href="/dashboard/announcements"
@@ -838,6 +874,65 @@ export default function DashboardPage() {
             </CardContent>
           </Card>
         </div>
+      )}
+
+      {/* Collections Overview Widget */}
+      {["SUPER_ADMIN", "ADVISER", "OFFICER"].includes(userRole) && (
+        <Card className="border-0 shadow-lg rounded-xl overflow-hidden">
+          <div className="h-1 bg-gradient-to-r from-emerald-500 to-teal-500" />
+          <CardContent className="p-5">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600 dark:bg-emerald-900/20 dark:text-emerald-400">
+                  <CreditCard className="h-5 w-5" />
+                </div>
+                <div>
+                  <CardTitle className="text-base font-semibold text-gray-900 dark:text-white">Collections Overview</CardTitle>
+                  <p className="text-xs text-muted-foreground">Payment collection status</p>
+                </div>
+              </div>
+              <Button variant="ghost" size="sm" className="h-8 text-xs text-emerald-600 hover:text-emerald-700 dark:text-emerald-400 dark:hover:text-emerald-300" asChild>
+                <Link href="/dashboard/payment-collections">
+                  View All <ArrowRight className="ml-1 h-3 w-3" />
+                </Link>
+              </Button>
+            </div>
+            <div className="grid grid-cols-3 gap-3">
+              <div className="rounded-lg bg-emerald-50 dark:bg-emerald-900/20 p-3">
+                <div className="flex items-center gap-1.5 mb-1">
+                  <CheckCircle className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
+                  <span className="text-xs text-muted-foreground">Active</span>
+                </div>
+                <p className="text-2xl font-bold text-emerald-700 dark:text-emerald-300">{collectionStats.activeCollections}</p>
+              </div>
+              <div className="rounded-lg bg-teal-50 dark:bg-teal-900/20 p-3">
+                <div className="flex items-center gap-1.5 mb-1">
+                  <DollarSign className="h-3.5 w-3.5 text-teal-600 dark:text-teal-400" />
+                  <span className="text-xs text-muted-foreground">Collected</span>
+                </div>
+                <p className="text-2xl font-bold text-teal-700 dark:text-teal-300">₱{collectionStats.totalCollected.toLocaleString()}</p>
+              </div>
+              <div className="rounded-lg bg-amber-50 dark:bg-amber-900/20 p-3">
+                <div className="flex items-center gap-1.5 mb-1">
+                  <Clock className="h-3.5 w-3.5 text-amber-600 dark:text-amber-400" />
+                  <span className="text-xs text-muted-foreground">Pending</span>
+                </div>
+                <p className="text-2xl font-bold text-amber-700 dark:text-amber-300">{collectionStats.pendingVerification}</p>
+              </div>
+            </div>
+            {collectionStats.pendingVerification > 0 && (
+              <Link href="/dashboard/payment-collections" className="block mt-3">
+                <div className="flex items-center gap-2 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800/50 px-3 py-2.5 hover:bg-amber-100 dark:hover:bg-amber-900/30 transition-colors">
+                  <AlertCircle className="h-4 w-4 text-amber-600 dark:text-amber-400 shrink-0" />
+                  <p className="text-sm text-amber-800 dark:text-amber-200 flex-1">
+                    <span className="font-semibold">{collectionStats.pendingVerification}</span> payment{collectionStats.pendingVerification !== 1 ? "s" : ""} awaiting verification
+                  </p>
+                  <ArrowRight className="h-4 w-4 text-amber-500" />
+                </div>
+              </Link>
+            )}
+          </CardContent>
+        </Card>
       )}
 
       {/* Quick Actions - Role Based */}

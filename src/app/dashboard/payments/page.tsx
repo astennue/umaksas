@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useSession } from "next-auth/react";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -80,6 +81,7 @@ import {
   X,
   Ticket,
   Award,
+  ArrowRight,
 } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "sonner";
@@ -719,6 +721,29 @@ export default function PaymentsPage() {
   return (
     <RoleGuard allowedRoles={["SUPER_ADMIN", "ADVISER", "OFFICER", "STUDENT_ASSISTANT"]}>
     <div className="space-y-6">
+      {/* Deprecation Notice - Collections system is the new way */}
+      <div className="rounded-lg border border-amber-200 dark:border-amber-800/50 bg-amber-50 dark:bg-amber-900/20 p-4">
+        <div className="flex items-start gap-3">
+          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-amber-100 dark:bg-amber-900/40">
+            <Info className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-semibold text-amber-800 dark:text-amber-200">
+              New Payment Collections System Available
+            </p>
+            <p className="text-xs text-amber-700 dark:text-amber-300 mt-1">
+              This page manages legacy monthly payments. The new <Link href="/dashboard/payment-collections" className="underline font-medium hover:text-amber-900 dark:hover:text-amber-100">Payment Collections</Link> system offers more flexible collection management with support for multiple targets, GCash QR codes, and per-collection tracking. We recommend using the new system for future collections.
+            </p>
+          </div>
+          <Link href="/dashboard/payment-collections">
+            <Button size="sm" className="shrink-0 gap-1.5 text-xs bg-amber-600 hover:bg-amber-700 text-white">
+              <ArrowRight className="h-3.5 w-3.5" />
+              Go to Collections
+            </Button>
+          </Link>
+        </div>
+      </div>
+
       {/* Page Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>

@@ -341,6 +341,11 @@ export default function PaymentCollectionsPage() {
   const [formData, setFormData] = useState(defaultFormData);
   const [isSaving, setIsSaving] = useState(false);
 
+  // QR upload states
+  const [qrPreview, setQrPreview] = useState<string | null>(null);
+  const [qrUploading, setQrUploading] = useState(false);
+  const qrInputRef = useRef<HTMLInputElement>(null);
+
   const [detailOpen, setDetailOpen] = useState(false);
   const [detailCollection, setDetailCollection] = useState<Collection | null>(null);
   const [detailLoading, setDetailLoading] = useState(false);
@@ -506,10 +511,57 @@ export default function PaymentCollectionsPage() {
     });
   };
 
+  // ── QR file upload handler ──
+  const handleQrFileSelect = async (file: File | undefined) => {
+    if (!file) return;
+
+    const allowedTypes = ["image/jpeg", "image/png", "image/webp", "image/gif"];
+    if (!allowedTypes.includes(file.type)) {
+      toast.error("Invalid file type. Only JPG, PNG, WebP, and GIF images are allowed.");
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("File is too large. Maximum size is 5MB.");
+      return;
+    }
+
+    // Show local preview immediately
+    const localUrl = URL.createObjectURL(file);
+    setQrPreview(localUrl);
+    setQrUploading(true);
+
+    try {
+      const fd = new FormData();
+      fd.append("file", file);
+      fd.append("type", "photo");
+
+      const res = await fetch("/api/upload", { method: "POST", body: fd });
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.error || "Upload failed");
+      }
+
+      const data = await res.json();
+      setQrPreview(data.url);
+      setFormData((p) => ({ ...p, gcashQrUrl: data.url }));
+      toast.success("QR code uploaded successfully");
+    } catch (error: any) {
+      toast.error(error.message || "Failed to upload QR code");
+      setQrPreview(null);
+      setFormData((p) => ({ ...p, gcashQrUrl: "" }));
+    } finally {
+      setQrUploading(false);
+      if (qrInputRef.current) qrInputRef.current.value = "";
+      URL.revokeObjectURL(localUrl);
+    }
+  };
+
   // ── Form handlers ──
   const openCreateForm = () => {
     setEditingCollection(null);
     setFormData(defaultFormData);
+    setQrPreview(null);
+    setQrUploading(false);
     setFormOpen(true);
   };
 
@@ -528,6 +580,8 @@ export default function PaymentCollectionsPage() {
       gcashQrUrl: col.gcashQrUrl || "",
       paymentInstructions: col.paymentInstructions || "",
     });
+    setQrPreview(col.gcashQrUrl || null);
+    setQrUploading(false);
     setFormOpen(true);
   };
 
@@ -996,8 +1050,63 @@ export default function PaymentCollectionsPage() {
                     <Input id="col-gcash" placeholder="e.g., 09123456789" value={formData.gcashNumber} onChange={(e) => setFormData((p) => ({ ...p, gcashNumber: e.target.value }))} />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="col-gcash-qr">GCash QR Code URL</Label>
-                    <Input id="col-gcash-qr" placeholder="https://... (uploaded QR image URL)" value={formData.gcashQrUrl} onChange={(e) => setFormData((p) => ({ ...p, gcashQrUrl: e.target.value }))} />
+                    <Label>GCash QR Code</Label>
+                    {qrPreview ? (
+                      <div className="relative group rounded-lg border border-slate-200 dark:border-slate-700 overflow-hidden bg-white dark:bg-slate-900">
+                        <div className="flex items-center justify-center p-2 bg-slate-50 dark:bg-slate-800/50">
+                          <img src={qrPreview} alt="GCash QR Code" className="h-40 w-40 object-contain rounded" />
+                        </div>
+                        <div className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <Button
+                            type="button"
+                            variant="destructive"
+                            size="icon"
+                            className="h-7 w-7 rounded-full shadow-md"
+                            onClick={() => {
+                              setQrPreview(null);
+                              setFormData((p) => ({ ...p, gcashQrUrl: "" }));
+                              if (qrInputRef.current) qrInputRef.current.value = "";
+                            }}
+                          >
+                            <X className="h-3.5 w-3.5" />
+                          </Button>
+                        </div>
+                        {qrUploading && (
+                          <div className="absolute inset-0 bg-white/60 dark:bg-slate-900/60 flex items-center justify-center">
+                            <Loader2 className="h-6 w-6 animate-spin text-[#1e3a8a]" />
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <div
+                        className="flex flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed border-slate-300 dark:border-slate-600 bg-slate-50/50 dark:bg-slate-800/30 p-6 cursor-pointer hover:border-[#1e3a8a]/40 hover:bg-blue-50/50 dark:hover:border-blue-500/40 dark:hover:bg-blue-900/10 transition-colors"
+                        onClick={() => qrInputRef.current?.click()}
+                        onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); }}
+                        onDrop={(e) => { e.preventDefault(); e.stopPropagation(); handleQrFileSelect(e.dataTransfer.files[0]); }}
+                      >
+                        {qrUploading ? (
+                          <Loader2 className="h-8 w-8 animate-spin text-[#1e3a8a]" />
+                        ) : (
+                          <QrCode className="h-8 w-8 text-slate-400 dark:text-slate-500" />
+                        )}
+                        <div className="text-center">
+                          <p className="text-xs font-medium text-slate-600 dark:text-slate-400">
+                            {qrUploading ? "Uploading..." : "Click to upload or drag and drop"}
+                          </p>
+                          <p className="text-[10px] text-muted-foreground mt-0.5">JPG, PNG, WebP, GIF (max 5MB)</p>
+                        </div>
+                        <input
+                          ref={qrInputRef}
+                          type="file"
+                          accept="image/jpeg,image/png,image/webp,image/gif"
+                          className="hidden"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) handleQrFileSelect(file);
+                          }}
+                        />
+                      </div>
+                    )}
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="col-instructions">Payment Instructions</Label>

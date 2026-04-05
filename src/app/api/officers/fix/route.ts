@@ -9,22 +9,38 @@ export async function POST() {
   try {
     const authResult = await requireRole(["SUPER_ADMIN"]);
     if (authResult instanceof NextResponse) return authResult;
+    const { user: admin } = authResult;
 
     let activatedCount = 0;
     let profilesCreated = 0;
     const errors: string[] = [];
 
     // Step 1: Activate all inactive OFFICER users
-    const activatedUsers = await db.user.updateMany({
-      where: {
-        role: UserRole.OFFICER,
-        isActive: false,
-      },
-      data: {
-        isActive: true,
-      },
+    const inactiveOfficers = await db.user.findMany({
+      where: { role: UserRole.OFFICER, isActive: false },
+      select: { id: true, email: true },
     });
-    activatedCount = activatedUsers.count;
+
+    if (inactiveOfficers.length > 0) {
+      const activatedUsers = await db.user.updateMany({
+        where: { role: UserRole.OFFICER, isActive: false },
+        data: { isActive: true },
+      });
+      activatedCount = activatedUsers.count;
+
+      console.log(`[Officer Fix] Activated ${activatedCount} officer accounts by ${admin.email}`);
+
+      // Log activation for each officer
+      await db.activityLog.createMany({
+        data: inactiveOfficers.map((o) => ({
+          userId: o.id,
+          action: "OFFICER_ACCOUNT_ACTIVATED",
+          entityType: "User",
+          entityId: o.id,
+          details: `Account activated by ${admin.email} via Officer Fix tool`,
+        })),
+      });
+    }
 
     // Step 2: Find all OFFICER users who don't have an SAProfile
     const officersWithoutProfile = await db.user.findMany({
@@ -51,11 +67,29 @@ export async function POST() {
           },
         });
         profilesCreated++;
+
+        // Log profile creation
+        await db.activityLog.create({
+          userId: officer.id,
+          action: "SA_PROFILE_CREATED",
+          entityType: "SAProfile",
+          entityId: officer.id,
+          details: `SAProfile auto-created by ${admin.email} via Officer Fix tool`,
+        });
       } catch (err: unknown) {
         const msg = err instanceof Error ? err.message : String(err);
         errors.push(`Failed to create SAProfile for ${officer.email}: ${msg}`);
+        console.error(`[Officer Fix] Failed to create SAProfile for ${officer.email}:`, msg);
       }
     }
+
+    // Log the admin action
+    await db.activityLog.create({
+      userId: admin.id,
+      action: "OFFICER_FIX_RUN",
+      entityType: "User",
+      details: `Officer Fix run: activated ${activatedCount} accounts, created ${profilesCreated} profiles, ${errors.length} errors`,
+    });
 
     return NextResponse.json({
       success: true,
@@ -117,12 +151,19 @@ export async function GET() {
       where: { role: UserRole.OFFICER },
     });
 
+    // Count officers with SAProfile (for a complete picture)
+    const officersWithProfile = await db.user.count({
+      where: { role: UserRole.OFFICER, isActive: true, profile: { isNot: null } },
+    });
+
     return NextResponse.json({
       totalOfficers,
+      activeOfficers: totalOfficers - inactiveOfficers.length,
       inactiveOfficers: inactiveOfficers.length,
       inactiveOfficerList: inactiveOfficers,
       officersWithoutProfile: officersWithoutProfile.length,
       officerWithoutProfileList: officersWithoutProfile,
+      officersWithProfile,
     });
   } catch (error) {
     console.error("Error in officer fix preview:", error);

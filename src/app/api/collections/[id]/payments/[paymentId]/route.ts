@@ -89,6 +89,25 @@ export async function PUT(
       },
     });
 
+    // Notify the paying user about verification result
+    try {
+      const isApproved = action === "verify";
+      const verifierName = `${user.firstName || ""} ${user.lastName || ""}`.trim() || user.email;
+      await db.notification.create({
+        data: {
+          userId: payment.userId,
+          type: isApproved ? "COLLECTION_PAYMENT_APPROVED" : "COLLECTION_PAYMENT_REJECTED",
+          title: isApproved ? "Collection Payment Approved" : "Collection Payment Rejected",
+          message: isApproved
+            ? `Your payment for "${payment.collection.title}" has been approved by ${verifierName}. Your payment is now verified.`
+            : `Your payment for "${payment.collection.title}" has been rejected by ${verifierName}.${verificationNotes ? ` Reason: ${verificationNotes}` : ""} Please resubmit your proof if needed.`,
+          link: "/dashboard/payments",
+        },
+      });
+    } catch {
+      // Non-critical: notification creation failure should not block
+    }
+
     return NextResponse.json({ payment: updated });
   } catch (error) {
     console.error("Error verifying payment:", error);

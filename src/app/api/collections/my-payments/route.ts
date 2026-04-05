@@ -126,17 +126,53 @@ export async function PUT(req: NextRequest) {
       },
     });
 
-    // Create notification
+    // Create notification for the submitting user
     try {
       await db.notification.create({
         data: {
           userId: user.id,
-          type: "SYSTEM",
+          type: "COLLECTION_PAYMENT_SUBMITTED",
           title: "Payment Proof Submitted",
           message: `Your payment proof for "${payment.collection.title}" has been submitted successfully. Tracking number: ${trackingNumber}. Please wait for verification.`,
           link: "/dashboard/payments",
         },
       });
+    } catch {
+      // Non-critical: notification creation failure should not block
+    }
+
+    // Notify admin users (SUPER_ADMIN, ADVISER, PRESIDENT, TREASURER officers) about the new submission
+    try {
+      // Find eligible admin users
+      const [superAdmins, advisers, officers] = await Promise.all([
+        db.user.findMany({ where: { role: "SUPER_ADMIN", isActive: true }, select: { id: true } }),
+        db.user.findMany({ where: { role: "ADVISER", isActive: true }, select: { id: true } }),
+        db.officerProfile.findMany({
+          where: { position: { in: ["PRESIDENT", "TREASURER"] }, user: { isActive: true } },
+          select: { userId: true },
+        }),
+      ]);
+
+      const adminUserIds = [
+        ...superAdmins.map((u) => u.id),
+        ...advisers.map((u) => u.id),
+        ...officers.map((o) => o.userId),
+      ];
+
+      const uniqueAdminIds = [...new Set(adminUserIds)];
+
+      if (uniqueAdminIds.length > 0) {
+        const payerName = `${user.firstName || ""} ${user.lastName || ""}`.trim() || user.email;
+        await db.notification.createMany({
+          data: uniqueAdminIds.map((adminId) => ({
+            userId: adminId,
+            type: "COLLECTION_PAYMENT_SUBMITTED",
+            title: "New Collection Payment Submitted",
+            message: `${payerName} submitted a payment proof for "${payment.collection.title}". Tracking number: ${trackingNumber}.`,
+            link: `/dashboard/collections/${payment.collectionId}`,
+          })),
+        });
+      }
     } catch {
       // Non-critical: notification creation failure should not block
     }
