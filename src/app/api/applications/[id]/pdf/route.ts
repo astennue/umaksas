@@ -125,7 +125,40 @@ export async function GET(
       drawTextSafe("APPLICATION FORM", margin, y, fontBold, fontSize, rgb(0.2, 0.2, 0.2));
       y -= 8;
       drawLine(margin, y, contentWidth);
+      y -= 20;
+
+      // Applicant Summary Header
+      const fullName = [app.firstName, app.middleName ? `${app.middleName.charAt(0)}.` : null, app.lastName, app.suffix].filter(Boolean).join(" ");
+      drawTextSafe(fullName || "Unknown Applicant", margin, y, fontBold, 14, rgb(0, 0.15, 0.4));
       y -= 16;
+
+      // Summary row 1: College, Program, Year Level
+      const summaryParts: string[] = [];
+      if (app.college) summaryParts.push(app.college);
+      if (app.program) summaryParts.push(app.program);
+      if (app.yearLevel) summaryParts.push(app.yearLevel);
+      if (summaryParts.length > 0) {
+        drawTextSafe(summaryParts.join(" | "), margin, y, font, fontSizeSmall, rgb(0.3, 0.3, 0.3));
+        y -= 12;
+      }
+
+      // Summary row 2: Student Number, Email, Phone
+      const contactParts: string[] = [];
+      if (app.studentNumber) contactParts.push(`SN: ${app.studentNumber}`);
+      if (app.email || app.applicantEmail) contactParts.push(app.email || app.applicantEmail);
+      if (app.phone) contactParts.push(app.phone);
+      if (contactParts.length > 0) {
+        drawTextSafe(contactParts.join("  |  "), margin, y, font, fontSizeSmall, rgb(0.3, 0.3, 0.3));
+        y -= 12;
+      }
+
+      // Summary row 3: Status, Submitted Date
+      const statusLabel = app.status.replace(/_/g, " ");
+      const submittedLabel = app.submittedAt ? `Submitted: ${new Date(app.submittedAt).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" })}` : "Not yet submitted";
+      drawTextSafe(`Status: ${statusLabel}  |  ${submittedLabel}`, margin, y, font, fontSizeSmall, rgb(0.3, 0.3, 0.3));
+      y -= 8;
+      drawLine(margin, y, contentWidth);
+      y -= 10;
     } catch (err) {
       console.error("Error drawing PDF header:", err);
     }
@@ -209,9 +242,8 @@ export async function GET(
 
     // ====== PERSONAL INFORMATION ======
     try {
-      const fullName = [app.firstName, app.middleName, app.lastName, app.suffix].filter(Boolean).join(" ");
       drawSectionTitle("I. Personal Information");
-      drawFieldTwoCol("Full Name", fullName, "Date of Birth", app.dateOfBirth ? new Date(app.dateOfBirth).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" }) : null);
+      drawFieldTwoCol("Full Name", [app.firstName, app.middleName, app.lastName, app.suffix].filter(Boolean).join(" "), "Date of Birth", app.dateOfBirth ? new Date(app.dateOfBirth).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" }) : null);
       drawFieldTwoCol("Place of Birth", app.placeOfBirth, "Sex", app.gender);
       drawFieldTwoCol("Civil Status", app.civilStatus, "Citizenship", app.citizenship);
       if (app.religion) drawFieldTwoCol("Religion", app.religion, "", null);
@@ -378,14 +410,51 @@ export async function GET(
       console.error("Error drawing essays:", err);
     }
 
-    // ====== DOCUMENTS UPLOADED ======
+    // ====== TRAININGS & SEMINARS ======
     try {
-      y -= 4;
-      drawSectionTitle("IX. Documents Uploaded");
-      drawFieldTwoCol("2x2 ID Photo", app.photoUrl ? "Submitted" : "Not submitted", "Resume/CV", app.resumeUrl ? "Submitted" : "Not submitted");
-      drawFieldTwoCol("Grade Report", app.gradeReportUrl ? "Submitted" : "Not submitted", "Registration Form", app.registrationUrl ? "Submitted" : "Not submitted");
+      if (app.trainingsJson) {
+        drawSectionTitle("IX. Trainings & Seminars");
+        const trainings = JSON.parse(app.trainingsJson) as Array<{ title?: string; organizer?: string; date?: string; description?: string }>;
+        if (trainings.length > 0) {
+          trainings.forEach((t, i) => {
+            checkPageBreak(40);
+            drawTextSafe(`Training #${i + 1}`, margin, y, fontBold, fontSizeSmall, rgb(0.2, 0.2, 0.2));
+            y -= 12;
+            drawFieldTwoCol("Title", t.title, "Organizer", t.organizer);
+            drawFieldTwoCol("Date", t.date, "Description", t.description);
+            y -= 4;
+          });
+        } else {
+          drawField("Trainings", "None");
+        }
+        y -= 8;
+      }
     } catch (err) {
-      console.error("Error drawing documents:", err);
+      console.error("Error drawing trainings:", err);
+    }
+
+    // ====== CHARACTER REFERENCES ======
+    try {
+      if (app.referencesJson) {
+        drawSectionTitle("X. Character References");
+        const refs = JSON.parse(app.referencesJson) as Array<{ name?: string; position?: string; company?: string; contact?: string; email?: string }>;
+        if (refs.length > 0) {
+          refs.forEach((r, i) => {
+            checkPageBreak(40);
+            drawTextSafe(`Reference #${i + 1}`, margin, y, fontBold, fontSizeSmall, rgb(0.2, 0.2, 0.2));
+            y -= 12;
+            drawFieldTwoCol("Name", r.name, "Position", r.position);
+            drawFieldTwoCol("Company/Institution", r.company, "Contact", r.contact);
+            if (r.email) drawField("Email", r.email);
+            y -= 4;
+          });
+        } else {
+          drawField("References", "None");
+        }
+        y -= 8;
+      }
+    } catch (err) {
+      console.error("Error drawing references:", err);
     }
 
     // ====== FOOTER ======

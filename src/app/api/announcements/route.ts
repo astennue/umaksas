@@ -7,6 +7,8 @@ import { OfficerPosition, Prisma } from "@prisma/client";
 
 const ADMIN_ROLES = ["SUPER_ADMIN", "ADVISER", "OFFICER"];
 
+export const maxDuration = 60;
+
 async function getAuthorName(authorId: string | null): Promise<string> {
   if (!authorId) return "Unknown";
   try {

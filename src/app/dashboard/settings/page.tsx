@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
@@ -71,10 +71,13 @@ export default function SettingsPage() {
 
   const [settings, setSettings] = useState<SystemSettingsData | null>(null);
   const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
 
   const { confirm, ConfirmDialog } = useConfirm();
+
+  // Refs
+  const qrInputRef = useRef<HTMLInputElement>(null);
 
   // Keyboard shortcut: Ctrl/Cmd+S to save
   useKeyboardShortcuts({
@@ -154,6 +157,7 @@ export default function SettingsPage() {
       return;
     }
 
+    setIsSaving(true);
     try {
       const formData = new FormData();
       formData.append("file", file);
@@ -164,16 +168,18 @@ export default function SettingsPage() {
         body: formData,
       });
 
+      const uploadData = await uploadRes.json();
+
       if (!uploadRes.ok) {
-        const uploadData = await uploadRes.json();
         throw new Error(uploadData.error || "Failed to upload file");
       }
 
-      const uploadData = await uploadRes.json();
       setGcashQrUrl(uploadData.url);
       toast.success("GCash QR code uploaded");
     } catch (error: unknown) {
       toast.error(error instanceof Error ? error.message : "Failed to upload QR code");
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -200,7 +206,7 @@ export default function SettingsPage() {
     });
     if (!confirmed) return;
 
-    setSaving(true);
+    setIsSaving(true);
     try {
       const payload: Record<string, unknown> = {
         academicYear: academicYear || null,
@@ -246,7 +252,7 @@ export default function SettingsPage() {
       console.error("Save error:", error);
       toast.error(error instanceof Error ? error.message : "Failed to save settings");
     } finally {
-      setSaving(false);
+      setIsSaving(false);
     }
   };
 
@@ -296,10 +302,10 @@ export default function SettingsPage() {
         </div>
         <Button
           onClick={handleSave}
-          disabled={saving}
+          disabled={isSaving}
           className="bg-blue-700 hover:bg-blue-800"
         >
-          {saving ? (
+          {isSaving ? (
             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
           ) : (
             <Save className="mr-2 h-4 w-4" />
@@ -310,7 +316,7 @@ export default function SettingsPage() {
 
       {/* Save indicator row */}
       <div className="flex items-center gap-2">
-        <SavingIndicator saving={saving} lastSaved={lastSaved} dirty={dirty} />
+        <SavingIndicator saving={isSaving} lastSaved={lastSaved} dirty={dirty} />
       </div>
 
       {/* Role Badge */}
@@ -430,17 +436,18 @@ export default function SettingsPage() {
                     ) : (
                       <div
                         className="flex flex-col items-center justify-center rounded-lg border-2 border-dashed p-6 cursor-pointer hover:border-[#004EE0]/50 hover:bg-[#004EE0]/5 transition-colors max-w-xs"
-                        onClick={() => {
-                          const input = document.createElement("input");
-                          input.type = "file";
-                          input.accept = ".jpg,.jpeg,.png,.webp";
-                          input.onchange = (e) => handleQrUpload(e as unknown as React.ChangeEvent<HTMLInputElement>);
-                          input.click();
-                        }}
+                        onClick={() => qrInputRef.current?.click()}
                       >
+                        <input
+                          ref={qrInputRef}
+                          type="file"
+                          accept=".jpg,.jpeg,.png,.webp"
+                          className="hidden"
+                          onChange={handleQrUpload}
+                        />
                         <Upload className="mb-2 h-8 w-8 text-muted-foreground" />
                         <p className="text-sm text-muted-foreground text-center">
-                          Click to upload GCash QR code
+                          {isSaving ? "Uploading..." : "Click to upload GCash QR code"}
                         </p>
                         <p className="text-xs text-muted-foreground mt-1">
                           JPG, PNG, or WebP (max 10MB)

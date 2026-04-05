@@ -177,9 +177,11 @@ export async function PUT(request: NextRequest) {
       );
     }
 
-    if (!["APPROVED", "REJECTED"].includes(status)) {
+    // Allow APPROVED, REJECTED, and revert statuses (UNDER_REVIEW, SUBMITTED, INTERVIEW_SCHEDULED)
+    const allowedStatuses = ["APPROVED", "REJECTED", "UNDER_REVIEW", "SUBMITTED", "INTERVIEW_SCHEDULED"];
+    if (!allowedStatuses.includes(status)) {
       return NextResponse.json(
-        { error: "Status must be APPROVED or REJECTED" },
+        { error: "Invalid status" },
         { status: 400 }
       );
     }
@@ -196,10 +198,21 @@ export async function PUT(request: NextRequest) {
       );
     }
 
-    // Prevent reviewing already finalized applications
-    if (["APPROVED", "REJECTED", "WITHDRAWN"].includes(application.status)) {
+    // Allow reverting from APPROVED/REJECTED to other statuses (with reviewNotes)
+    // But prevent WITHDRAWN from being changed
+    if (application.status === "WITHDRAWN") {
       return NextResponse.json(
-        { error: `Application is already ${application.status}` },
+        { error: "Application has been withdrawn and cannot be modified" },
+        { status: 400 }
+      );
+    }
+
+    // If reverting from finalized status, require reviewNotes
+    const isReverting = ["APPROVED", "REJECTED"].includes(application.status) && 
+                        ["UNDER_REVIEW", "SUBMITTED", "INTERVIEW_SCHEDULED"].includes(status);
+    if (isReverting && !reviewNotes) {
+      return NextResponse.json(
+        { error: "Review notes are required when reverting application status" },
         { status: 400 }
       );
     }
@@ -210,8 +223,28 @@ export async function PUT(request: NextRequest) {
       data: {
         status,
         reviewedAt: new Date(),
+        ...(reviewNotes && { reviewNotes }),
       },
     });
+
+    // Determine notification type based on action
+    let notifType: string;
+    let notifTitle: string;
+    let notifMessage: string;
+
+    if (isReverting) {
+      notifType = "SYSTEM";
+      notifTitle = "Application Status Updated";
+      notifMessage = `Your application status has been updated to ${status.replace(/_/g, " ")}.${reviewNotes ? ` Note: ${reviewNotes}` : ""}`;
+    } else if (status === "APPROVED") {
+      notifType = "APPLICATION_APPROVED";
+      notifTitle = "Application Approved";
+      notifMessage = "Congratulations! Your student assistant application has been approved. You will be notified about the next steps.";
+    } else {
+      notifType = "APPLICATION_REJECTED";
+      notifTitle = "Application Update";
+      notifMessage = `Your student assistant application has been reviewed.${reviewNotes ? ` Reason: ${reviewNotes}` : ""}`;
+    }
 
     // Create notification for the applicant
     try {
@@ -223,17 +256,9 @@ export async function PUT(request: NextRequest) {
         await db.notification.create({
           data: {
             userId: applicant.id,
-            type: status === "APPROVED" ? "APPLICATION_APPROVED" : "APPLICATION_REJECTED",
-            title:
-              status === "APPROVED"
-                ? "Application Approved"
-                : "Application Update",
-            message:
-              status === "APPROVED"
-                ? `Congratulations! Your student assistant application has been approved. You will be notified about the next steps.`
-                : `Your student assistant application has been reviewed. Please check your application status for more details.${
-                    reviewNotes ? ` Reason: ${reviewNotes}` : ""
-                  }`,
+            type: notifType as "APPLICATION_APPROVED" | "APPLICATION_REJECTED" | "SYSTEM",
+            title: notifTitle,
+            message: notifMessage,
             link: "/dashboard/applications",
           },
         });
@@ -252,11 +277,9 @@ export async function PUT(request: NextRequest) {
         await db.notification.create({
           data: {
             userId: adviser.id,
-            type: status === "APPROVED" ? "APPLICATION_APPROVED" : "APPLICATION_REJECTED",
-            title: `Application ${status}`,
-            message: `An application from ${application.firstName || ""} ${application.lastName || ""} (${application.applicantEmail}) has been ${status.toLowerCase()} by ${session.user.name || userRole}.${
-              reviewNotes ? ` Notes: ${reviewNotes}` : ""
-            }`,
+            type: notifType as "APPLICATION_APPROVED" | "APPLICATION_REJECTED" | "SYSTEM",
+            title: notifTitle,
+            message: `An application from ${application.firstName || ""} ${application.lastName || ""} (${application.applicantEmail}) has been ${isReverting ? "updated to " + status : status.toLowerCase()} by ${session.user.name || userRole}.${reviewNotes ? ` Notes: ${reviewNotes}` : ""}`,
             link: `/dashboard/applications`,
           },
         });

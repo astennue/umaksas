@@ -323,18 +323,78 @@ export default function ApplicationDetailPage() {
     .filter(Boolean).join(" ").trim() || app.applicantEmail;
   const statusInfo = statusConfig[app.status] || statusConfig.DRAFT;
 
+  const trackingRef = app.id.slice(0, 8).toUpperCase();
+
+  // Rejection dialog state
+  const [rejectOpen, setRejectOpen] = useState(false);
+  const [rejectRemarks, setRejectRemarks] = useState("");
+  const [revertOpen, setRevertOpen] = useState(false);
+
+  const handleReject = async () => {
+    if (!app || !rejectRemarks.trim()) {
+      toast.error("Please provide a reason for rejection");
+      return;
+    }
+    setActionLoading("REJECTED");
+    try {
+      const res = await fetch("/api/applications/admin", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: app.id, status: "REJECTED", reviewNotes: rejectRemarks.trim() }),
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || "Failed to reject application");
+      }
+      toast.success("Application rejected successfully");
+      setRejectOpen(false);
+      setRejectRemarks("");
+      fetchApplication();
+    } catch (error: unknown) {
+      toast.error(error instanceof Error ? error.message : "Action failed");
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  const handleRevertStatus = async (newStatus: string) => {
+    if (!app) return;
+    setActionLoading(newStatus);
+    try {
+      const res = await fetch("/api/applications/admin", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: app.id, status: newStatus, reviewNotes: `Status reverted from ${app.status} to ${newStatus}` }),
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || "Failed to revert status");
+      }
+      toast.success(`Application status reverted to ${newStatus.replace(/_/g, " ")}`);
+      setRevertOpen(false);
+      fetchApplication();
+    } catch (error: unknown) {
+      toast.error(error instanceof Error ? error.message : "Action failed");
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center gap-3">
         <Button variant="ghost" size="sm" asChild>
           <Link href="/dashboard/applications">
-            <ArrowLeft className="mr-1.5 h-4 w-4" /> Back to Applications
+            <ArrowLeft className="mr-1.5 h-4 w-4" /> Back to Application
           </Link>
         </Button>
         <div className="flex-1">
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Application Details | {app.lastName?.toUpperCase() || 'UNKNOWN'}</h1>
-          <p className="text-sm text-muted-foreground">{fullName} &middot; {app.applicantEmail}</p>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Application Details | {app.lastName?.toUpperCase() || "UNKNOWN"}</h1>
+          <div className="flex items-center gap-3 mt-1">
+            <span className="text-xs text-muted-foreground">{fullName} &middot; {app.applicantEmail}</span>
+            <span className="text-xs text-muted-foreground bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded font-mono">Ref: {trackingRef}</span>
+          </div>
         </div>
         <div className="flex items-center gap-2">
           {isAdmin && (
@@ -361,7 +421,7 @@ export default function ApplicationDetailPage() {
               <Button
                 size="sm"
                 variant="destructive"
-                onClick={() => handleAction("REJECTED")}
+                onClick={() => setRejectOpen(true)}
                 disabled={!!actionLoading}
                 className="gap-1.5"
               >
@@ -369,6 +429,18 @@ export default function ApplicationDetailPage() {
                 Reject
               </Button>
             </>
+          )}
+          {canReview && (app.status === "REJECTED" || app.status === "APPROVED") && (
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => setRevertOpen(true)}
+              disabled={!!actionLoading}
+              className="gap-1.5"
+            >
+              {actionLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <ArrowLeft className="h-4 w-4" />}
+              Revert Status
+            </Button>
           )}
         </div>
       </div>
@@ -705,6 +777,107 @@ export default function ApplicationDetailPage() {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setDocumentPreview(null)}>Close</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Rejection Confirmation Dialog */}
+      <Dialog open={rejectOpen} onOpenChange={setRejectOpen}>
+        <DialogContent className="border-0 shadow-2xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-red-600">
+              <XCircle className="h-5 w-5" />
+              Reject Application
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <p className="text-sm text-muted-foreground">
+              Are you sure you want to reject the application from <strong>{fullName}</strong>? This action can be reverted later.
+            </p>
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Reason for Rejection <span className="text-red-500">*</span></label>
+              <textarea
+                className="w-full min-h-[100px] rounded-lg border border-input bg-transparent px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring resize-none"
+                placeholder="Provide the reason for rejecting this application..."
+                value={rejectRemarks}
+                onChange={(e) => setRejectRemarks(e.target.value)}
+              />
+            </div>
+          </div>
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={() => { setRejectOpen(false); setRejectRemarks(""); }}>Cancel</Button>
+            <Button
+              variant="destructive"
+              onClick={handleReject}
+              disabled={!!actionLoading || !rejectRemarks.trim()}
+              className="gap-1.5"
+            >
+              {actionLoading === "REJECTED" ? <Loader2 className="h-4 w-4 animate-spin" /> : <XCircle className="h-4 w-4" />}
+              Confirm Rejection
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Revert Status Dialog */}
+      <Dialog open={revertOpen} onOpenChange={setRevertOpen}>
+        <DialogContent className="border-0 shadow-2xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <ArrowLeft className="h-5 w-5" />
+              Revert Application Status
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <p className="text-sm text-muted-foreground">
+              Current status: <Badge variant="secondary" className={statusInfo.color}>{statusInfo.label}</Badge>
+            </p>
+            <p className="text-sm text-muted-foreground">
+              Select a new status for this application:
+            </p>
+            <div className="grid gap-2">
+              {app.status === "REJECTED" && (
+                <Button
+                  variant="outline"
+                  className="justify-start gap-2 h-12"
+                  onClick={() => handleRevertStatus("UNDER_REVIEW")}
+                  disabled={!!actionLoading}
+                >
+                  {actionLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+                  <div>
+                    <p className="text-sm font-medium">Under Review</p>
+                    <p className="text-xs text-muted-foreground">Return to review process</p>
+                  </div>
+                </Button>
+              )}
+              <Button
+                variant="outline"
+                className="justify-start gap-2 h-12"
+                onClick={() => handleRevertStatus("SUBMITTED")}
+                disabled={!!actionLoading}
+              >
+                {actionLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+                <div>
+                  <p className="text-sm font-medium">Submitted</p>
+                  <p className="text-xs text-muted-foreground">Revert to initial submitted state</p>
+                </div>
+              </Button>
+              <Button
+                variant="outline"
+                className="justify-start gap-2 h-12"
+                onClick={() => handleRevertStatus("INTERVIEW_SCHEDULED")}
+                disabled={!!actionLoading}
+              >
+                {actionLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+                <div>
+                  <p className="text-sm font-medium">Interview Scheduled</p>
+                  <p className="text-xs text-muted-foreground">Set for interview phase</p>
+                </div>
+              </Button>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setRevertOpen(false)}>Cancel</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
