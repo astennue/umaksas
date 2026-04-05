@@ -186,6 +186,14 @@ export default function SettingsPage() {
         body: formData,
       });
 
+      // Check if response is JSON before parsing
+      const contentType = res.headers.get("content-type") || "";
+      if (!contentType.includes("application/json")) {
+        const text = await res.text().catch(() => "");
+        console.error("QR upload returned non-JSON response:", res.status, contentType, text.slice(0, 500));
+        throw new Error(`Server error (${res.status}). The upload may have been blocked by a server configuration (e.g., Nginx body size limit). Please try with a smaller image or contact your administrator.`);
+      }
+
       const data = await safeJsonParse<any>(res);
 
       if (!res.ok) {

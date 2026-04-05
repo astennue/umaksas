@@ -8,7 +8,7 @@ server.log
 .zscripts/
 Caddyfile
 agent-ctx/
-upload/
+/upload/
 components.json
 mini-services/attendance-service/bun.lock
 db/

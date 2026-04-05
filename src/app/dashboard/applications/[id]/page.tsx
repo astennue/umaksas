@@ -109,7 +109,8 @@ interface ApplicationData {
   registrationUrl: string | null;
   residenceImageUrl: string | null;
   // Review
-  interviewStatus: string;
+  reviewNotes: string | null;
+  interviewStatus: string | null;
   interviewScore: number | null;
   interviewDate: string | null;
   interviewNotes: string | null;
@@ -494,6 +495,17 @@ export default function ApplicationDetailPage() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Review Notes */}
+      {app.reviewNotes && (
+        <div className="rounded-lg border border-amber-200 bg-amber-50 dark:border-amber-800 dark:bg-amber-950/30 p-4">
+          <div className="flex items-center gap-2 mb-2">
+            <FileText className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+            <h3 className="text-sm font-semibold text-amber-800 dark:text-amber-200">Review Notes</h3>
+          </div>
+          <p className="text-sm text-amber-700 dark:text-amber-300 whitespace-pre-wrap break-words">{app.reviewNotes}</p>
+        </div>
+      )}
 
       {/* Tabs */}
       <Tabs defaultValue="overview" className="space-y-4">

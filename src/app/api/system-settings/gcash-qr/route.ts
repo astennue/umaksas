@@ -29,7 +29,17 @@ export async function POST(request: NextRequest) {
     const { error } = await authenticate();
     if (error) return error;
 
-    const formData = await request.formData();
+    let formData: FormData;
+    try {
+      formData = await request.formData();
+    } catch (parseError) {
+      console.error("Failed to parse QR upload body:", parseError);
+      return NextResponse.json(
+        { error: "QR code upload failed: Image file too large or upload was interrupted. Please try again with a smaller image (max 10MB)." },
+        { status: 413 }
+      );
+    }
+
     const file = formData.get("file") as File | null;
 
     if (!file) {
