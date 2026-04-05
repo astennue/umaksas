@@ -67,9 +67,11 @@ interface OrgChartData {
   presidentName: string
   presidentTitle: string
   presidentEmail: string | null
+  presidentPhotoUrl: string | null
   vpName: string
   vpTitle: string
   vpEmail: string | null
+  vpPhotoUrl: string | null
   adviserName: string
   adviserTitle: string
   adviserEmail: string | null
@@ -707,6 +709,7 @@ export function OrgChart() {
             title={orgChartData.presidentTitle}
             email={orgChartData.presidentEmail}
             initials={getInitials(orgChartData.presidentName)}
+            photoUrl={orgChartData.presidentPhotoUrl}
             colors={COLORS.l1}
             icon={<Building2 className="w-4 h-4" />}
           />
@@ -721,6 +724,7 @@ export function OrgChart() {
             title={orgChartData.vpTitle}
             email={orgChartData.vpEmail}
             initials={getInitials(orgChartData.vpName)}
+            photoUrl={orgChartData.vpPhotoUrl}
             colors={COLORS.l2}
             icon={<Shield className="w-4 h-4" />}
           />
@@ -821,6 +825,7 @@ export function OrgChart() {
           title={orgChartData.presidentTitle}
           email={orgChartData.presidentEmail}
           initials={getInitials(orgChartData.presidentName)}
+          photoUrl={orgChartData.presidentPhotoUrl}
           colors={COLORS.l1}
           icon={<Building2 className="w-4 h-4" />}
         />
@@ -834,6 +839,7 @@ export function OrgChart() {
           title={orgChartData.vpTitle}
           email={orgChartData.vpEmail}
           initials={getInitials(orgChartData.vpName)}
+          photoUrl={orgChartData.vpPhotoUrl}
           colors={COLORS.l2}
           icon={<Shield className="w-4 h-4" />}
         />
@@ -907,6 +913,7 @@ export function OrgChart() {
           title={orgChartData.presidentTitle}
           email={orgChartData.presidentEmail}
           initials={getInitials(orgChartData.presidentName)}
+          photoUrl={orgChartData.presidentPhotoUrl}
           colors={COLORS.l1}
           icon={<Building2 className="w-4 h-4" />}
         />
@@ -919,6 +926,7 @@ export function OrgChart() {
           title={orgChartData.vpTitle}
           email={orgChartData.vpEmail}
           initials={getInitials(orgChartData.vpName)}
+          photoUrl={orgChartData.vpPhotoUrl}
           colors={COLORS.l2}
           icon={<Shield className="w-4 h-4" />}
         />

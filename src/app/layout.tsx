@@ -17,22 +17,29 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "UMAK Student Assistant Management System",
+  title: "UMAK S.A.S.",
   description:
     "The official Student Assistant Management System of Universidad Makati. Apply, manage schedules, track attendance, and more.",
   keywords: [
     "UMAK",
+    "UMAK SAS",
+    "UMAK S.A.S.",
     "Universidad Makati",
     "Student Assistant",
     "SAS",
     "Management System",
   ],
   authors: [{ name: "UMAK SAS Team" }],
+  icons: {
+    icon: "/logo/umak-sas-logo.png",
+    shortcut: "/logo/umak-sas-logo.png",
+    apple: "/logo/umak-sas-logo.png",
+  },
   openGraph: {
-    title: "UMAK Student Assistant Management System",
+    title: "UMAK S.A.S.",
     description:
-      "The official Student Assistant Management System of Universidad Makati.",
-    siteName: "UMAK SAS",
+      "The official Student Assistant Society of Universidad Makati.",
+    siteName: "UMAK S.A.S.",
     type: "website",
   },
 };
@@ -44,6 +51,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
+      <head>
+        <link rel="icon" type="image/png" href="/logo/umak-sas-logo.png" />
+      </head>
       <body
         className={`${geist.variable} ${geistMono.variable} font-sans antialiased bg-background text-foreground overflow-x-hidden`}
       >

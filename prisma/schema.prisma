@@ -1432,11 +1432,13 @@ model OrgChart {
   presidentName     String
   presidentTitle    String   @default("University President")
   presidentEmail    String?
+  presidentPhotoUrl String?
 
   // VP for Student Services
   vpName            String
   vpTitle           String   @default("Vice President for Student Services and Community Development")
   vpEmail           String?
+  vpPhotoUrl        String?
 
   // SA Adviser
   adviserName       String

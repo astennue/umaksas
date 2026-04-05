@@ -37,6 +37,7 @@ import {
   Settings,
   PenSquare,
   RefreshCw,
+  UserCog,
   type LucideIcon,
 } from "lucide-react";
 import { useState } from "react";
@@ -97,6 +98,9 @@ const navItems: NavItem[] = [
   // Notifications - visible to all authenticated
   { label: "Notifications", href: "/dashboard/notifications", icon: Bell, roles: [] },
 
+  // Manage Users - Super Admin, Adviser
+  { label: "Manage Users", href: "/dashboard/users", icon: UserCog, roles: ["SUPER_ADMIN", "ADVISER"] },
+
   // CMS / Content - Super Admin only
   { label: "CMS / Content", href: "/dashboard/content", icon: PenSquare, roles: ["SUPER_ADMIN"] },
 
@@ -151,7 +155,7 @@ function SidebarNav({ collapsed, onNavigate }: { collapsed: boolean; onNavigate?
         </div>
         {!collapsed && (
           <div className="min-w-0">
-            <h2 className="text-base font-bold text-white tracking-tight">UMak SAS</h2>
+            <h2 className="text-base font-bold text-white tracking-tight">UMAK S.A.S.</h2>
             <p className="text-[10px] text-blue-300/70 tracking-wide uppercase">Management Portal</p>
           </div>
         )}
