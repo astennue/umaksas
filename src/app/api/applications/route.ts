@@ -7,9 +7,7 @@ import { authOptions } from "@/lib/auth";
 export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
-    if (!session?.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    // Session is optional — allow creating applications without login
 
     const body = await request.json();
 
@@ -31,8 +29,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Get the user's ID from session
-    const userId = (session.user as any).id;
+    // Get the user's ID from session (optional)
+    const userId = session?.user ? (session.user as any).id : null;
 
     // Create application
     const application = await db.application.create({
@@ -141,9 +139,7 @@ export async function GET(request: NextRequest) {
 export async function PUT(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
-    if (!session?.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    // Session is optional — allow updating applications without login
 
     const body = await request.json();
     const { id, employment, trainings, references, availability, ...rest } = body;
@@ -168,8 +164,8 @@ export async function PUT(request: NextRequest) {
       );
     }
 
-    // Get the user's ID from session to link ownership
-    const userId = (session.user as any).id;
+    // Get the user's ID from session (optional)
+    const userId = session?.user ? (session.user as any).id : null;
 
     // Update application
     const application = await db.application.update({

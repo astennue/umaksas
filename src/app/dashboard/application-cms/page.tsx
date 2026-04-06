@@ -45,6 +45,7 @@ import {
   X,
   FolderPlus,
   AlertTriangle,
+  Wand2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
@@ -745,6 +746,7 @@ function ApplicationCMS() {
   const [originalFields, setOriginalFields] = useState<FormFieldItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [seeding, setSeeding] = useState(false);
 
   // Dialog state
   const [editingField, setEditingField] = useState<Partial<FormFieldItem> | null>(null);
@@ -791,6 +793,53 @@ function ApplicationCMS() {
   })();
 
   const totalFields = fields.length;
+
+  // ============================================
+  // Handler: Load Default Fields
+  // ============================================
+
+  const handleLoadDefaults = async () => {
+    const confirmed = await confirm({
+      title: "Load Default Fields",
+      description: "This will populate the CMS with all default application form fields (13 steps, ~50 fields). This can only be done when no fields exist yet.",
+      confirmText: "Load Defaults",
+      cancelText: "Cancel",
+    });
+
+    if (!confirmed) return;
+
+    setSeeding(true);
+    try {
+      const res = await fetch("/api/application-fields/seed", {
+        method: "POST",
+      });
+      if (!res.ok) throw new Error("Failed to seed default fields");
+      const data = await res.json();
+
+      if (data.fields && data.fields.length > 0) {
+        const fetched: FormFieldItem[] = data.fields.map((f: Record<string, unknown>) => ({
+          id: f.id as string,
+          label: (f.label as string) || "",
+          fieldType: (f.fieldType as string) || "TEXT",
+          context: (f.context as string) || "APPLICATION",
+          configJson: (f.configJson as FieldConfig | null) || null,
+          isRequired: (f.isRequired as boolean) ?? false,
+          orderIndex: (f.orderIndex as number) || 0,
+          section: (f.section as string | null) || null,
+          step: (f.step as number | null) || null,
+          isActive: (f.isActive as boolean) ?? true,
+        }));
+        setFields(fetched);
+        setOriginalFields(fetched);
+      }
+
+      toast.success(data.message || `Loaded ${data.count} default fields`);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to load default fields");
+    } finally {
+      setSeeding(false);
+    }
+  };
 
   // Fetch data
   const fetchData = useCallback(async () => {
@@ -1288,16 +1337,33 @@ function ApplicationCMS() {
       {/* Sections list */}
       {sections.length === 0 ? (
         <Card className="border-dashed">
-          <CardContent className="flex flex-col items-center justify-center py-12">
-            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-blue-100 dark:bg-blue-900/30 mb-4">
+          <CardContent className="flex flex-col items-center justify-center py-12 gap-4">
+            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-blue-100 dark:bg-blue-900/30 mb-2">
               <FileText className="h-7 w-7 text-blue-600 dark:text-blue-400" />
             </div>
             <h3 className="text-base font-semibold text-gray-900 dark:text-white">
               No sections yet
             </h3>
             <p className="mt-1 text-sm text-muted-foreground max-w-sm text-center">
-              Add a section to start building your application form.
+              Add a section to start building your application form, or load the default fields.
             </p>
+            <Button
+              onClick={handleLoadDefaults}
+              disabled={seeding}
+              className="gap-2 bg-[#003366] hover:bg-[#003366]/90 text-white"
+            >
+              {seeding ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Loading Defaults...
+                </>
+              ) : (
+                <>
+                  <Wand2 className="h-4 w-4" />
+                  Load Default Fields
+                </>
+              )}
+            </Button>
           </CardContent>
         </Card>
       ) : (

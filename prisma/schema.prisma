@@ -358,6 +358,10 @@ model Application {
   gradeReportUrl    String?
   residenceImageUrl String?
 
+  // Signature (for non-logged-in applicants)
+  signatureData     String?
+  printedName       String?
+
   // Review
   reviewNotes       String?
 

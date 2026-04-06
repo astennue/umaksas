@@ -270,14 +270,6 @@ export default function SettingsPage() {
     : false;
 
   const handleSave = async () => {
-    const confirmed = await confirm({
-      title: "Save Settings?",
-      description: "These changes will take effect immediately for all users.",
-      confirmText: "Save",
-      variant: "default",
-    });
-    if (!confirmed) return;
-
     setIsSaving(true);
     try {
       const payload: Record<string, unknown> = {

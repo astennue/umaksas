@@ -610,7 +610,7 @@ export default function ApplyPage() {
                   Start Application
                 </Button>
                 <p className="text-[11px] text-muted-foreground mt-2 text-center">
-                  You will need to sign in with your UMak account to apply.
+                  No sign-in required — just fill out the form.
                 </p>
               </CardContent>
             </Card>
@@ -620,46 +620,7 @@ export default function ApplyPage() {
     );
   }
 
-  // Auth gate: require login before filling application (shown after "Start Application" is clicked)
-  if (authStatus === "loading") {
-    return (
-      <PublicLayout>
-        <div className="flex min-h-[60vh] items-center justify-center">
-          <div className="flex flex-col items-center gap-3">
-            <Loader2 className="h-8 w-8 animate-spin text-blue-700" />
-            <p className="text-sm text-muted-foreground">Checking authentication...</p>
-          </div>
-        </div>
-      </PublicLayout>
-    );
-  }
-
-  if (!session) {
-    return (
-      <PublicLayout>
-        <div className="flex min-h-[60vh] items-center justify-center">
-          <div className="flex flex-col items-center gap-6 text-center max-w-md px-4">
-            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-amber-100 dark:bg-amber-900/30">
-              <LogIn className="h-8 w-8 text-amber-600" />
-            </div>
-            <div>
-              <h2 className="text-xl font-bold">Login Required</h2>
-              <p className="mt-2 text-sm text-muted-foreground">
-                You need to sign in with your UMak account to submit a Student Assistant application. Please log in first to continue.
-              </p>
-            </div>
-            <a
-              href="/portal-login"
-              className="inline-flex items-center gap-2 rounded-lg bg-blue-700 px-6 py-3 text-sm font-semibold text-white hover:bg-blue-800 transition-colors"
-            >
-              <LogIn className="h-4 w-4" />
-              Sign In to Apply
-            </a>
-          </div>
-        </div>
-      </PublicLayout>
-    );
-  }
+  // Auth gate removed — form is accessible to everyone without login
 
   if (isLoadingDraft) {
     return (

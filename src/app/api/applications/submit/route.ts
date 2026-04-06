@@ -8,9 +8,7 @@ import { sendApplicationEmail } from "@/lib/email";
 export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
-    if (!session?.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    // Session is optional — allow submitting applications without login
 
     const body = await request.json();
     const { applicationId } = body;
@@ -34,14 +32,16 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Verify ownership: only the applicant or an officer can submit
-    const userId = (session.user as any).id;
-    if (application.userId && application.userId !== userId) {
-      // Allow officers/advisers/admins to submit on behalf
-      const userRole = (session.user as any).role;
-      const allowedRoles = ["SUPER_ADMIN", "ADVISER", "OFFICER"];
-      if (!allowedRoles.includes(userRole)) {
-        return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    // If session exists, verify ownership: only the applicant or an officer can submit
+    if (session?.user) {
+      const userId = (session.user as any).id;
+      if (application.userId && application.userId !== userId) {
+        // Allow officers/advisers/admins to submit on behalf
+        const userRole = (session.user as any).role;
+        const allowedRoles = ["SUPER_ADMIN", "ADVISER", "OFFICER"];
+        if (!allowedRoles.includes(userRole)) {
+          return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+        }
       }
     }
 

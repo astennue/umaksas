@@ -10,12 +10,10 @@ export async function POST(
 ) {
   try {
     const session = await getServerSession(authOptions);
-    if (!session?.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    // Session is optional — allow saving signatures without login
 
     const { id } = await params;
-    const userId = session.user.id;
+    const userId = session?.user ? (session.user as any).id : null;
 
     // Fetch the application
     const application = await db.application.findFirst({
@@ -29,13 +27,13 @@ export async function POST(
       );
     }
 
-    // Verify ownership: the applicant must own the application
-    if (application.userId && application.userId !== userId) {
+    // If session exists, verify ownership: the applicant must own the application
+    if (userId && application.userId && application.userId !== userId) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    // If no userId linked yet, link it now and allow (don't block by email mismatch)
-    if (!application.userId) {
+    // If no userId linked yet and session exists, link it now
+    if (userId && !application.userId) {
       await db.application.update({
         where: { id },
         data: { userId },
@@ -67,25 +65,49 @@ export async function POST(
       );
     }
 
-    // Upsert the digital signature (with printedName)
-    const signature = await db.digitalSignature.upsert({
-      where: { userId },
-      update: {
-        signatureData,
-        printedName: printedName.trim(),
-        updatedAt: new Date(),
-      },
-      create: {
-        userId,
-        signatureData,
-        printedName: printedName.trim(),
-      },
-    });
+    if (userId) {
+      // Logged-in user: upsert the DigitalSignature table (backward compat)
+      const signature = await db.digitalSignature.upsert({
+        where: { userId },
+        update: {
+          signatureData,
+          printedName: printedName.trim(),
+          updatedAt: new Date(),
+        },
+        create: {
+          userId,
+          signatureData,
+          printedName: printedName.trim(),
+        },
+      });
 
-    return NextResponse.json({
-      success: true,
-      signatureId: signature.id,
-    });
+      // Also store on Application record for consistency
+      await db.application.update({
+        where: { id },
+        data: {
+          signatureData,
+          printedName: printedName.trim(),
+        },
+      });
+
+      return NextResponse.json({
+        success: true,
+        signatureId: signature.id,
+      });
+    } else {
+      // Non-logged-in user: store signature data directly on the Application record
+      await db.application.update({
+        where: { id },
+        data: {
+          signatureData,
+          printedName: printedName.trim(),
+        },
+      });
+
+      return NextResponse.json({
+        success: true,
+      });
+    }
   } catch (error) {
     console.error("Error saving signature:", error);
     return NextResponse.json(

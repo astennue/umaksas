@@ -129,7 +129,7 @@ export async function GET(
 
       // Applicant Summary Header
       const fullName = [app.firstName, app.middleName ? `${app.middleName.charAt(0)}.` : null, app.lastName, app.suffix].filter(Boolean).join(" ");
-      drawTextSafe(fullName || "Unknown Applicant", margin, y, fontBold, 14, rgb(0, 0.15, 0.4));
+      drawTextSafe((fullName || "Unknown Applicant").toUpperCase(), margin, y, fontBold, 14, rgb(0, 0.15, 0.4));
       y -= 16;
 
       // Summary row 1: College, Program, Year Level
@@ -256,7 +256,7 @@ export async function GET(
     try {
       drawSectionTitle("I. Personal Information");
       drawFieldTwoCol("Full Name", [app.firstName, app.middleName, app.lastName, app.suffix].filter(Boolean).join(" "), "Date of Birth", app.dateOfBirth ? new Date(app.dateOfBirth).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" }) : null);
-      drawFieldTwoCol("Place of Birth", app.placeOfBirth, "Sex", app.gender);
+      drawFieldTwoCol("Place of Birth", app.placeOfBirth ? app.placeOfBirth.toUpperCase() : null, "Sex", app.gender);
       drawFieldTwoCol("Civil Status", app.civilStatus, "Citizenship", app.citizenship);
       if (app.religion) drawFieldTwoCol("Religion", app.religion, "", null);
       y -= 8;
@@ -467,6 +467,24 @@ export async function GET(
       }
     } catch (err) {
       console.error("Error drawing references:", err);
+    }
+
+    // ====== SIGNATURE ======
+    try {
+      if (app.signatureData || app.printedName) {
+        drawSectionTitle("XI. Applicant Signature");
+        if (app.printedName) {
+          drawField("Printed Name", app.printedName);
+        }
+        // Note: The actual signature image is stored and can be verified in the system.
+        drawField("Signature", "Attached (digital signature on file)");
+        if (app.submittedAt) {
+          drawField("Date Signed", new Date(app.submittedAt).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" }));
+        }
+        y -= 8;
+      }
+    } catch (err) {
+      console.error("Error drawing signature section:", err);
     }
 
     // REVIEW NOTES — stored in notifications, not in Application record
