@@ -78,7 +78,7 @@ import { RoleGuard } from "@/components/auth/role-guard";
 import { EmptyState } from "@/components/ui/empty-state";
 import { SavingIndicator } from "@/components/ui/saving-indicator";
 import { useKeyboardShortcuts } from "@/hooks/use-keyboard-shortcuts";
-import { useDebounce } from "@hooks/use-debounce";
+import { useDebounce } from "@/hooks/use-debounce";
 
 interface Renewal {
   id: string;

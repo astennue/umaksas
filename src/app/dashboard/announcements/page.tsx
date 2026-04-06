@@ -52,7 +52,7 @@ import { RoleGuard } from "@/components/auth/role-guard";
 import { EmptyState } from "@/components/ui/empty-state";
 import { useConfirm } from "@/hooks/use-confirm";
 import { useKeyboardShortcuts } from "@/hooks/use-keyboard-shortcuts";
-import { useDebounce } from "@hooks/use-debounce";
+import { useDebounce } from "@/hooks/use-debounce";
 
 interface Announcement {
   id: string;
