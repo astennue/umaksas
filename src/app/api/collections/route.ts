@@ -123,7 +123,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Deadline is required" }, { status: 400 });
     }
 
-    const validTargets = ["ALL_SAS", "ALL_OFFICERS", "ALL", "INDIVIDUAL"];
+    const validTargets = ["ALL_SA_WITH_OFFICERS", "ALL", "INDIVIDUAL"];
     if (!target || !validTargets.includes(target)) {
       return NextResponse.json({ error: "Valid target is required" }, { status: 400 });
     }

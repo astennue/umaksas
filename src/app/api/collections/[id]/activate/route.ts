@@ -54,18 +54,37 @@ export async function POST(
         select: { id: true },
       });
       targetUserIds.push(...users.map((u) => u.id));
-    } else if (parsed.mode === "ALL_SAS") {
+    } else if (parsed.mode === "ALL_SA_WITH_OFFICERS") {
+      // Includes Student Assistants AND Officers (but not Advisers)
       const users = await db.user.findMany({
-        where: { role: "STUDENT_ASSISTANT", isActive: true },
+        where: {
+          OR: [
+            { role: "STUDENT_ASSISTANT", isActive: true },
+            { role: "OFFICER", isActive: true },
+          ],
+        },
+        select: { id: true },
+      });
+      targetUserIds.push(...users.map((u) => u.id));
+    } else if (parsed.mode === "ALL_SAS") {
+      // Legacy mode - map to ALL_SA_WITH_OFFICERS behavior (SA + Officers)
+      const users = await db.user.findMany({
+        where: {
+          OR: [
+            { role: "STUDENT_ASSISTANT", isActive: true },
+            { role: "OFFICER", isActive: true },
+          ],
+        },
         select: { id: true },
       });
       targetUserIds.push(...users.map((u) => u.id));
     } else if (parsed.mode === "ALL_OFFICERS") {
+      // Legacy mode - map to ALL_SA_WITH_OFFICERS behavior (SA + Officers)
       const users = await db.user.findMany({
         where: {
           OR: [
+            { role: "STUDENT_ASSISTANT", isActive: true },
             { role: "OFFICER", isActive: true },
-            { role: "ADVISER", isActive: true },
           ],
         },
         select: { id: true },

@@ -197,9 +197,8 @@ interface TargetRolesParsed {
 // ── Config ──────────────────────────────────────────────────────────
 
 const TARGET_OPTIONS = [
-  { value: "ALL_SAS", label: "All Student Assistants" },
-  { value: "ALL_OFFICERS", label: "All Officers including Adviser/s" },
-  { value: "ALL", label: "All (SAs + Officers + Advisers)" },
+  { value: "ALL_SA_WITH_OFFICERS", label: "All Student Assistant (Including Officers)" },
+  { value: "ALL", label: "All (Student Assistant, Organization Officers, and the Organization Adviser)" },
   { value: "INDIVIDUAL", label: "Per Individual Selection" },
 ];
 
@@ -249,7 +248,9 @@ function parseTargetRoles(rolesStr: string): TargetRolesParsed {
 
 function targetLabel(rolesStr: string): string {
   const parsed = parseTargetRoles(rolesStr);
-  const found = TARGET_OPTIONS.find((t) => t.value === parsed.mode);
+  // Map legacy modes to new equivalents for display
+  const displayMode = parsed.mode === "ALL_SAS" || parsed.mode === "ALL_OFFICERS" ? "ALL_SA_WITH_OFFICERS" : parsed.mode;
+  const found = TARGET_OPTIONS.find((t) => t.value === displayMode);
   if (found) return found.label;
   if (parsed.mode === "LEGACY" && parsed.legacyRoles) {
     const labels: Record<string, string> = { STUDENT_ASSISTANT: "Student Assistants", OFFICER: "Officers", ADVISER: "Advisers" };
@@ -268,7 +269,7 @@ const defaultFormData = {
   description: "",
   amount: 20,
   deadline: "",
-  target: "ALL_SAS" as string,
+  target: "ALL_SA_WITH_OFFICERS" as string,
   individualUserIds: [] as string[],
   paymentMethod: "GCASH" as string,
   gcashNumber: "",
@@ -573,7 +574,7 @@ export default function PaymentCollectionsPage() {
       description: col.description || "",
       amount: col.amount,
       deadline: formatDateInput(col.endDate),
-      target: parsed.mode === "LEGACY" ? "ALL_SAS" : parsed.mode,
+      target: parsed.mode === "LEGACY" || parsed.mode === "ALL_SAS" || parsed.mode === "ALL_OFFICERS" ? "ALL_SA_WITH_OFFICERS" : parsed.mode,
       individualUserIds: parsed.userIds || [],
       paymentMethod: col.paymentMethod,
       gcashNumber: col.gcashNumber || "",

@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useSession } from "next-auth/react";
-import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -81,7 +80,6 @@ import {
   X,
   Ticket,
   Award,
-  ArrowRight,
 } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "sonner";
@@ -162,6 +160,36 @@ interface SystemSettings {
 
 interface OfficerData {
   position: string;
+}
+
+interface MyPaymentWithCollection {
+  id: string;
+  collectionId: string;
+  userId: string;
+  amount: number;
+  amountPaid: number | null;
+  transactionNumber: string | null;
+  proofUrl: string | null;
+  uploadedAt: string | null;
+  trackingNumber: string | null;
+  status: "UNPAID" | "PENDING" | "PAID" | "REJECTED";
+  verifiedBy: string | null;
+  verifiedAt: string | null;
+  verificationNotes: string | null;
+  createdAt: string;
+  collection: {
+    id: string;
+    title: string;
+    description: string | null;
+    amount: number;
+    paymentMethod: string;
+    gcashNumber: string | null;
+    gcashQrUrl: string | null;
+    paymentInstructions: string | null;
+    startDate: string | null;
+    endDate: string | null;
+    status: string;
+  };
 }
 
 const MONTHS = [
@@ -288,6 +316,22 @@ export default function PaymentsPage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const payFileInputRef = useRef<HTMLInputElement>(null);
 
+  // Collection payments state
+  const [collectionPayments, setCollectionPayments] = useState<MyPaymentWithCollection[]>([]);
+  const [colStats, setColStats] = useState<{ total: number; unpaid: number; pending: number; paid: number; rejected: number }>({ total: 0, unpaid: 0, pending: 0, paid: 0, rejected: 0 });
+  const [colLoading, setColLoading] = useState(true);
+
+  // Collection pay dialog state
+  const [colPayOpen, setColPayOpen] = useState(false);
+  const [colPayPayment, setColPayPayment] = useState<MyPaymentWithCollection | null>(null);
+  const [colPayTxNumber, setColPayTxNumber] = useState("");
+  const [colPayAmount, setColPayAmount] = useState("");
+  const [colPayConfirm, setColPayConfirm] = useState(false);
+  const [colPaySelectedFile, setColPaySelectedFile] = useState<File | null>(null);
+  const [colPayFilePreview, setColPayFilePreview] = useState<string | null>(null);
+  const [isColSubmitting, setIsColSubmitting] = useState(false);
+  const colPayFileInputRef = useRef<HTMLInputElement>(null);
+
   // Keyboard shortcuts
   useKeyboardShortcuts({
     r: () => { fetchPayments(); fetchStats(); toast.success("Data refreshed"); },
@@ -397,10 +441,34 @@ export default function PaymentsPage() {
     }
   }, [debouncedSearch, monthFilter, yearFilter, paymentTab, isOfficer, currentUserId]);
 
+  // Fetch collection payments
+  const fetchCollectionPayments = useCallback(async () => {
+    try {
+      setColLoading(true);
+      const res = await fetch("/api/collections/my-payments");
+      if (!res.ok) throw new Error("Failed to fetch collection payments");
+      const data = await safeJsonParse<any>(res);
+      const payments: MyPaymentWithCollection[] = data.payments || [];
+      setCollectionPayments(payments);
+      setColStats({
+        total: payments.length,
+        unpaid: payments.filter((p: MyPaymentWithCollection) => p.status === "UNPAID").length,
+        pending: payments.filter((p: MyPaymentWithCollection) => p.status === "PENDING").length,
+        paid: payments.filter((p: MyPaymentWithCollection) => p.status === "PAID").length,
+        rejected: payments.filter((p: MyPaymentWithCollection) => p.status === "REJECTED").length,
+      });
+    } catch {
+      // Silently fail - collection payments are supplementary
+    } finally {
+      setColLoading(false);
+    }
+  }, []);
+
   useEffect(() => {
     fetchOfficer();
     fetchSettings();
-  }, [fetchOfficer, fetchSettings]);
+    fetchCollectionPayments();
+  }, [fetchOfficer, fetchSettings, fetchCollectionPayments]);
 
   useEffect(() => {
     fetchPayments();
@@ -572,6 +640,97 @@ export default function PaymentsPage() {
     setPayFilePreview(null);
   };
 
+  // Collection pay dialog handlers
+  const resetColPayForm = () => {
+    setColPayTxNumber("");
+    setColPayAmount("");
+    setColPayConfirm(false);
+    setColPaySelectedFile(null);
+    setColPayFilePreview(null);
+  };
+
+  const openColPayNow = (cp: MyPaymentWithCollection) => {
+    resetColPayForm();
+    setColPayPayment(cp);
+    setColPayAmount(cp.amount.toString());
+    setColPayOpen(true);
+  };
+
+  const handleColPayFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error("File size must be less than 10MB");
+      return;
+    }
+    if (!["image/jpeg", "image/png", "image/webp"].includes(file.type)) {
+      toast.error("Only JPG, PNG, and WebP images are allowed for GCash receipts");
+      return;
+    }
+    setColPaySelectedFile(file);
+    if (file.type.startsWith("image/")) {
+      const reader = new FileReader();
+      reader.onload = (ev) => setColPayFilePreview(ev.target?.result as string);
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleColPaySubmit = async () => {
+    if (!colPayPayment || !colPaySelectedFile) return;
+    if (!colPayTxNumber.trim()) {
+      toast.error("Please enter the transaction number");
+      return;
+    }
+    if (!colPayAmount || parseFloat(colPayAmount) <= 0) {
+      toast.error("Please enter a valid amount");
+      return;
+    }
+    if (!colPayConfirm) {
+      toast.error("Please confirm the authenticity of your payment");
+      return;
+    }
+
+    setIsColSubmitting(true);
+    try {
+      // Upload receipt image
+      const formData = new FormData();
+      formData.append("file", colPaySelectedFile);
+      formData.append("type", "photo");
+
+      const uploadRes = await fetch("/api/upload", {
+        method: "POST",
+        body: formData,
+      });
+      const uploadData = await uploadRes.json();
+      if (!uploadRes.ok) throw new Error(uploadData.error || "Failed to upload receipt");
+
+      // Submit payment proof to collection payments API
+      const updateRes = await fetch("/api/collections/my-payments", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          paymentId: colPayPayment.id,
+          transactionNumber: colPayTxNumber.trim(),
+          amountPaid: parseFloat(colPayAmount),
+          proofUrl: uploadData.url,
+        }),
+      });
+
+      const updateData = await updateRes.json();
+      if (!updateRes.ok) throw new Error(updateData.error || "Failed to submit payment");
+
+      toast.success("Collection payment submitted successfully! Please wait for verification.");
+      setColPayOpen(false);
+      setColPayPayment(null);
+      resetColPayForm();
+      fetchCollectionPayments();
+    } catch (error: unknown) {
+      toast.error(error instanceof Error ? error.message : "Failed to submit payment");
+    } finally {
+      setIsColSubmitting(false);
+    }
+  };
+
   const handlePayFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -723,29 +882,6 @@ export default function PaymentsPage() {
   return (
     <RoleGuard allowedRoles={["SUPER_ADMIN", "ADVISER", "OFFICER", "STUDENT_ASSISTANT"]}>
     <div className="space-y-6">
-      {/* Deprecation Notice - Collections system is the new way */}
-      <div className="rounded-lg border border-amber-200 dark:border-amber-800/50 bg-amber-50 dark:bg-amber-900/20 p-4">
-        <div className="flex items-start gap-3">
-          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-amber-100 dark:bg-amber-900/40">
-            <Info className="h-4 w-4 text-amber-600 dark:text-amber-400" />
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-semibold text-amber-800 dark:text-amber-200">
-              New Payment Collections System Available
-            </p>
-            <p className="text-xs text-amber-700 dark:text-amber-300 mt-1">
-              This page manages legacy monthly payments. The new <Link href="/dashboard/payment-collections" className="underline font-medium hover:text-amber-900 dark:hover:text-amber-100">Payment Collections</Link> system offers more flexible collection management with support for multiple targets, GCash QR codes, and per-collection tracking. We recommend using the new system for future collections.
-            </p>
-          </div>
-          <Link href="/dashboard/payment-collections">
-            <Button size="sm" className="shrink-0 gap-1.5 text-xs bg-amber-600 hover:bg-amber-700 text-white">
-              <ArrowRight className="h-3.5 w-3.5" />
-              Go to Collections
-            </Button>
-          </Link>
-        </div>
-      </div>
-
       {/* Page Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
@@ -1255,6 +1391,148 @@ export default function PaymentsPage() {
           </Button>
         </div>
       )}
+
+      {/* Payment Collections Section — visible to all roles */}
+      <Separator />
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
+              <Ticket className="h-5 w-5 text-[#004EE0]" />
+              Payment Collections
+            </h2>
+            <p className="text-sm text-muted-foreground">
+              Active payment collections assigned to you
+            </p>
+          </div>
+          <Button variant="outline" size="sm" onClick={fetchCollectionPayments} disabled={colLoading}>
+            <RefreshCw className={cn("mr-2 h-3.5 w-3.5", colLoading && "animate-spin")} />
+            Refresh
+          </Button>
+        </div>
+
+        {/* Collection Stats */}
+        {collectionPayments.length > 0 && (
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+            {[
+              { label: "Unpaid", count: colStats.unpaid, color: "text-red-600", icon: AlertTriangle, bg: "bg-red-50 dark:bg-red-900/10" },
+              { label: "Pending", count: colStats.pending, color: "text-amber-600", icon: Clock, bg: "bg-amber-50 dark:bg-amber-900/10" },
+              { label: "Paid", count: colStats.paid, color: "text-green-600", icon: CheckCircle2, bg: "bg-green-50 dark:bg-green-900/10" },
+              { label: "Rejected", count: colStats.rejected, color: "text-slate-600", icon: XCircle, bg: "bg-slate-50 dark:bg-slate-900/10" },
+            ].map((stat) => (
+              <div key={stat.label} className={`rounded-lg border p-3 ${stat.bg}`}>
+                <div className="flex items-center gap-2">
+                  <stat.icon className={`h-4 w-4 ${stat.color}`} />
+                  <p className="text-xs text-muted-foreground">{stat.label}</p>
+                </div>
+                <p className={`mt-1 text-xl font-bold ${stat.color}`}>{stat.count}</p>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Collection Payments List */}
+        {colLoading ? (
+          <div className="space-y-3">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="h-24 animate-pulse rounded-lg bg-slate-100 dark:bg-slate-800" />
+            ))}
+          </div>
+        ) : collectionPayments.length === 0 ? (
+          <EmptyState
+            icon={Ticket}
+            title="No collection payments"
+            description="You don't have any active payment collections assigned to you."
+            className="rounded-lg border border-dashed"
+          />
+        ) : (
+          <div className="space-y-3">
+            {collectionPayments.map((cp) => {
+              const config = statusConfig[cp.status] || statusConfig.UNPAID;
+              const StatusIcon = config.icon;
+
+              return (
+                <Card key={cp.id} className="overflow-hidden">
+                  <div className={`h-1 ${
+                    cp.status === "PAID" ? "bg-green-500" :
+                    cp.status === "PENDING" ? "bg-amber-500" :
+                    cp.status === "REJECTED" ? "bg-slate-400" : "bg-red-500"
+                  }`} />
+                  <CardContent className="p-4">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <h3 className="text-sm font-semibold truncate">{cp.collection.title}</h3>
+                          <Badge className={`${config.color} gap-1`} variant="secondary">
+                            <StatusIcon className="h-3 w-3" />
+                            {config.label}
+                          </Badge>
+                          {(cp.status === "UNPAID" || cp.status === "REJECTED") && (
+                            <Badge className="bg-[#004EE0] text-white gap-1 animate-pulse" variant="secondary">
+                              <Banknote className="h-2.5 w-2.5" />
+                              To Pay
+                            </Badge>
+                          )}
+                        </div>
+                        {cp.collection.description && (
+                          <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{cp.collection.description}</p>
+                        )}
+                        <div className="flex items-center gap-4 mt-2 text-sm">
+                          <span className="font-bold text-slate-900 dark:text-white">{formatCurrency(cp.amount)}</span>
+                          {cp.amountPaid !== null && cp.amountPaid > 0 && (
+                            <span className="text-xs text-muted-foreground">
+                              Paid: <span className="text-green-600 font-medium">{formatCurrency(cp.amountPaid)}</span>
+                            </span>
+                          )}
+                          {cp.trackingNumber && (
+                            <span className="text-xs text-muted-foreground font-mono">
+                              #{cp.trackingNumber}
+                            </span>
+                          )}
+                          {cp.verificationNotes && (
+                            <span className="text-xs text-red-600 truncate max-w-[200px]" title={cp.verificationNotes}>
+                              {cp.verificationNotes}
+                            </span>
+                          )}
+                        </div>
+                        {cp.collection.startDate && (
+                          <p className="text-[10px] text-muted-foreground mt-1">
+                            Due: {cp.collection.startDate ? format(new Date(cp.collection.startDate), "MMM d, yyyy") : "—"}
+                            {cp.collection.endDate && ` — ${format(new Date(cp.collection.endDate), "MMM d, yyyy")}`}
+                          </p>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-1 shrink-0">
+                        {(cp.status === "UNPAID" || cp.status === "REJECTED") && (
+                          <Button
+                            size="sm"
+                            className="h-7 text-xs bg-[#004EE0] hover:bg-[#004EE0]/90 text-white"
+                            onClick={() => openColPayNow(cp)}
+                          >
+                            <Smartphone className="mr-1 h-3 w-3" />
+                            Pay Now
+                          </Button>
+                        )}
+                        {cp.proofUrl && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-7 text-xs"
+                            onClick={() => window.open(cp.proofUrl!, "_blank")}
+                          >
+                            <Eye className="mr-1 h-3 w-3" />
+                            View Proof
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
+        )}
+      </div>
 
       {/* Payment Detail Modal */}
       <Dialog open={detailOpen} onOpenChange={setDetailOpen}>
@@ -2115,6 +2393,233 @@ export default function PaymentsPage() {
           <DialogFooter>
             <Button variant="outline" onClick={() => { setProofDialogOpen(false); setProofPayment(null); setProofUrl(""); }}>
               Cancel
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Collection Payment Pay Dialog */}
+      <Dialog open={colPayOpen} onOpenChange={(open) => {
+        setColPayOpen(open);
+        if (!open) resetColPayForm();
+      }}>
+        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#004EE0]/10">
+                <Smartphone className="h-4 w-4 text-[#004EE0]" />
+              </div>
+              Pay via GCash
+            </DialogTitle>
+            <DialogDescription>
+              {colPayPayment
+                ? `Payment for ${colPayPayment.collection.title}`
+                : ""}
+            </DialogDescription>
+          </DialogHeader>
+          {colPayPayment && (
+            <div className="space-y-5">
+              {/* Collection Info */}
+              <div className="rounded-lg border p-4 bg-slate-50 dark:bg-slate-900">
+                <h4 className="text-sm font-semibold">{colPayPayment.collection.title}</h4>
+                {colPayPayment.collection.description && (
+                  <p className="text-xs text-muted-foreground mt-1">{colPayPayment.collection.description}</p>
+                )}
+              </div>
+
+              {/* GCash QR Code */}
+              {colPayPayment.collection.gcashQrUrl && (
+                <div className="flex flex-col items-center">
+                  <div className="rounded-xl border-2 border-[#004EE0]/20 bg-white p-3 shadow-sm">
+                    <img
+                      src={colPayPayment.collection.gcashQrUrl}
+                      alt="GCash QR Code"
+                      className="h-48 w-48 object-contain"
+                    />
+                  </div>
+                  <p className="mt-2 text-xs text-muted-foreground">Scan this QR code with GCash</p>
+                </div>
+              )}
+
+              {/* GCash Number */}
+              {colPayPayment.collection.gcashNumber && (
+                <div className="rounded-lg bg-[#004EE0]/5 border border-[#004EE0]/20 p-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#004EE0]/10">
+                        <Smartphone className="h-5 w-5 text-[#004EE0]" />
+                      </div>
+                      <div>
+                        <p className="text-xs text-muted-foreground">GCash Number</p>
+                        <p className="text-lg font-bold text-[#004EE0]">{colPayPayment.collection.gcashNumber}</p>
+                      </div>
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="shrink-0"
+                      onClick={() => {
+                        navigator.clipboard.writeText((colPayPayment?.collection.gcashNumber || "").replace(/\s/g, ""));
+                        toast.success("GCash number copied!");
+                      }}
+                    >
+                      <Copy className="mr-1 h-3 w-3" />
+                      Copy
+                    </Button>
+                  </div>
+                </div>
+              )}
+
+              {/* Amount */}
+              <div className="rounded-lg border p-4 text-center">
+                <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Amount to Pay</p>
+                <p className="text-3xl font-bold text-slate-900 dark:text-white">
+                  {formatCurrency(colPayPayment.amount)}
+                </p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  {colPayPayment.collection.title}
+                </p>
+              </div>
+
+              {/* Payment Instructions */}
+              {colPayPayment.collection.paymentInstructions && (
+                <div className="space-y-2">
+                  <h4 className="text-sm font-semibold flex items-center gap-2">
+                    <Info className="h-4 w-4 text-[#004EE0]" />
+                    How to Pay
+                  </h4>
+                  <div className="rounded-lg border bg-slate-50 dark:bg-slate-900 p-4">
+                    <pre className="text-xs text-slate-700 dark:text-slate-300 whitespace-pre-wrap font-sans leading-relaxed">
+                      {colPayPayment.collection.paymentInstructions}
+                    </pre>
+                  </div>
+                </div>
+              )}
+
+              <Separator />
+
+              {/* Submit Payment Form */}
+              <div className="space-y-4">
+                <h4 className="text-sm font-semibold flex items-center gap-2">
+                  <Upload className="h-4 w-4 text-[#004EE0]" />
+                  Submit Payment Proof
+                </h4>
+
+                {/* Receipt Screenshot */}
+                <div className="space-y-2">
+                  <Label>Receipt Screenshot</Label>
+                  {colPayFilePreview ? (
+                    <div className="relative inline-block">
+                      <div className="rounded-lg border p-1 bg-white">
+                        <img
+                          src={colPayFilePreview}
+                          alt="Receipt preview"
+                          className="h-32 w-auto rounded-md object-contain"
+                        />
+                      </div>
+                      <Button
+                        variant="destructive"
+                        size="icon"
+                        className="absolute -top-2 -right-2 h-6 w-6 rounded-full"
+                        onClick={() => {
+                          setColPaySelectedFile(null);
+                          setColPayFilePreview(null);
+                        }}
+                      >
+                        <X className="h-3 w-3" />
+                      </Button>
+                    </div>
+                  ) : (
+                    <div
+                      className="flex flex-col items-center justify-center rounded-lg border-2 border-dashed p-6 cursor-pointer hover:border-[#004EE0]/50 hover:bg-[#004EE0]/5 transition-colors"
+                      onClick={() => colPayFileInputRef.current?.click()}
+                    >
+                      <ImageIcon className="mb-2 h-8 w-8 text-muted-foreground" />
+                      <p className="text-sm text-muted-foreground text-center">
+                        Click to upload receipt screenshot
+                      </p>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        JPG, PNG, or WebP (max 10MB)
+                      </p>
+                    </div>
+                  )}
+                  <input
+                    ref={colPayFileInputRef}
+                    type="file"
+                    accept=".jpg,.jpeg,.png,.webp"
+                    onChange={handleColPayFileSelect}
+                    className="hidden"
+                  />
+                </div>
+
+                {/* Transaction Number */}
+                <div className="space-y-2">
+                  <Label htmlFor="colPayTxNumber">GCash Transaction Number</Label>
+                  <Input
+                    id="colPayTxNumber"
+                    value={colPayTxNumber}
+                    onChange={(e) => setColPayTxNumber(e.target.value)}
+                    placeholder="e.g., 1234567890123"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    You can find this on your GCash transaction receipt
+                  </p>
+                </div>
+
+                {/* Amount Paid */}
+                <div className="space-y-2">
+                  <Label htmlFor="colPayAmount">Amount Paid (₱)</Label>
+                  <Input
+                    id="colPayAmount"
+                    type="number"
+                    value={colPayAmount}
+                    onChange={(e) => setColPayAmount(e.target.value)}
+                    min={0}
+                    step={0.01}
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Enter the exact amount you sent
+                  </p>
+                </div>
+
+                {/* Confirmation Checkbox */}
+                <div className="flex items-start gap-3 rounded-lg border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/20 p-3">
+                  <Checkbox
+                    id="colPayConfirm"
+                    checked={colPayConfirm}
+                    onCheckedChange={(checked) => setColPayConfirm(checked === true)}
+                    className="mt-0.5"
+                  />
+                  <Label htmlFor="colPayConfirm" className="text-xs text-amber-800 dark:text-amber-300 leading-relaxed cursor-pointer">
+                    I confirm that this payment is authentic and the receipt is genuine. Any falsification of payment proof will result in sanctions per the Student Handbook.
+                  </Label>
+                </div>
+              </div>
+            </div>
+          )}
+          <DialogFooter className="gap-2">
+            <div className="flex items-center gap-2 mr-auto">
+              <SavingIndicator saving={isColSubmitting} />
+            </div>
+            <Button variant="outline" onClick={() => setColPayOpen(false)}>
+              Cancel
+            </Button>
+            <Button
+              onClick={handleColPaySubmit}
+              disabled={isColSubmitting || !colPaySelectedFile || !colPayTxNumber.trim() || !colPayConfirm}
+              className="bg-[#004EE0] hover:bg-[#004EE0]/90 text-white"
+            >
+              {isColSubmitting ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Submitting...
+                </>
+              ) : (
+                <>
+                  <CheckCircle2 className="mr-2 h-4 w-4" />
+                  Submit Payment
+                </>
+              )}
             </Button>
           </DialogFooter>
         </DialogContent>
