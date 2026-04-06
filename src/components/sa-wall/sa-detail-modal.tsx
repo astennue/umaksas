@@ -121,7 +121,7 @@ export function SADetailModal({
 
                 {/* Office */}
                 {sa.officeName && (
-                  <div className="flex items-center justify-center gap-1.5 mt-2 text-blue-200 text-sm relative z-10 min-w-0 max-w-[280px]">
+                  <div className="flex items-center justify-center gap-1.5 mt-2 text-blue-100 text-sm relative z-10 min-w-0 max-w-[280px]">
                     <Building2 className="w-3.5 h-3.5 shrink-0" />
                     <span className="truncate">{sa.officeName}</span>
                   </div>
@@ -143,7 +143,7 @@ export function SADetailModal({
                       On Duty
                     </Badge>
                   ) : (
-                    <Badge className="bg-white/10 text-blue-200 border-white/20 text-xs font-medium px-3 py-1">
+                    <Badge className="bg-white/10 text-blue-100 border-white/20 text-xs font-medium px-3 py-1">
                       <span className="w-1.5 h-1.5 rounded-full bg-gray-400 mr-1.5" />
                       Off Duty
                     </Badge>
@@ -157,7 +157,7 @@ export function SADetailModal({
                   <>
                     <Separator className="-mx-6" />
                     <div className="mt-5 space-y-3.5">
-                      <h3 className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">
+                      <h3 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                         Details
                       </h3>
 
@@ -168,7 +168,7 @@ export function SADetailModal({
                             <BookOpen className="w-4 h-4" />
                           </div>
                           <div className="min-w-0 flex-1">
-                            <p className="text-xs text-gray-400 dark:text-gray-500">Program</p>
+                            <p className="text-xs text-gray-500 dark:text-gray-400">Program</p>
                             <p className="text-sm font-medium text-gray-700 dark:text-gray-300 truncate">
                               {sa.program}
                             </p>
@@ -183,7 +183,7 @@ export function SADetailModal({
                             <Calendar className="w-4 h-4" />
                           </div>
                           <div className="min-w-0 flex-1">
-                            <p className="text-xs text-gray-400 dark:text-gray-500">AY / Semester</p>
+                            <p className="text-xs text-gray-500 dark:text-gray-400">AY / Semester</p>
                             <p className="text-sm font-medium text-gray-700 dark:text-gray-300 truncate">
                               {[sa.academicYear, sa.semester].filter(Boolean).join(" | ") || "N/A"}
                             </p>

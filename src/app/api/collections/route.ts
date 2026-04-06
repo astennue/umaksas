@@ -89,12 +89,6 @@ export async function GET(req: NextRequest) {
   }
 }
 
-// Helper: check if OFFICER has PRESIDENT or TREASURER position
-async function isOfficerWithCreateAccess(userId: string): Promise<boolean> {
-  const officer = await db.officerProfile.findUnique({ where: { userId } });
-  return !!officer && ["PRESIDENT", "TREASURER"].includes(officer.position);
-}
-
 // POST /api/collections - Create a new collection
 export async function POST(req: NextRequest) {
   try {
@@ -102,14 +96,6 @@ export async function POST(req: NextRequest) {
     if (authResult instanceof NextResponse) return authResult;
 
     const { user } = authResult;
-
-    // OFFICER must be PRESIDENT or TREASURER to create collections
-    if (user.role === "OFFICER") {
-      const hasAccess = await isOfficerWithCreateAccess(user.id);
-      if (!hasAccess) {
-        return NextResponse.json({ error: "Only President or Treasurer can create collections" }, { status: 403 });
-      }
-    }
 
     const body = await req.json();
     const {

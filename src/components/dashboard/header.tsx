@@ -116,7 +116,7 @@ export function DashboardHeader() {
             {/* Search - hidden on mobile */}
             <div className="hidden md:flex items-center">
               <div className="relative">
-                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" />
                 <Input
                   placeholder="Search..."
                   className="h-9 w-48 lg:w-56 pl-8 text-sm bg-gray-50 border-gray-200 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-300 focus-visible:ring-blue-500/20"

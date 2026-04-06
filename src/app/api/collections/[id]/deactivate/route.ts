@@ -3,7 +3,7 @@ import { requireRole } from "@/lib/auth-helpers";
 import { db } from "@/lib/db";
 import { CollectionStatus } from "@prisma/client";
 
-// POST /api/collections/[id]/close - Close a collection
+// POST /api/collections/[id]/deactivate - Deactivate collection (ACTIVE → DRAFT)
 export async function POST(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -21,13 +21,13 @@ export async function POST(
       return NextResponse.json({ error: "Collection not found" }, { status: 404 });
     }
 
-    if (collection.status === "CLOSED") {
-      return NextResponse.json({ error: "Collection is already closed" }, { status: 400 });
+    if (collection.status !== "ACTIVE") {
+      return NextResponse.json({ error: "Only active collections can be deactivated" }, { status: 400 });
     }
 
     const updated = await db.paymentCollection.update({
       where: { id },
-      data: { status: CollectionStatus.CLOSED },
+      data: { status: CollectionStatus.DRAFT },
       include: {
         creator: {
           select: {
@@ -47,7 +47,7 @@ export async function POST(
 
     return NextResponse.json({ collection: updated });
   } catch (error) {
-    console.error("Error closing collection:", error);
-    return NextResponse.json({ error: "Failed to close collection" }, { status: 500 });
+    console.error("Error deactivating collection:", error);
+    return NextResponse.json({ error: "Failed to deactivate collection" }, { status: 500 });
   }
 }

@@ -482,7 +482,7 @@ export default function DashboardPage() {
                 <Badge className="bg-amber-500/90 text-white border-0 text-xs font-medium hover:bg-amber-500/80">
                   {roleLabels[userRole] || userRole}
                 </Badge>
-                <span className="text-sm text-blue-200 dark:text-gray-400">
+                <span className="text-sm text-blue-100 dark:text-gray-400">
                   {format(new Date(), "EEEE, MMMM d, yyyy")}
                 </span>
               </div>

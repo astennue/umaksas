@@ -11,14 +11,20 @@ export async function GET(
 ) {
   try {
     const session = await getServerSession(authOptions);
-    if (!session?.user) {
+
+    // Allow internal server-to-server calls (for email attachments)
+    const isInternal = request.headers.get("x-internal-call") === "true";
+
+    if (!session?.user && !isInternal) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const userRole = (session.user as { role?: string }).role;
-    const allowedRoles = ["SUPER_ADMIN", "ADVISER", "OFFICER", "HRMO"];
-    if (!userRole || !allowedRoles.includes(userRole)) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    if (!isInternal) {
+      const userRole = (session.user as { role?: string }).role;
+      const allowedRoles = ["SUPER_ADMIN", "ADVISER", "OFFICER", "HRMO"];
+      if (!userRole || !allowedRoles.includes(userRole)) {
+        return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      }
     }
 
     const { id } = await params;
@@ -221,8 +227,8 @@ export async function GET(
     const drawFieldTwoCol = (label1: string, value1: string | null | undefined, label2: string, value2: string | null | undefined) => {
       checkPageBreak(16);
       const halfWidth = contentWidth / 2;
-      const safeValue1 = sanitizeText(value1 ?? "N/A").substring(0, 30);
-      const safeValue2 = sanitizeText(value2 ?? "N/A").substring(0, 30);
+      const safeValue1 = sanitizeText(value1 || "N/A").substring(0, 30);
+      const safeValue2 = sanitizeText(value2 || "N/A").substring(0, 30);
 
       try {
         const page = getCurrentPage();
@@ -335,11 +341,39 @@ export async function GET(
     try {
       if (app.availabilityJson) {
         drawSectionTitle("VI. Weekly Availability");
-        const avail = JSON.parse(app.availabilityJson) as Record<string, string[]>;
+        let availParsed: Record<string, string[]>;
+        try {
+          const raw = JSON.parse(app.availabilityJson);
+          // Handle both Record format and boolean array format
+          if (Array.isArray(raw)) {
+            // Boolean array format — convert to readable day/time slots
+            const daySlots: Record<string, string[]> = { monday: [], tuesday: [], wednesday: [], thursday: [], friday: [] };
+            const days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"];
+            const slotsPerDay = 22; // 7AM-6PM in 30-min intervals
+            raw.forEach((slot: boolean, idx: number) => {
+              if (slot) {
+                const dayIdx = Math.floor(idx / slotsPerDay);
+                const slotIdx = idx % slotsPerDay;
+                const hour = Math.floor(slotIdx / 2) + 7;
+                const min = slotIdx % 2 === 0 ? "00" : "30";
+                const ampm = hour >= 12 ? "PM" : "AM";
+                const displayHour = hour > 12 ? hour - 12 : hour;
+                const timeStr = `${displayHour}:${min} ${ampm}`;
+                const dayKey = Object.keys(daySlots)[dayIdx];
+                if (dayKey) daySlots[dayKey].push(timeStr);
+              }
+            });
+            availParsed = daySlots;
+          } else {
+            availParsed = raw as Record<string, string[]>;
+          }
+        } catch {
+          availParsed = {};
+        }
         const dayKeys = ["monday", "tuesday", "wednesday", "thursday", "friday"];
         const dayLabels = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"];
         dayKeys.forEach((dk, i) => {
-          const slots = avail[dk] || [];
+          const slots = availParsed[dk] || [];
           drawField(dayLabels[i], slots.length > 0 ? slots.join(", ") : "None");
         });
         y -= 8;
@@ -426,14 +460,14 @@ export async function GET(
     try {
       if (app.trainingsJson) {
         drawSectionTitle("IX. Trainings & Seminars");
-        const trainings = JSON.parse(app.trainingsJson) as Array<{ title?: string; organizer?: string; date?: string; description?: string }>;
+        const trainings = JSON.parse(app.trainingsJson) as Array<{ title?: string; name?: string; organizer?: string; date?: string; description?: string; duration?: string }>;
         if (trainings.length > 0) {
           trainings.forEach((t, i) => {
             checkPageBreak(40);
             drawTextSafe(`Training #${i + 1}`, margin, y, fontBold, fontSizeSmall, rgb(0.2, 0.2, 0.2));
             y -= 12;
-            drawFieldTwoCol("Title", t.title, "Organizer", t.organizer);
-            drawFieldTwoCol("Date", t.date, "Description", t.description);
+            drawFieldTwoCol("Title", t.title || t.name, "Organizer", t.organizer);
+            drawFieldTwoCol("Date", t.date, "Duration", t.duration || t.description);
             y -= 4;
           });
         } else {
@@ -449,14 +483,14 @@ export async function GET(
     try {
       if (app.referencesJson) {
         drawSectionTitle("X. Character References");
-        const refs = JSON.parse(app.referencesJson) as Array<{ name?: string; position?: string; company?: string; contact?: string; email?: string }>;
+        const refs = JSON.parse(app.referencesJson) as Array<{ name?: string; position?: string; company?: string; organization?: string; contact?: string; phone?: string; email?: string; relationship?: string }>;
         if (refs.length > 0) {
           refs.forEach((r, i) => {
             checkPageBreak(40);
             drawTextSafe(`Reference #${i + 1}`, margin, y, fontBold, fontSizeSmall, rgb(0.2, 0.2, 0.2));
             y -= 12;
             drawFieldTwoCol("Name", r.name, "Position", r.position);
-            drawFieldTwoCol("Company/Institution", r.company, "Contact", r.contact);
+            drawFieldTwoCol("Company/Institution", r.company || r.organization, "Contact", r.contact || r.phone);
             if (r.email) drawField("Email", r.email);
             y -= 4;
           });

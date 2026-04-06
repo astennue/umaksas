@@ -5,12 +5,6 @@ import { CollectionStatus, PaymentStatus, UserRole } from "@prisma/client";
 
 export const dynamic = "force-dynamic";
 
-// Helper: check if OFFICER has PRESIDENT or TREASURER position
-async function isOfficerWithManageAccess(userId: string): Promise<boolean> {
-  const officer = await db.officerProfile.findUnique({ where: { userId } });
-  return !!officer && ["PRESIDENT", "TREASURER"].includes(officer.position);
-}
-
 // Helper: parse targetRoles field (supports both old array format and new object format)
 function parseTargetRoles(targetRolesStr: string): { mode: string; userIds?: string[]; legacyRoles?: UserRole[] } {
   try {
@@ -162,14 +156,6 @@ export async function PUT(
 
     const { user } = authResult;
 
-    // OFFICER must be PRESIDENT or TREASURER to update collections
-    if (user.role === "OFFICER") {
-      const hasAccess = await isOfficerWithManageAccess(user.id);
-      if (!hasAccess) {
-        return NextResponse.json({ error: "Only President or Treasurer can update collections" }, { status: 403 });
-      }
-    }
-
     const { id } = await params;
     const body = await req.json();
 
@@ -277,14 +263,6 @@ export async function DELETE(
     if (authResult instanceof NextResponse) return authResult;
 
     const { user } = authResult;
-
-    // OFFICER must be PRESIDENT or TREASURER to delete collections
-    if (user.role === "OFFICER") {
-      const hasAccess = await isOfficerWithManageAccess(user.id);
-      if (!hasAccess) {
-        return NextResponse.json({ error: "Only President or Treasurer can delete collections" }, { status: 403 });
-      }
-    }
 
     const { id } = await params;
 

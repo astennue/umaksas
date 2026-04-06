@@ -577,7 +577,7 @@ export default function PortalLoginPage() {
                       <button
                         type="button"
                         onClick={() => setShowPassword(!showPassword)}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 transition-all duration-200 hover:text-gray-600 dark:hover:text-gray-300"
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 transition-all duration-200 hover:text-gray-600 dark:hover:text-gray-300"
                         aria-label={
                           showPassword ? "Hide password" : "Show password"
                         }
@@ -645,7 +645,7 @@ export default function PortalLoginPage() {
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   transition={{ duration: 0.5, delay: 0.7 }}
-                  className="mt-6 text-center text-xs text-gray-400 dark:text-gray-500"
+                  className="mt-6 text-center text-xs text-gray-500 dark:text-gray-400"
                 >
                   Unauthorized access is strictly prohibited.
                   <br />

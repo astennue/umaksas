@@ -73,6 +73,7 @@ import { toast } from "sonner";
 import { cn, safeJsonParse } from "@/lib/utils";
 import { RoleGuard } from "@/components/auth/role-guard";
 import { useConfirm } from "@/hooks/use-confirm";
+import { useDebounce } from "@/hooks/use-debounce";
 import { EmptyState } from "@/components/ui/empty-state";
 
 // ── Types ───────────────────────────────────────────────────────────
@@ -291,14 +292,12 @@ export default function PaymentCollectionsPage() {
 
   const isPresident = isOfficer && officer?.position === "PRESIDENT";
   const isTreasurer = isOfficer && officer?.position === "TREASURER";
-  const isLeadershipOfficer = isPresident || isTreasurer;
-  const isViewOnlyOfficer = isOfficer && !isLeadershipOfficer;
 
   // Admin = SUPER_ADMIN or ADVISER
   const isAdmin = isSuperAdmin || isAdviser;
-  // Can manage CRUD = SUPER_ADMIN, ADVISER, or PRESIDENT/TREASURER officers
-  const canManage = isAdmin || isLeadershipOfficer;
-  // Can verify payments = SUPER_ADMIN, ADVISER, PRESIDENT, TREASURER
+  // Can manage CRUD = SUPER_ADMIN, ADVISER, or any OFFICER
+  const canManage = isAdmin || isOfficer;
+  // Can verify payments = SUPER_ADMIN, ADVISER, or any OFFICER
   const canVerifyPayments = canManage;
   // Show "My Payments" tab = officers who are NOT advisers and NOT super admin
   const showMyPaymentsTab = isOfficer;
@@ -334,6 +333,7 @@ export default function PaymentCollectionsPage() {
   const [colPage, setColPage] = useState(1);
   const [statusFilter, setStatusFilter] = useState("all");
   const [search, setSearch] = useState("");
+  const debouncedSearch = useDebounce(search, 300);
 
   // Dialog states
   const [formOpen, setFormOpen] = useState(false);
@@ -685,6 +685,29 @@ export default function PaymentCollectionsPage() {
     }
   };
 
+  // ── Deactivate collection ──
+  const handleDeactivateCollection = async (col: Collection) => {
+    const confirmed = await confirm({
+      title: "Deactivate Collection",
+      description: `Deactivate "${col.title}"? It will be changed back to Draft status and will no longer accept payments.`,
+      confirmText: "Deactivate",
+    });
+    if (!confirmed) return;
+
+    try {
+      const res = await fetch(`/api/collections/${col.id}/deactivate`, { method: "POST" });
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || "Failed to deactivate collection");
+      }
+      toast.success("Collection deactivated");
+      fetchCollections();
+      fetchStats();
+    } catch (error: unknown) {
+      toast.error(error instanceof Error ? error.message : "Failed to deactivate collection");
+    }
+  };
+
   // ── Close collection ──
   const handleCloseCollection = async (col: Collection) => {
     const confirmed = await confirm({
@@ -839,7 +862,7 @@ export default function PaymentCollectionsPage() {
 
   // ── Filter helpers ──
   const filteredCollections = collections.filter((c) => {
-    if (search && !c.title.toLowerCase().includes(search.toLowerCase())) return false;
+    if (debouncedSearch && !c.title.toLowerCase().includes(debouncedSearch.toLowerCase())) return false;
     return true;
   });
 
@@ -898,9 +921,7 @@ export default function PaymentCollectionsPage() {
             <p className="text-sm text-muted-foreground">
               {canManage
                 ? "Create and manage payment collections, verify submissions"
-                : isViewOnlyOfficer
-                  ? "View collections and manage your own payments"
-                  : "Manage organizational fee collections"}
+                : "Manage organizational fee collections"}
             </p>
           </div>
           <div className="flex items-center gap-2">
@@ -1605,8 +1626,13 @@ export default function PaymentCollectionsPage() {
                                 </Button>
                               )}
                               {canManage && col.status === "ACTIVE" && (
+                                <Button variant="ghost" size="sm" className="h-7 text-xs text-amber-600 hover:bg-amber-50" onClick={() => handleDeactivateCollection(col)}>
+                                  <Ban className="mr-1 h-3 w-3" />Deactivate
+                                </Button>
+                              )}
+                              {canManage && col.status === "ACTIVE" && (
                                 <Button variant="ghost" size="sm" className="h-7 text-xs text-red-600 hover:bg-red-50" onClick={() => handleCloseCollection(col)}>
-                                  <Ban className="mr-1 h-3 w-3" />Close
+                                  <Archive className="mr-1 h-3 w-3" />Close
                                 </Button>
                               )}
                               {canManage && (
@@ -1662,7 +1688,10 @@ export default function PaymentCollectionsPage() {
                           <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={() => openEditForm(col)}><Pencil className="mr-1 h-3 w-3" />Edit</Button>
                         )}
                         {canManage && col.status === "ACTIVE" && (
-                          <Button variant="ghost" size="sm" className="h-7 text-xs text-red-600" onClick={() => handleCloseCollection(col)}><Ban className="mr-1 h-3 w-3" />Close</Button>
+                          <Button variant="ghost" size="sm" className="h-7 text-xs text-amber-600" onClick={() => handleDeactivateCollection(col)}><Ban className="mr-1 h-3 w-3" />Deactivate</Button>
+                        )}
+                        {canManage && col.status === "ACTIVE" && (
+                          <Button variant="ghost" size="sm" className="h-7 text-xs text-red-600" onClick={() => handleCloseCollection(col)}><Archive className="mr-1 h-3 w-3" />Close</Button>
                         )}
                         {canManage && (
                           <Button variant="ghost" size="sm" className="h-7 text-xs text-red-500" onClick={() => handleDeleteCollection(col)} disabled={isDeleting}>

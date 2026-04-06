@@ -37,6 +37,7 @@ import { format } from "date-fns";
 import { RoleGuard } from "@/components/auth/role-guard";
 import { AddUserDialog } from "@/components/dashboard/add-user-dialog";
 import { CRUDToolbar } from "@/components/crud-toolbar";
+import { useDebounce } from "@/hooks/use-debounce";
 import { safeJsonParse } from "@/lib/utils";
 
 interface UserRow {
@@ -98,6 +99,7 @@ export default function ManageUsersPage() {
   const [users, setUsers] = useState<UserRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
+  const debouncedSearch = useDebounce(search, 300);
   const [roleFilter, setRoleFilter] = useState("all");
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
@@ -112,7 +114,7 @@ export default function ManageUsersPage() {
         page: page.toString(),
         limit: limit.toString(),
       });
-      if (search) params.set("search", search);
+      if (debouncedSearch) params.set("search", debouncedSearch);
       if (roleFilter !== "all") params.set("role", roleFilter);
 
       const res = await fetch(`/api/users?${params.toString()}`);
@@ -126,7 +128,7 @@ export default function ManageUsersPage() {
     } finally {
       setLoading(false);
     }
-  }, [page, search, roleFilter]);
+  }, [page, debouncedSearch, roleFilter]);
 
   useEffect(() => {
     fetchUsers();

@@ -89,7 +89,7 @@ const TYPE_COLORS: Record<string, {
     bgDark: "dark:bg-blue-950/60",
     border: "border-blue-300 dark:border-blue-700",
     text: "text-blue-800",
-    textDark: "dark:text-blue-200",
+    textDark: "dark:text-blue-100",
     stripe: "bg-blue-500",
     icon: Briefcase,
     label: "Work",

@@ -78,6 +78,7 @@ import { CRUDActions } from "@/components/crud-actions";
 import { RoleGuard } from "@/components/auth/role-guard";
 import { EmptyState } from "@/components/ui/empty-state";
 import { useKeyboardShortcuts } from "@/hooks/use-keyboard-shortcuts";
+import { useDebounce } from "@/hooks/use-debounce";
 import { SavingIndicator } from "@/components/ui/saving-indicator";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
@@ -191,6 +192,7 @@ export default function CertificatesPage() {
 
   // ─── Filter State ─────────────────────────────────────────────────────────
   const [search, setSearch] = useState("");
+  const debouncedSearch = useDebounce(search, 300);
   const [typeFilter, setTypeFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
 
@@ -232,7 +234,7 @@ export default function CertificatesPage() {
         page: page.toString(),
         limit: limit.toString(),
       });
-      if (search) params.set("search", search);
+      if (debouncedSearch) params.set("search", debouncedSearch);
       if (typeFilter !== "all") params.set("type", typeFilter);
       if (statusFilter !== "all") params.set("status", statusFilter);
 
@@ -247,7 +249,7 @@ export default function CertificatesPage() {
     } finally {
       setLoading(false);
     }
-  }, [page, search, typeFilter, statusFilter]);
+  }, [page, debouncedSearch, typeFilter, statusFilter]);
 
   useEffect(() => {
     fetchCertificates();

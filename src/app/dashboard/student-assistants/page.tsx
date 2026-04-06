@@ -55,6 +55,7 @@ import { safeJsonParse } from "@/lib/utils";
 import { EmptyState } from "@/components/ui/empty-state";
 import { useConfirm } from "@/hooks/use-confirm";
 import { useKeyboardShortcuts } from "@/hooks/use-keyboard-shortcuts";
+import { useDebounce } from "@/hooks/use-debounce";
 
 interface StudentAssistant {
   id: string;
@@ -111,6 +112,7 @@ export default function StudentAssistantsPage() {
   const [offices, setOffices] = useState<{ id: string; name: string; code: string | null }[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
+  const debouncedSearch = useDebounce(search, 300);
   const [collegeFilter, setCollegeFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
   const [page, setPage] = useState(1);
@@ -144,7 +146,7 @@ export default function StudentAssistantsPage() {
         page: page.toString(),
         limit: limit.toString(),
       });
-      if (search) params.set("search", search);
+      if (debouncedSearch) params.set("search", debouncedSearch);
       if (collegeFilter !== "all") params.set("college", collegeFilter);
       if (statusFilter !== "all") params.set("status", statusFilter);
 
@@ -159,7 +161,7 @@ export default function StudentAssistantsPage() {
     } finally {
       setLoading(false);
     }
-  }, [page, search, collegeFilter, statusFilter]);
+  }, [page, debouncedSearch, collegeFilter, statusFilter]);
 
   // Auto-open edit modal when navigated from SA detail page with ?edit=ID
   useEffect(() => {

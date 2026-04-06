@@ -52,6 +52,7 @@ import { RoleGuard } from "@/components/auth/role-guard";
 import { EmptyState } from "@/components/ui/empty-state";
 import { useConfirm } from "@/hooks/use-confirm";
 import { useKeyboardShortcuts } from "@/hooks/use-keyboard-shortcuts";
+import { useDebounce } from "@hooks/use-debounce";
 
 interface Announcement {
   id: string;
@@ -144,6 +145,7 @@ export default function DashboardAnnouncementsPage() {
   const [loading, setLoading] = useState(true);
   const [activeFilter, setActiveFilter] = useState("ALL");
   const [searchQuery, setSearchQuery] = useState("");
+  const debouncedSearchQuery = useDebounce(searchQuery, 300);
 
   // Dialog state
   const [formOpen, setFormOpen] = useState(false);
@@ -201,8 +203,8 @@ export default function DashboardAnnouncementsPage() {
       return true;
     })
     .filter((a) => {
-      if (!searchQuery) return true;
-      const q = searchQuery.toLowerCase();
+      if (!debouncedSearchQuery) return true;
+      const q = debouncedSearchQuery.toLowerCase();
       return (
         a.title.toLowerCase().includes(q) ||
         a.content.toLowerCase().includes(q) ||

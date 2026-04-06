@@ -49,6 +49,7 @@ export async function POST(request: NextRequest) {
         religion: rest.religion || "",
         email: rest.email || email || "",
         phone: rest.phone || "",
+        alternatePhone: rest.alternatePhone || "",
         fatherName: rest.fatherName || "",
         fatherOccupation: rest.fatherOccupation || "",
         fatherContact: rest.fatherContact || "",
@@ -142,7 +143,7 @@ export async function PUT(request: NextRequest) {
     // Session is optional — allow updating applications without login
 
     const body = await request.json();
-    const { id, employment, trainings, references, availability, ...rest } = body;
+    const { id, employment, trainings, references, availability, weeklyAvailability, ...rest } = body;
 
     if (!id) {
       return NextResponse.json({ error: "Application ID is required" }, { status: 400 });
@@ -185,6 +186,7 @@ export async function PUT(request: NextRequest) {
         religion: rest.religion ?? existing.religion,
         email: rest.email ?? existing.email,
         phone: rest.phone ?? existing.phone,
+        alternatePhone: rest.alternatePhone ?? existing.alternatePhone,
         fatherName: rest.fatherName ?? existing.fatherName,
         fatherOccupation: rest.fatherOccupation ?? existing.fatherOccupation,
         fatherContact: rest.fatherContact ?? existing.fatherContact,
@@ -210,7 +212,8 @@ export async function PUT(request: NextRequest) {
         section: rest.section ?? existing.section,
         gwa: rest.gwa ?? existing.gwa,
         employmentJson: employment ? JSON.stringify(employment) : existing.employmentJson,
-        availabilityJson: availability ? JSON.stringify(availability) : existing.availabilityJson,
+        // Use weeklyAvailability (Record format) for proper PDF parsing; fall back to availability (boolean array)
+        availabilityJson: weeklyAvailability || (availability ? JSON.stringify(availability) : existing.availabilityJson),
         trainingsJson: trainings ? JSON.stringify(trainings) : existing.trainingsJson,
         referencesJson: references ? JSON.stringify(references) : existing.referencesJson,
         essayWhyApply: rest.essayWhyApply ?? existing.essayWhyApply,

@@ -120,38 +120,27 @@ export async function POST(request: NextRequest) {
       // Don't fail the submission if notification fails
     }
 
-    // Send confirmation email with PDF (async, don't fail the submission)
+    // Send confirmation email with full PDF (async, don't fail the submission)
     try {
       const applicantName = `${application.firstName || ""} ${application.lastName || ""}`.trim() || application.applicantEmail;
       const applicantEmail = application.email || application.applicantEmail;
 
-      // Generate PDF buffer for email attachment
+      // Generate full PDF by calling the PDF endpoint internally
       let pdfBuffer: Buffer | undefined;
       try {
-        const { PDFDocument, rgb, StandardFonts } = await import("pdf-lib");
-        const pdfDoc = await PDFDocument.create();
-        const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
-        const fontBold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
-        const pageWidth = 595.28;
-        const margin = 40;
-        const contentWidth = pageWidth - margin * 2;
-        let y = 780;
-
-        const page = pdfDoc.addPage([pageWidth, 841.89]);
-        page.drawText("UNIVERSITY OF MAKATI", { x: margin, y, size: 16, font: fontBold, color: rgb(0, 0.15, 0.4) });
-        y -= 18;
-        page.drawText("STUDENT ASSISTANTSHIP SOCIETY", { x: margin, y, size: 12, font: fontBold, color: rgb(0, 0.15, 0.4) });
-        y -= 16;
-        page.drawText("APPLICATION FORM", { x: margin, y, size: 10, font: fontBold });
-        y -= 24;
-        page.drawText(`Name: ${applicantName}`, { x: margin, y, size: 10, font });
-        y -= 14;
-        page.drawText(`Reference: ${updated.id}`, { x: margin, y, size: 10, font });
-        y -= 14;
-        page.drawText(`Date: ${new Date().toLocaleDateString()}`, { x: margin, y, size: 10, font });
-
-        const pdfBytes = await pdfDoc.save();
-        pdfBuffer = Buffer.from(pdfBytes);
+        const baseUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.VERCEL_URL 
+          ? `https://${process.env.VERCEL_URL}` : "http://localhost:3000";
+        const pdfRes = await fetch(`${baseUrl}/api/applications/${applicationId}/pdf`, {
+          headers: { 
+            "x-internal-call": "true",
+          },
+        });
+        if (pdfRes.ok) {
+          const arrayBuffer = await pdfRes.arrayBuffer();
+          pdfBuffer = Buffer.from(arrayBuffer);
+        } else {
+          console.error("Warning: PDF endpoint returned", pdfRes.status);
+        }
       } catch (pdfErr) {
         console.error("Warning: Could not generate PDF for email attachment:", pdfErr);
       }

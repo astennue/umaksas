@@ -113,7 +113,7 @@ export function SAFullProfileModal({ sa, open, onOpenChange }: SAFullProfileModa
                       On Duty
                     </Badge>
                   ) : (
-                    <Badge className="bg-white/10 text-blue-200 border-white/20 text-xs font-medium px-3 py-1">
+                    <Badge className="bg-white/10 text-blue-100 border-white/20 text-xs font-medium px-3 py-1">
                       <span className="w-1.5 h-1.5 rounded-full bg-gray-400 mr-1.5" />
                       Off Duty
                     </Badge>
@@ -125,7 +125,7 @@ export function SAFullProfileModal({ sa, open, onOpenChange }: SAFullProfileModa
               <div className="px-6 pb-6">
                 <Separator className="-mx-6" />
                 <div className="mt-5 space-y-3.5">
-                  <h3 className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">
+                  <h3 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                     Profile Information
                   </h3>
 
@@ -136,7 +136,7 @@ export function SAFullProfileModal({ sa, open, onOpenChange }: SAFullProfileModa
                         <GraduationCap className="w-4 h-4" />
                       </div>
                       <div className="min-w-0 flex-1">
-                        <p className="text-xs text-gray-400 dark:text-gray-500">College</p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">College</p>
                         <p className="text-sm font-medium text-gray-700 dark:text-gray-300 truncate">
                           {getCollegeDisplay(sa.college, 'both')}
                         </p>
@@ -151,7 +151,7 @@ export function SAFullProfileModal({ sa, open, onOpenChange }: SAFullProfileModa
                         <BookOpen className="w-4 h-4" />
                       </div>
                       <div className="min-w-0 flex-1">
-                        <p className="text-xs text-gray-400 dark:text-gray-500">Program</p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">Program</p>
                         <p className="text-sm font-medium text-gray-700 dark:text-gray-300 truncate">
                           {sa.program}
                         </p>
@@ -166,7 +166,7 @@ export function SAFullProfileModal({ sa, open, onOpenChange }: SAFullProfileModa
                         <Building2 className="w-4 h-4" />
                       </div>
                       <div className="min-w-0 flex-1">
-                        <p className="text-xs text-gray-400 dark:text-gray-500">Office Assigned</p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">Office Assigned</p>
                         <p className="text-sm font-medium text-gray-700 dark:text-gray-300 truncate">
                           {sa.officeName}
                         </p>
@@ -181,7 +181,7 @@ export function SAFullProfileModal({ sa, open, onOpenChange }: SAFullProfileModa
                         <Mail className="w-4 h-4" />
                       </div>
                       <div className="min-w-0 flex-1">
-                        <p className="text-xs text-gray-400 dark:text-gray-500">Office Email</p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">Office Email</p>
                         <p className="text-sm font-medium text-gray-700 dark:text-gray-300 truncate">
                           {sa.officeEmail}
                         </p>
@@ -196,7 +196,7 @@ export function SAFullProfileModal({ sa, open, onOpenChange }: SAFullProfileModa
                         <User className="w-4 h-4" />
                       </div>
                       <div className="min-w-0 flex-1">
-                        <p className="text-xs text-gray-400 dark:text-gray-500">UMAK Email</p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">UMAK Email</p>
                         <p className="text-sm font-medium text-gray-700 dark:text-gray-300 truncate">
                           {sa.umakEmail}
                         </p>
@@ -206,7 +206,7 @@ export function SAFullProfileModal({ sa, open, onOpenChange }: SAFullProfileModa
 
                   {/* Show message if no data available */}
                   {!sa.college && !sa.program && !sa.officeName && !sa.officeEmail && !sa.umakEmail && (
-                    <div className="text-center py-4 text-sm text-gray-400 dark:text-gray-500">
+                    <div className="text-center py-4 text-sm text-gray-500 dark:text-gray-400">
                       No profile information available yet.
                     </div>
                   )}

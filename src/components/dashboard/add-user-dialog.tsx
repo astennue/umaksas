@@ -314,12 +314,12 @@ export function AddUserDialog({ open, onOpenChange, onUserCreated }: AddUserDial
                 className={`flex h-7 w-7 items-center justify-center rounded-full text-xs font-semibold transition-colors ${
                   idx <= step
                     ? "bg-[#1e3a8a] text-white"
-                    : "bg-gray-100 text-gray-400 dark:bg-gray-800 dark:text-gray-500"
+                    : "bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-500"
                 }`}
               >
                 {idx < step ? <Check className="h-3.5 w-3.5" /> : idx + 1}
               </div>
-              <span className={`text-xs font-medium ${idx <= step ? "text-gray-900 dark:text-white" : "text-gray-400"}`}>
+              <span className={`text-xs font-medium ${idx <= step ? "text-gray-900 dark:text-white" : "text-gray-500"}`}>
                 {label}
               </span>
               {idx < 2 && <ChevronRight className="h-3 w-3 text-gray-300 mx-1" />}

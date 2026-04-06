@@ -94,11 +94,11 @@ export function Combobox({
         <span className="truncate">{selectedOption?.label || placeholder}</span>
         {value ? (
           <X
-            className="w-4 h-4 text-gray-400 shrink-0 ml-2 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300"
+            className="w-4 h-4 text-gray-500 shrink-0 ml-2 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300"
             onClick={(e) => { e.stopPropagation(); onChange?.(""); }}
           />
         ) : (
-          <ChevronDown className={cn("w-4 h-4 text-gray-400 shrink-0 ml-2 transition-transform dark:text-gray-500", open && "rotate-180")} />
+          <ChevronDown className={cn("w-4 h-4 text-gray-500 shrink-0 ml-2 transition-transform dark:text-gray-500", open && "rotate-180")} />
         )}
       </button>
 
@@ -108,7 +108,7 @@ export function Combobox({
           {/* Search input */}
           {searchable && (
             <div className="flex items-center border-b border-gray-100 px-3 py-2 dark:border-gray-700">
-              <Search className="w-4 h-4 text-gray-400 shrink-0 mr-2" />
+              <Search className="w-4 h-4 text-gray-500 shrink-0 mr-2" />
               <input
                 ref={inputRef}
                 type="text"
@@ -130,7 +130,7 @@ export function Combobox({
               Object.entries(groups).map(([group, opts]) => (
                 <div key={group}>
                   {group !== "__ungrouped" && (
-                    <div className="px-3 py-1.5 text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                    <div className="px-3 py-1.5 text-xs font-semibold text-gray-500 uppercase tracking-wider">
                       {group}
                     </div>
                   )}

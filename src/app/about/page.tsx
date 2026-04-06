@@ -420,7 +420,7 @@ export default function AboutPage() {
             <h2 className="text-3xl font-bold tracking-tight text-white sm:text-4xl">
               Our Journey
             </h2>
-            <p className="mx-auto mt-2 max-w-lg text-sm leading-relaxed text-gray-400">
+            <p className="mx-auto mt-2 max-w-lg text-sm leading-relaxed text-gray-500">
               Tracing our journey from inception to digital transformation
             </p>
           </div>
@@ -460,7 +460,7 @@ export default function AboutPage() {
                       </h3>
 
                       {/* Description */}
-                      <p className="mt-2 text-sm leading-relaxed text-gray-400">
+                      <p className="mt-2 text-sm leading-relaxed text-gray-500">
                         {event.description}
                       </p>
                     </div>
@@ -567,7 +567,7 @@ export default function AboutPage() {
                   <p className="text-sm text-gray-500 dark:text-gray-400">
                     sas@umak.edu.ph
                   </p>
-                  <p className="mt-1 text-xs text-gray-400 dark:text-gray-500">
+                  <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
                     We&apos;ll respond within 24-48 hours
                   </p>
                 </CardContent>
@@ -587,7 +587,7 @@ export default function AboutPage() {
                   <p className="text-sm text-gray-500 dark:text-gray-400">
                     (02) 8882-2500
                   </p>
-                  <div className="mt-1 flex items-center justify-center gap-1 text-xs text-gray-400 dark:text-gray-500">
+                  <div className="mt-1 flex items-center justify-center gap-1 text-xs text-gray-500 dark:text-gray-400">
                     <Clock className="h-3 w-3" />
                     Mon-Fri, 8:00 AM - 5:00 PM
                   </div>

@@ -69,7 +69,7 @@ export function PublicHeader() {
                 className={cn(
                   "px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200",
                   isApplyDisabled
-                    ? "text-gray-400 cursor-not-allowed opacity-60"
+                    ? "text-gray-500 cursor-not-allowed opacity-60"
                     : pathname === link.href
                       ? "text-yellow-700 bg-yellow-50 dark:text-yellow-400 dark:bg-yellow-400/10"
                       : "text-gray-600 hover:text-yellow-700 hover:bg-gray-100 dark:text-gray-400 dark:hover:text-yellow-400"
@@ -132,7 +132,7 @@ export function PublicHeader() {
                           className={cn(
                             "rounded-lg px-4 py-3 text-sm font-medium transition-all duration-200",
                             isApplyDisabled
-                              ? "text-gray-400 cursor-not-allowed opacity-60"
+                              ? "text-gray-500 cursor-not-allowed opacity-60"
                               : pathname === link.href
                                 ? "text-yellow-700 bg-yellow-50 dark:text-yellow-400 dark:bg-yellow-400/10"
                                 : "text-gray-600 hover:text-yellow-700 hover:bg-gray-100 dark:text-gray-400 dark:hover:text-yellow-400"

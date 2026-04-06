@@ -227,7 +227,7 @@ function OfficerProfileModal({
               <div className="px-6 pb-6">
                 <Separator className="-mx-6" />
                 <div className="mt-5 space-y-3.5">
-                  <h3 className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">
+                  <h3 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                     Profile Information
                   </h3>
 
@@ -238,7 +238,7 @@ function OfficerProfileModal({
                         <GraduationCap className="w-4 h-4" />
                       </div>
                       <div className="min-w-0 flex-1">
-                        <p className="text-xs text-gray-400 dark:text-gray-500">College</p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">College</p>
                         <p className="text-sm font-medium text-gray-700 dark:text-gray-300 truncate">
                           {getCollegeDisplay(officer.college, 'both')}
                         </p>
@@ -253,7 +253,7 @@ function OfficerProfileModal({
                         <BookOpen className="w-4 h-4" />
                       </div>
                       <div className="min-w-0 flex-1">
-                        <p className="text-xs text-gray-400 dark:text-gray-500">Program</p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">Program</p>
                         <p className="text-sm font-medium text-gray-700 dark:text-gray-300 truncate">
                           {officer.program}
                         </p>
@@ -268,7 +268,7 @@ function OfficerProfileModal({
                         <Building2 className="w-4 h-4" />
                       </div>
                       <div className="min-w-0 flex-1">
-                        <p className="text-xs text-gray-400 dark:text-gray-500">Office Assigned</p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">Office Assigned</p>
                         <p className="text-sm font-medium text-gray-700 dark:text-gray-300 truncate">
                           {officer.officeName}
                         </p>
@@ -283,7 +283,7 @@ function OfficerProfileModal({
                         <Mail className="w-4 h-4" />
                       </div>
                       <div className="min-w-0 flex-1">
-                        <p className="text-xs text-gray-400 dark:text-gray-500">Office Email</p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">Office Email</p>
                         <p className="text-sm font-medium text-gray-700 dark:text-gray-300 truncate">
                           {officer.officeEmail}
                         </p>
@@ -298,7 +298,7 @@ function OfficerProfileModal({
                         <User className="w-4 h-4" />
                       </div>
                       <div className="min-w-0 flex-1">
-                        <p className="text-xs text-gray-400 dark:text-gray-500">UMAK Email</p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">UMAK Email</p>
                         <p className="text-sm font-medium text-gray-700 dark:text-gray-300 truncate">
                           {officer.user.email}
                         </p>
@@ -308,7 +308,7 @@ function OfficerProfileModal({
 
                   {/* Show message if no data available */}
                   {!officer.college && !officer.program && !officer.officeName && !officer.officeEmail && !officer.user.email && (
-                    <div className="text-center py-4 text-sm text-gray-400 dark:text-gray-500">
+                    <div className="text-center py-4 text-sm text-gray-500 dark:text-gray-400">
                       No profile information available yet.
                     </div>
                   )}
@@ -412,7 +412,7 @@ export function OfficersList({ officers, open, onOpenChange }: OfficersListProps
                         {officer.user.fullName}
                       </h3>
                       {officer.email && (
-                        <p className="text-gray-400 text-xs mt-1 truncate">{officer.email}</p>
+                        <p className="text-gray-500 text-xs mt-1 truncate">{officer.email}</p>
                       )}
 
                       {/* View Profile button */}

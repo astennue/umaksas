@@ -265,7 +265,7 @@ const SignaturePad = forwardRef<SignaturePadRef, SignaturePadProps>(
             <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
               {/* Guide line */}
               <div className="absolute bottom-12 left-8 right-8 border-t border-dashed border-gray-300 dark:border-gray-500" />
-              <div className="flex flex-col items-center gap-1 text-gray-400 dark:text-gray-500 mb-8">
+              <div className="flex flex-col items-center gap-1 text-gray-500 dark:text-gray-400 mb-8">
                 <PenLine className="h-7 w-7 opacity-40" />
                 <span className="text-sm font-medium opacity-60">
                   Sign above this line

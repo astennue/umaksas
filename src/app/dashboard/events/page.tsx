@@ -45,6 +45,7 @@ import { CRUDActions } from "@/components/crud-actions";
 import { toast } from "sonner";
 import { EmptyState } from "@/components/ui/empty-state";
 import { useKeyboardShortcuts } from "@/hooks/use-keyboard-shortcuts";
+import { useDebounce } from "@/hooks/use-debounce";
 
 interface Office {
   id: string;
@@ -60,6 +61,7 @@ export default function EventsPage() {
   const [statusFilter, setStatusFilter] = useState("all");
   const [officeFilter, setOfficeFilter] = useState("all");
   const [search, setSearch] = useState("");
+  const debouncedSearch = useDebounce(search, 300);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const limit = 12;
@@ -88,7 +90,7 @@ export default function EventsPage() {
       const params = new URLSearchParams();
       if (statusFilter !== "all") params.set("status", statusFilter);
       if (officeFilter !== "all") params.set("officeId", officeFilter);
-      if (search) params.set("search", search);
+      if (debouncedSearch) params.set("search", debouncedSearch);
       params.set("page", page.toString());
       params.set("limit", limit.toString());
 
@@ -103,7 +105,7 @@ export default function EventsPage() {
     } finally {
       setLoading(false);
     }
-  }, [statusFilter, officeFilter, search, page]);
+  }, [statusFilter, officeFilter, debouncedSearch, page]);
 
   const fetchOffices = useCallback(async () => {
     try {
@@ -123,7 +125,7 @@ export default function EventsPage() {
   // Reset page when filters change
   useEffect(() => {
     setPage(1);
-  }, [statusFilter, officeFilter, search]);
+  }, [statusFilter, officeFilter, debouncedSearch]);
 
   // Stats
   const stats = {

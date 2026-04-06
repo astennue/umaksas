@@ -438,7 +438,7 @@ export function SAFormModal({
                     <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg transition-colors ${
                       isCommitteeOfficer
                         ? "bg-amber-100 text-amber-600"
-                        : "bg-gray-100 text-gray-400"
+                        : "bg-gray-100 text-gray-500"
                     }`}>
                       <Briefcase className="h-4 w-4" />
                     </div>

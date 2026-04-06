@@ -400,7 +400,7 @@ export default function SettingsPage() {
                 "flex h-10 w-10 shrink-0 items-center justify-center rounded-xl transition-colors",
                 paymentCollectionEnabled
                   ? "bg-green-100 text-green-600 dark:bg-green-900/20 dark:text-green-400"
-                  : "bg-gray-100 text-gray-400 dark:bg-gray-800 dark:text-gray-500"
+                  : "bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-500"
               )}>
                 {paymentCollectionEnabled
                   ? <ToggleRight className="h-5 w-5" />
@@ -586,7 +586,7 @@ export default function SettingsPage() {
                   "flex h-10 w-10 shrink-0 items-center justify-center rounded-xl transition-colors",
                   applicationOpen
                     ? "bg-green-100 text-green-600 dark:bg-green-900/20 dark:text-green-400"
-                    : "bg-gray-100 text-gray-400 dark:bg-gray-800 dark:text-gray-500"
+                    : "bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-500"
                 )}>
                   {applicationOpen ? <ToggleRight className="h-5 w-5" /> : <ToggleLeft className="h-5 w-5" />}
                 </div>
@@ -612,7 +612,7 @@ export default function SettingsPage() {
                   "flex h-10 w-10 shrink-0 items-center justify-center rounded-xl transition-colors",
                   renewalOpen
                     ? "bg-green-100 text-green-600 dark:bg-green-900/20 dark:text-green-400"
-                    : "bg-gray-100 text-gray-400 dark:bg-gray-800 dark:text-gray-500"
+                    : "bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-500"
                 )}>
                   {renewalOpen ? <ToggleRight className="h-5 w-5" /> : <ToggleLeft className="h-5 w-5" />}
                 </div>

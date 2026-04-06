@@ -287,7 +287,7 @@ function TrackPageContent() {
                     <CardTitle className="text-base">
                       {application.firstName} {application.lastName}
                     </CardTitle>
-                    <p className="text-sm text-blue-200">{application.applicantEmail}</p>
+                    <p className="text-sm text-blue-100">{application.applicantEmail}</p>
                   </div>
                   <Badge
                     className={`${statusColors[application.status]?.bg || "bg-gray-100"} ${

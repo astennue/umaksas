@@ -44,7 +44,7 @@ export function MobileBottomNav() {
                 "flex flex-col items-center gap-0.5 px-2 py-1.5 rounded-lg transition-colors min-w-[48px]",
                 isActive
                   ? "text-blue-700 bg-blue-50 dark:text-blue-400 dark:bg-blue-950/40"
-                  : "text-gray-400 dark:text-gray-500"
+                  : "text-gray-500 dark:text-gray-400"
               )}
             >
               <Icon className={cn("h-5 w-5", isActive && "stroke-[2.5]")} />

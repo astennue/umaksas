@@ -214,12 +214,12 @@ function OfficerProfileDialog({
               <div className="px-6 pb-6">
                 <Separator className="-mx-6" />
                 <div className="mt-5 space-y-3.5">
-                  <h3 className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Profile Information</h3>
+                  <h3 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Profile Information</h3>
                   {officer.college ? (
                     <div className="flex items-center gap-3 text-sm">
                       <div className="w-8 h-8 rounded-lg bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center flex-shrink-0 text-blue-600 dark:text-blue-400"><GraduationCap className="w-4 h-4" /></div>
                       <div className="min-w-0 flex-1">
-                        <p className="text-xs text-gray-400 dark:text-gray-500">College</p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">College</p>
                         <p className="text-sm font-medium text-gray-700 dark:text-gray-300 truncate">{getCollegeDisplay(officer.college, 'both')}</p>
                       </div>
                     </div>
@@ -228,7 +228,7 @@ function OfficerProfileDialog({
                     <div className="flex items-center gap-3 text-sm">
                       <div className="w-8 h-8 rounded-lg bg-violet-50 dark:bg-violet-900/30 flex items-center justify-center flex-shrink-0 text-violet-600 dark:text-violet-400"><BookOpen className="w-4 h-4" /></div>
                       <div className="min-w-0 flex-1">
-                        <p className="text-xs text-gray-400 dark:text-gray-500">Program</p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">Program</p>
                         <p className="text-sm font-medium text-gray-700 dark:text-gray-300 truncate">{officer.program}</p>
                       </div>
                     </div>
@@ -237,7 +237,7 @@ function OfficerProfileDialog({
                     <div className="flex items-center gap-3 text-sm">
                       <div className="w-8 h-8 rounded-lg bg-amber-50 dark:bg-amber-900/30 flex items-center justify-center flex-shrink-0 text-amber-600 dark:text-amber-400"><Building2 className="w-4 h-4" /></div>
                       <div className="min-w-0 flex-1">
-                        <p className="text-xs text-gray-400 dark:text-gray-500">Office Assigned</p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">Office Assigned</p>
                         <p className="text-sm font-medium text-gray-700 dark:text-gray-300 truncate">{officer.officeName}</p>
                       </div>
                     </div>
@@ -246,7 +246,7 @@ function OfficerProfileDialog({
                     <div className="flex items-center gap-3 text-sm">
                       <div className="w-8 h-8 rounded-lg bg-green-50 dark:bg-green-900/30 flex items-center justify-center flex-shrink-0 text-green-600 dark:text-green-400"><Mail className="w-4 h-4" /></div>
                       <div className="min-w-0 flex-1">
-                        <p className="text-xs text-gray-400 dark:text-gray-500">Office Email</p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">Office Email</p>
                         <p className="text-sm font-medium text-gray-700 dark:text-gray-300 truncate">{officer.officeEmail}</p>
                       </div>
                     </div>
@@ -255,13 +255,13 @@ function OfficerProfileDialog({
                     <div className="flex items-center gap-3 text-sm">
                       <div className="w-8 h-8 rounded-lg bg-indigo-50 dark:bg-indigo-900/30 flex items-center justify-center flex-shrink-0 text-indigo-600 dark:text-indigo-400"><User className="w-4 h-4" /></div>
                       <div className="min-w-0 flex-1">
-                        <p className="text-xs text-gray-400 dark:text-gray-500">UMAK Email</p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">UMAK Email</p>
                         <p className="text-sm font-medium text-gray-700 dark:text-gray-300 truncate">{officer.user.email}</p>
                       </div>
                     </div>
                   ) : null}
                   {!officer.college && !officer.program && !officer.officeName && !officer.officeEmail && !officer.user.email && (
-                    <div className="text-center py-4 text-sm text-gray-400 dark:text-gray-500">No profile information available yet.</div>
+                    <div className="text-center py-4 text-sm text-gray-500 dark:text-gray-400">No profile information available yet.</div>
                   )}
                 </div>
               </div>

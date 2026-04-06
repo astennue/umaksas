@@ -204,7 +204,7 @@ function SidebarNav({ collapsed, onNavigate }: { collapsed: boolean; onNavigate?
                   "group relative flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-150",
                   isActive
                     ? "bg-white/15 text-white shadow-sm"
-                    : "text-blue-200 hover:bg-white/10 hover:text-white",
+                    : "text-blue-100 hover:bg-white/10 hover:text-white",
                   collapsed && "justify-center px-2"
                 )}
                 title={collapsed ? item.label : undefined}
@@ -251,7 +251,7 @@ function SidebarNav({ collapsed, onNavigate }: { collapsed: boolean; onNavigate?
         <button
           onClick={() => signOut({ callbackUrl: "/portal-login" })}
           className={cn(
-            "flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-150 text-blue-200 hover:bg-white/10 hover:text-white",
+            "flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-150 text-blue-100 hover:bg-white/10 hover:text-white",
             collapsed && "justify-center px-2"
           )}
         >

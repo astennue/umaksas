@@ -304,7 +304,7 @@ export default function SAWallPage() {
             <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center">
               {/* Search */}
               <div className="relative flex-1 w-full">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />
                 <Input
                   placeholder="Search by name, college, or office..."
                   value={searchQuery}
@@ -314,7 +314,7 @@ export default function SAWallPage() {
                 {searchQuery && (
                   <button
                     onClick={() => setSearchQuery("")}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-600"
                   >
                     <X className="w-4 h-4" />
                   </button>
@@ -480,7 +480,7 @@ export default function SAWallPage() {
           {/* Footer count */}
           {!loading && mergedSAs.length > 0 && (
             <div className="mt-8 text-center">
-              <p className="text-xs text-gray-400 dark:text-gray-500">
+              <p className="text-xs text-gray-500 dark:text-gray-400">
                 Showing {totalFiltered} Student Assistant
                 {totalFiltered !== 1 ? "s" : ""}
                 {onDutyCount > 0 &&

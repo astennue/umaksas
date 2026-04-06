@@ -70,6 +70,7 @@ import { format } from "date-fns";
 import { toast } from "sonner";
 import { safeJsonParse } from "@/lib/utils";
 import { useConfirm } from "@/hooks/use-confirm";
+import { useDebounce } from "@/hooks/use-debounce";
 import { useKeyboardShortcuts } from "@/hooks/use-keyboard-shortcuts";
 import { EmptyState } from "@/components/ui/empty-state";
 import { ScheduleInterviewDialog } from "@/components/interviews/schedule-interview-dialog";
@@ -185,6 +186,7 @@ export default function ApplicationsPage() {
   const [applications, setApplications] = useState<Application[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
+  const debouncedSearch = useDebounce(search, 300);
   const [statusFilter, setStatusFilter] = useState("all");
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
@@ -217,7 +219,7 @@ export default function ApplicationsPage() {
         limit: limit.toString(),
       });
       if (statusFilter !== "all") params.set("status", statusFilter);
-      if (search) params.set("search", search);
+      if (debouncedSearch) params.set("search", debouncedSearch);
 
       const res = await fetch(`/api/applications/admin?${params.toString()}`);
       if (!res.ok) throw new Error("Failed to fetch applications");
@@ -230,7 +232,7 @@ export default function ApplicationsPage() {
     } finally {
       setLoading(false);
     }
-  }, [page, statusFilter, search]);
+  }, [page, statusFilter, debouncedSearch]);
 
   useEffect(() => {
     fetchApplications();

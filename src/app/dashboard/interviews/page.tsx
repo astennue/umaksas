@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 import { EmptyState } from "@/components/ui/empty-state";
 import { useKeyboardShortcuts } from "@/hooks/use-keyboard-shortcuts";
+import { useDebounce } from "@/hooks/use-debounce";
 import { InterviewCard, type InterviewData } from "@/components/interviews/interview-card";
 import { InterviewCalendar } from "@/components/interviews/interview-calendar";
 import { InterviewDetailModal } from "@/components/interviews/interview-detail-modal";
@@ -46,6 +47,7 @@ export default function InterviewsPage() {
   const [view, setView] = useState<"list" | "calendar">("list");
   const [statusFilter, setStatusFilter] = useState("all");
   const [search, setSearch] = useState("");
+  const debouncedSearch = useDebounce(search, 300);
   const [selectedInterview, setSelectedInterview] = useState<InterviewData | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
   const [scheduleOpen, setScheduleOpen] = useState(false);
@@ -110,7 +112,7 @@ export default function InterviewsPage() {
       ? `${interview.application.firstName} ${interview.application.lastName || ""}`.toLowerCase()
       : interview.application.applicantEmail.toLowerCase();
 
-    if (search && !name.includes(search.toLowerCase())) return false;
+    if (debouncedSearch && !name.includes(debouncedSearch.toLowerCase())) return false;
     return true;
   });
 

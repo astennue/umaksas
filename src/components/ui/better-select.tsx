@@ -64,7 +64,7 @@ export function BetterSelect({
         )}
       >
         <SelectValue placeholder={placeholder} />
-        <ChevronDown className="h-4 w-4 text-gray-400 shrink-0 ml-auto" />
+        <ChevronDown className="h-4 w-4 text-gray-500 shrink-0 ml-auto" />
       </SelectTrigger>
       <SelectContent className="rounded-lg border-gray-200 bg-white shadow-lg dark:border-gray-700 dark:bg-gray-800">
         {children}

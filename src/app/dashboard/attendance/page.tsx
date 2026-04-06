@@ -55,6 +55,7 @@ import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isSam
 import { toast } from "sonner";
 import { useConfirm } from "@/hooks/use-confirm";
 import { useKeyboardShortcuts } from "@/hooks/use-keyboard-shortcuts";
+import { useDebounce } from "@/hooks/use-debounce";
 import { StatusTransition } from "@/components/ui/status-transition";
 import { EmptyState } from "@/components/ui/empty-state";
 
@@ -154,6 +155,7 @@ export default function AttendancePage() {
 
   // Filters state
   const [search, setSearch] = useState("");
+  const debouncedSearch = useDebounce(search, 300);
   const [statusFilter, setStatusFilter] = useState("all");
   const [officeFilter, setOfficeFilter] = useState("all");
   const [startDate, setStartDate] = useState("");
@@ -248,7 +250,7 @@ export default function AttendancePage() {
         page: page.toString(),
         limit: limit.toString(),
       });
-      if (search && !canClockUser) params.set("search", search);
+      if (debouncedSearch && !canClockUser) params.set("search", debouncedSearch);
       if (statusFilter !== "all") params.set("status", statusFilter);
       if (officeFilter !== "all") params.set("office", officeFilter);
       if (startDate) params.set("startDate", startDate);
@@ -265,7 +267,7 @@ export default function AttendancePage() {
     } finally {
       setLoading(false);
     }
-  }, [page, search, statusFilter, officeFilter, startDate, endDate, canClockUser]);
+  }, [page, debouncedSearch, statusFilter, officeFilter, startDate, endDate, canClockUser]);
 
   const fetchCalendarRecords = useCallback(async (month: Date) => {
     if (!canClockUser && !userId) return;
@@ -656,7 +658,7 @@ export default function AttendancePage() {
                 <div className="text-5xl font-bold tracking-tight md:text-6xl">
                   {format(currentTime, "hh:mm:ss a")}
                 </div>
-                <p className="text-sm text-blue-200">{format(currentTime, "EEEE, MMMM d, yyyy")}</p>
+                <p className="text-sm text-blue-100">{format(currentTime, "EEEE, MMMM d, yyyy")}</p>
                 {/* Schedule info display */}
                 {(todaySchedule || (todayRecord?.notes?.includes("Shift:"))) && (
                   <div className="mt-1 flex items-center gap-2 rounded-md bg-blue-500/20 px-3 py-1.5">
@@ -739,7 +741,7 @@ export default function AttendancePage() {
                     <CheckCircle className="h-5 w-5 text-green-400" />
                     <div>
                       <p className="text-sm font-medium">Day Complete</p>
-                      <p className="text-xs text-blue-200">
+                      <p className="text-xs text-blue-100">
                         {todayRecord.totalHours.toFixed(1)} hours logged
                         {todayRecord.status === "OVERTIME" && (
                           <span className="ml-1 text-blue-300">

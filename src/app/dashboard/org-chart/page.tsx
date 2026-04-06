@@ -113,7 +113,7 @@ function PhotoUpload({
               </button>
             </>
           ) : (
-            <User className="h-8 w-8 text-slate-300 dark:text-slate-600" />
+            <User className="h-8 w-8 text-slate-400 dark:text-slate-600" />
           )}
         </div>
 

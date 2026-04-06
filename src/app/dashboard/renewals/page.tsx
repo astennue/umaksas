@@ -78,6 +78,7 @@ import { RoleGuard } from "@/components/auth/role-guard";
 import { EmptyState } from "@/components/ui/empty-state";
 import { SavingIndicator } from "@/components/ui/saving-indicator";
 import { useKeyboardShortcuts } from "@/hooks/use-keyboard-shortcuts";
+import { useDebounce } from "@hooks/use-debounce";
 
 interface Renewal {
   id: string;
@@ -130,6 +131,7 @@ export default function RenewalsManagementPage() {
   const [renewals, setRenewals] = useState<Renewal[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
+  const debouncedSearch = useDebounce(search, 300);
   const [statusFilter, setStatusFilter] = useState<string>("ALL");
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
@@ -175,8 +177,8 @@ export default function RenewalsManagementPage() {
         let filtered = data.renewals || [];
 
         // Client-side search
-        if (search.trim()) {
-          const q = search.toLowerCase();
+        if (debouncedSearch.trim()) {
+          const q = debouncedSearch.toLowerCase();
           filtered = filtered.filter(
             (r: Renewal) =>
               `${r.user.firstName} ${r.user.lastName}`.toLowerCase().includes(q) ||
@@ -195,7 +197,7 @@ export default function RenewalsManagementPage() {
     } finally {
       setLoading(false);
     }
-  }, [statusFilter, page, search]);
+  }, [statusFilter, page, debouncedSearch]);
 
   // Fetch season status
   useEffect(() => {

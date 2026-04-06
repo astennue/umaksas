@@ -423,13 +423,13 @@ export default function SAProfilePage() {
               </div>
 
               {data.college && (
-                <p className="text-blue-200 text-sm mt-2 flex items-center justify-center sm:justify-start gap-1.5">
+                <p className="text-blue-100 text-sm mt-2 flex items-center justify-center sm:justify-start gap-1.5">
                   <GraduationCap className="h-3.5 w-3.5" />
                   {data.college}
                 </p>
               )}
               {data.isOfficer && data.officerEmail && (
-                <p className="text-blue-200 text-sm mt-2 flex items-center justify-center sm:justify-start gap-1.5">
+                <p className="text-blue-100 text-sm mt-2 flex items-center justify-center sm:justify-start gap-1.5">
                   <Mail className="h-3.5 w-3.5" />
                   {data.officerEmail}
                 </p>

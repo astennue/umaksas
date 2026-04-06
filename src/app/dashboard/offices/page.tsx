@@ -61,6 +61,7 @@ import { CRUDActions } from "@/components/crud-actions";
 import { RoleGuard } from "@/components/auth/role-guard";
 import { EmptyState } from "@/components/ui/empty-state";
 import { useKeyboardShortcuts } from "@/hooks/use-keyboard-shortcuts";
+import { useDebounce } from "@/hooks/use-debounce";
 
 // =============================================
 // Types
@@ -136,6 +137,7 @@ export default function OfficesPage() {
   const [offices, setOffices] = useState<Office[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
+  const debouncedSearch = useDebounce(search, 300);
   const [statusFilter, setStatusFilter] = useState("all");
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
@@ -185,7 +187,7 @@ export default function OfficesPage() {
         page: page.toString(),
         limit: limit.toString(),
       });
-      if (search) params.set("search", search);
+      if (debouncedSearch) params.set("search", debouncedSearch);
       if (statusFilter !== "all") params.set("isActive", statusFilter);
 
       const res = await fetch(`/api/offices?${params.toString()}`);
@@ -200,7 +202,7 @@ export default function OfficesPage() {
     } finally {
       setLoading(false);
     }
-  }, [page, search, statusFilter]);
+  }, [page, debouncedSearch, statusFilter]);
 
   const fetchSARequests = useCallback(async () => {
     try {

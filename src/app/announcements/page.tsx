@@ -275,7 +275,7 @@ export default function AnnouncementsPage() {
                 <button
                   type="button"
                   onClick={() => setSearchQuery("")}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-600 dark:hover:text-gray-300"
                 >
                   <X className="h-4 w-4" />
                 </button>
@@ -285,7 +285,7 @@ export default function AnnouncementsPage() {
             {/* Time filter */}
             <Select value={timeFilter} onValueChange={(v) => setTimeFilter(v as TimeFilterOption)}>
               <SelectTrigger className="h-12 text-sm w-full sm:w-[180px] bg-white dark:bg-gray-800 border-0 shadow-lg rounded-xl">
-                <Calendar className="w-4 h-4 mr-1.5 text-gray-400" />
+                <Calendar className="w-4 h-4 mr-1.5 text-gray-500" />
                 <SelectValue placeholder="Filter by time" />
               </SelectTrigger>
               <SelectContent>
@@ -300,7 +300,7 @@ export default function AnnouncementsPage() {
             {/* Sort */}
             <Select value={sortBy} onValueChange={(v) => setSortBy(v as SortOption)}>
               <SelectTrigger className="h-12 text-sm w-full sm:w-[180px] bg-white dark:bg-gray-800 border-0 shadow-lg rounded-xl">
-                <ArrowUpDown className="w-4 h-4 mr-1.5 text-gray-400" />
+                <ArrowUpDown className="w-4 h-4 mr-1.5 text-gray-500" />
                 <SelectValue placeholder="Sort by" />
               </SelectTrigger>
               <SelectContent>

@@ -696,7 +696,7 @@ export default function ApplicationDetailPage() {
             <CardContent className="p-6">
               <div className="grid gap-3 sm:grid-cols-2">
                 <div className="flex items-center gap-3 rounded-lg border p-3">
-                  <div className={`h-10 w-10 rounded-lg flex items-center justify-center ${app.photoUrl ? "bg-green-100 text-green-600" : "bg-gray-100 text-gray-400"}`}>
+                  <div className={`h-10 w-10 rounded-lg flex items-center justify-center ${app.photoUrl ? "bg-green-100 text-green-600" : "bg-gray-100 text-gray-500"}`}>
                     <User className="h-5 w-5" />
                   </div>
                   <div className="flex-1">
@@ -710,7 +710,7 @@ export default function ApplicationDetailPage() {
                   )}
                 </div>
                 <div className="flex items-center gap-3 rounded-lg border p-3">
-                  <div className={`h-10 w-10 rounded-lg flex items-center justify-center ${app.resumeUrl ? "bg-green-100 text-green-600" : "bg-gray-100 text-gray-400"}`}>
+                  <div className={`h-10 w-10 rounded-lg flex items-center justify-center ${app.resumeUrl ? "bg-green-100 text-green-600" : "bg-gray-100 text-gray-500"}`}>
                     <FileText className="h-5 w-5" />
                   </div>
                   <div className="flex-1">
@@ -724,7 +724,7 @@ export default function ApplicationDetailPage() {
                   )}
                 </div>
                 <div className="flex items-center gap-3 rounded-lg border p-3">
-                  <div className={`h-10 w-10 rounded-lg flex items-center justify-center ${app.gradeReportUrl ? "bg-green-100 text-green-600" : "bg-gray-100 text-gray-400"}`}>
+                  <div className={`h-10 w-10 rounded-lg flex items-center justify-center ${app.gradeReportUrl ? "bg-green-100 text-green-600" : "bg-gray-100 text-gray-500"}`}>
                     <BookOpen className="h-5 w-5" />
                   </div>
                   <div className="flex-1">
@@ -738,7 +738,7 @@ export default function ApplicationDetailPage() {
                   )}
                 </div>
                 <div className="flex items-center gap-3 rounded-lg border p-3">
-                  <div className={`h-10 w-10 rounded-lg flex items-center justify-center ${app.registrationUrl ? "bg-green-100 text-green-600" : "bg-gray-100 text-gray-400"}`}>
+                  <div className={`h-10 w-10 rounded-lg flex items-center justify-center ${app.registrationUrl ? "bg-green-100 text-green-600" : "bg-gray-100 text-gray-500"}`}>
                     <FileText className="h-5 w-5" />
                   </div>
                   <div className="flex-1">

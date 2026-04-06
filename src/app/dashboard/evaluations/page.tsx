@@ -66,6 +66,7 @@ import { RoleGuard } from "@/components/auth/role-guard";
 import { format } from "date-fns";
 import { useConfirm } from "@/hooks/use-confirm";
 import { useKeyboardShortcuts } from "@/hooks/use-keyboard-shortcuts";
+import { useDebounce } from "@/hooks/use-debounce";
 import { EmptyState } from "@/components/ui/empty-state";
 import { SavingIndicator } from "@/components/ui/saving-indicator";
 
@@ -228,6 +229,7 @@ export default function EvaluationsPage() {
 
   // Filters (for read-only view)
   const [search, setSearch] = useState("");
+  const debouncedSearch = useDebounce(search, 300);
   const [monthFilter, setMonthFilter] = useState("all");
   const [yearFilter, setYearFilter] = useState(currentYear.toString());
   const [ratingFilter, setRatingFilter] = useState("all");
@@ -322,7 +324,7 @@ export default function EvaluationsPage() {
         page: page.toString(),
         limit: limit.toString(),
       });
-      if (search) params.set("search", search);
+      if (debouncedSearch) params.set("search", debouncedSearch);
       if (monthFilter !== "all") params.set("month", monthFilter);
       if (yearFilter !== "all") params.set("year", yearFilter);
       if (ratingFilter !== "all") params.set("rating", ratingFilter);
@@ -339,7 +341,7 @@ export default function EvaluationsPage() {
     } finally {
       setLoading(false);
     }
-  }, [page, search, monthFilter, yearFilter, ratingFilter, statusFilter]);
+  }, [page, debouncedSearch, monthFilter, yearFilter, ratingFilter, statusFilter]);
 
   // Fetch summary
   const fetchSummary = useCallback(async () => {
@@ -378,7 +380,7 @@ export default function EvaluationsPage() {
     if (isReadOnly && !loading) {
       fetchEvaluations();
     }
-  }, [page, search, monthFilter, yearFilter, ratingFilter, statusFilter, isReadOnly]);
+  }, [page, debouncedSearch, monthFilter, yearFilter, ratingFilter, statusFilter, isReadOnly]);
 
   // ========== Form Logic ==========
 

@@ -88,6 +88,7 @@ import { toast } from "sonner";
 import { cn, safeJsonParse } from "@/lib/utils";
 import { RoleGuard } from "@/components/auth/role-guard";
 import { useConfirm } from "@/hooks/use-confirm";
+import { useDebounce } from "@/hooks/use-debounce";
 import { useKeyboardShortcuts } from "@/hooks/use-keyboard-shortcuts";
 import { EmptyState } from "@/components/ui/empty-state";
 import { SavingIndicator } from "@/components/ui/saving-indicator";
@@ -234,6 +235,7 @@ export default function PaymentsPage() {
 
   // Filter state
   const [search, setSearch] = useState("");
+  const debouncedSearch = useDebounce(search, 300);
   const [monthFilter, setMonthFilter] = useState("all");
   const [yearFilter, setYearFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
@@ -338,7 +340,7 @@ export default function PaymentsPage() {
         page: isMineTab ? "1" : page.toString(),
         limit: isMineTab ? "1000" : limit.toString(),
       });
-      if (search) params.set("search", search);
+      if (debouncedSearch) params.set("search", debouncedSearch);
       if (monthFilter !== "all") params.set("month", monthFilter);
       if (yearFilter !== "all") params.set("year", yearFilter);
       if (statusFilter !== "all") params.set("status", statusFilter);
@@ -361,13 +363,13 @@ export default function PaymentsPage() {
     } finally {
       setLoading(false);
     }
-  }, [page, search, monthFilter, yearFilter, statusFilter, paymentTab, isOfficer, currentUserId]);
+  }, [page, debouncedSearch, monthFilter, yearFilter, statusFilter, paymentTab, isOfficer, currentUserId]);
 
   const fetchStats = useCallback(async () => {
     try {
       const isMineTab = paymentTab === "mine" && isOfficer;
       const params = new URLSearchParams({ page: "1", limit: "1000" });
-      if (search) params.set("search", search);
+      if (debouncedSearch) params.set("search", debouncedSearch);
       if (monthFilter !== "all") params.set("month", monthFilter);
       if (yearFilter !== "all") params.set("year", yearFilter);
 
@@ -393,7 +395,7 @@ export default function PaymentsPage() {
     } catch {
       // Ignore
     }
-  }, [search, monthFilter, yearFilter, paymentTab, isOfficer, currentUserId]);
+  }, [debouncedSearch, monthFilter, yearFilter, paymentTab, isOfficer, currentUserId]);
 
   useEffect(() => {
     fetchOfficer();
@@ -407,7 +409,7 @@ export default function PaymentsPage() {
 
   useEffect(() => {
     setPage(1);
-  }, [search, monthFilter, yearFilter, statusFilter]);
+  }, [debouncedSearch, monthFilter, yearFilter, statusFilter]);
 
   useEffect(() => {
     setPage(1);

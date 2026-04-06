@@ -675,7 +675,7 @@ export default function HomePage() {
                       {a.excerpt && (
                         <p className="mt-1 text-xs text-gray-500 dark:text-gray-400 line-clamp-2">{a.excerpt}</p>
                       )}
-                      <p className="mt-1 text-[11px] text-gray-400 dark:text-gray-500">
+                      <p className="mt-1 text-[11px] text-gray-500 dark:text-gray-400">
                         {a.createdAt ? new Date(a.createdAt).toLocaleDateString("en-PH", { month: "short", day: "numeric", year: "numeric" }) : ""}
                       </p>
                     </div>
